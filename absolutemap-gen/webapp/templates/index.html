@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Slot Detection Viewer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <header>
+        <h1>Parking Slot Detection Viewer</h1>
+        <nav id="navigation">
+            <button id="btn-prev" disabled>&larr; Previous</button>
+            <span id="nav-label">Loading...</span>
+            <button id="btn-next">&rarr; Next</button>
+            <button id="btn-generate">Generate Markers</button>
+        </nav>
+    </header>
+
+    <main>
+        <section id="image-panels">
+            <div class="panel">
+                <h3>Original</h3>
+                <img id="img-original" alt="Original image" />
+            </div>
+            <div class="panel">
+                <h3>Detection Overlay</h3>
+                <img id="img-detection" alt="Detection overlay" />
+            </div>
+            <div class="panel">
+                <h3>Post-processed</h3>
+                <img id="img-postprocess" alt="Post-processed overlay" />
+            </div>
+        </section>
+
+        <section id="map-section">
+            <div id="map"></div>
+        </section>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

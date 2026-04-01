@@ -1,0 +1,55 @@
+# Local environment and secrets
+.env
+.venv/
+venv/
+env/
+
+# Datasets and large data (8 GB+)
+data/
+
+# Generated rasters, pipeline runs, and predictions
+artifacts/
+tests/koutaki_2016_parking_extraction/.cache/
+tests/koutaki_2016_parking_extraction/runs_mapbox/
+runs/
+out/
+
+# Large binary files
+*.pth
+*.pt
+*.onnx
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Images (generated outputs — source images live in data/)
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+*.bmp
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Tools
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/

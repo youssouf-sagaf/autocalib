@@ -1,0 +1,144 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+header {
+    background: #16213e;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #0f3460;
+    flex-shrink: 0;
+}
+
+header h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e94560;
+}
+
+#navigation {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#navigation button {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+#btn-prev, #btn-next {
+    background: #0f3460;
+    color: #e0e0e0;
+}
+
+#btn-prev:hover:not(:disabled), #btn-next:hover:not(:disabled) {
+    background: #1a4a8a;
+}
+
+#btn-prev:disabled, #btn-next:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+#btn-generate {
+    background: #2196f3;
+    color: #fff;
+}
+
+#btn-generate:hover {
+    background: #1976d2;
+}
+
+#btn-generate.active {
+    background: #e94560;
+}
+
+#nav-label {
+    font-size: 0.85rem;
+    color: #a0a0b0;
+    min-width: 200px;
+    text-align: center;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 55% 45%;
+    flex: 1;
+    min-height: 0;
+}
+
+#image-panels {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 6px;
+    padding: 6px;
+    overflow: auto;
+}
+
+.panel {
+    background: #16213e;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.panel h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #a0a0b0;
+    padding: 6px 10px;
+    background: #0f3460;
+    flex-shrink: 0;
+}
+
+.panel img {
+    width: 100%;
+    flex: 1;
+    object-fit: contain;
+    min-height: 0;
+    background: #111;
+}
+
+#map-section {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#map {
+    flex: 1;
+    min-height: 0;
+}
+
+
+
+@media (max-width: 900px) {
+    main {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+}

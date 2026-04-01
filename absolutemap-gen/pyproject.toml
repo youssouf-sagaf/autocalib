@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "absolutemap-gen"
+version = "0.2.0"
+description = "Parking slot extraction from satellite imagery: U-Net segmentation + YOLO-OBB detection → GeoJSON export."
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "numpy>=1.24",
+    "opencv-python>=4.8",
+    "Pillow>=10.0",
+    "pyproj>=3.6",
+    "python-dotenv>=1.0",
+    "rasterio>=1.3",
+    "shapely>=2.0",
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "ultralytics>=8.3",
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

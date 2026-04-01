@@ -1,0 +1,12 @@
+{
+  "calibration": {
+    "bboxes": {
+      "VP4yOCGXtzliF84xB9HI": [0.63, 0.71, 0.65, 0.69],
+      "iAdA7tPW1n3WqqRjBKGV": [0.39, 0.68, 0.41, 0.70]
+    }
+  },
+  "characteristics": {
+    "image_width": 1280,
+    "image_height": 480
+  }
+}
