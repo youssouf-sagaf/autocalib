@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "absolutemap-gen"
 version = "0.2.0"
-description = "Parking slot extraction from satellite imagery: U-Net segmentation + YOLO-OBB detection → GeoJSON export."
+description = "Parking slot extraction from satellite imagery: SegFormer segmentation + YOLO-OBB detection → GeoJSON export."
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
@@ -18,6 +18,8 @@ dependencies = [
     "shapely>=2.0",
     "torch>=2.0",
     "torchvision>=0.15",
+    "transformers>=4.36",
+    "safetensors>=0.4",
     "ultralytics>=8.3",
     "matplotlib>=3.7",
 ]

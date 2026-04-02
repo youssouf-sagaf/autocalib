@@ -1,4 +1,6 @@
 // State
+let sources = [];
+let currentSource = "mapbox";
 let runs = [];
 let currentIndex = 0;
 let currentData = null;
@@ -12,9 +14,60 @@ const btnPrev = document.getElementById("btn-prev");
 const btnNext = document.getElementById("btn-next");
 const btnGenerate = document.getElementById("btn-generate");
 const navLabel = document.getElementById("nav-label");
+const sourceSelector = document.getElementById("source-selector");
 
+function buildSourceButtons(sourceList, defaultSource) {
+    sourceSelector.innerHTML = "";
+    sourceList.forEach((src) => {
+        const btn = document.createElement("button");
+        btn.className = "source-btn" + (src.name === defaultSource ? " active" : "");
+        btn.dataset.source = src.name;
+        btn.textContent = `${src.name.toUpperCase()} (${src.count})`;
+        btn.addEventListener("click", () => switchSource(src.name));
+        sourceSelector.appendChild(btn);
+    });
+}
 
-// Init
+async function switchSource(source) {
+    if (source === currentSource) return;
+    currentSource = source;
+
+    sourceSelector.querySelectorAll(".source-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.source === source);
+    });
+
+    await fetchRuns();
+}
+
+async function fetchRuns() {
+    const resp = await fetch(`/api/runs?source=${currentSource}`);
+    const data = await resp.json();
+    runs = data.runs;
+
+    if (runs.length > 0) {
+        loadRun(0);
+    } else {
+        navLabel.textContent = `No runs for ${currentSource}`;
+        clearDisplay();
+    }
+}
+
+function clearDisplay() {
+    document.getElementById("img-original").removeAttribute("src");
+    document.getElementById("img-segmentation").removeAttribute("src");
+    document.getElementById("img-detection").removeAttribute("src");
+    document.getElementById("img-postprocess").removeAttribute("src");
+    if (parkingZoneLayer) {
+        map.removeLayer(parkingZoneLayer);
+        parkingZoneLayer = null;
+    }
+    markersLayer.clearLayers();
+    markersVisible = false;
+    btnGenerate.textContent = "Generate Markers";
+    btnGenerate.classList.remove("active");
+    currentData = null;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     map = L.map("map").setView([48.86, 2.35], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -27,29 +80,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     btnNext.addEventListener("click", () => loadRun(currentIndex + 1));
     btnGenerate.addEventListener("click", toggleMarkers);
 
-    const resp = await fetch("/api/runs");
-    const data = await resp.json();
-    runs = data.runs;
+    const srcResp = await fetch("/api/sources");
+    const srcData = await srcResp.json();
+    sources = srcData.sources;
+    currentSource = srcData.default;
 
-    if (runs.length > 0) {
-        loadRun(0);
-    } else {
-        navLabel.textContent = "No pipeline runs found";
-    }
+    buildSourceButtons(sources, currentSource);
+    await fetchRuns();
 });
 
 async function loadRun(index) {
     if (index < 0 || index >= runs.length) return;
     currentIndex = index;
     const name = runs[currentIndex];
+    const sq = `source=${currentSource}`;
 
     navLabel.textContent = `${name} (${currentIndex + 1}/${runs.length})`;
     btnPrev.disabled = currentIndex === 0;
     btnNext.disabled = currentIndex === runs.length - 1;
 
-    document.getElementById("img-original").src = `/api/runs/${name}/image/original`;
-    document.getElementById("img-detection").src = `/api/runs/${name}/image/detection`;
-    document.getElementById("img-postprocess").src = `/api/runs/${name}/image/postprocess`;
+    document.getElementById("img-original").src = `/api/runs/${name}/image/original?${sq}`;
+    document.getElementById("img-segmentation").src = `/api/runs/${name}/image/segmentation?${sq}`;
+    document.getElementById("img-detection").src = `/api/runs/${name}/image/detection?${sq}`;
+    document.getElementById("img-postprocess").src = `/api/runs/${name}/image/postprocess?${sq}`;
 
     if (parkingZoneLayer) {
         map.removeLayer(parkingZoneLayer);
@@ -60,10 +113,9 @@ async function loadRun(index) {
     btnGenerate.textContent = "Generate Markers";
     btnGenerate.classList.remove("active");
 
-    const resp = await fetch(`/api/runs/${name}`);
+    const resp = await fetch(`/api/runs/${name}?${sq}`);
     currentData = await resp.json();
 
-    // Switch to Mapbox satellite tiles (same source as the GeoTIFFs)
     if (currentData.mapbox_token && !map._hasSatellite) {
         map.eachLayer((layer) => {
             if (layer instanceof L.TileLayer) map.removeLayer(layer);

@@ -6,7 +6,7 @@ Usage:
 
 Ce script :
     - Charge une image GeoTIFF (ou un crop via --bbox/--window)
-    - Applique le modèle de segmentation U-Net
+    - Applique le modèle de segmentation SegFormer
     - Sauvegarde les masques brut et raffiné
     - Génère une overlay pour visualisation
     - Exporte les zones parkables en GeoJSON (si le raster a un CRS)
@@ -33,7 +33,7 @@ from absolutemap_gen.export_geojson import (
     transform_geometry_pixels_to_wgs84,
 )
 from absolutemap_gen.io_geotiff import crop_geotiff_by_bounds, crop_geotiff_by_pixels, read_geotiff_rgb
-from absolutemap_gen.segmentation import UNetParkableSegmenter, refined_mask_to_multipolygon
+from absolutemap_gen.segmentation import SegFormerParkableSegmenter, refined_mask_to_multipolygon
 
 
 def create_overlay(rgb_hwc: np.ndarray, mask_refined: np.ndarray, alpha: float = 0.5) -> np.ndarray:
@@ -178,10 +178,9 @@ def main() -> int:
     # Initialise le segmenteur
     print(f"\n🤖 Chargement du modèle de segmentation...")
     settings = segmentation_settings_from_env(require_checkpoint=True)
-    print(f"   Checkpoint : {settings.unet_checkpoint_path}")
-    print(f"   Input size : {settings.unet_input_size}")
+    print(f"   SegFormer dir : {settings.segformer_checkpoint_dir}")
     
-    segmenter = UNetParkableSegmenter(settings)
+    segmenter = SegFormerParkableSegmenter(settings)
     
     # Lance la prédiction
     print(f"\n🔮 Exécution de la segmentation...")

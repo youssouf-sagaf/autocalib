@@ -1,14 +1,24 @@
 """Flask backend for the Parking Slot Detection Viewer."""
 
+import io
 import json
 import os
 from pathlib import Path
 
-from flask import Flask, abort, jsonify, send_file
+import numpy as np
+from flask import Flask, abort, jsonify, request, send_file
+from PIL import Image
 
 app = Flask(__name__)
 
-ARTIFACTS_DIR = (Path(__file__).resolve().parent.parent / "artifacts" / "run_output")
+_ARTIFACTS_ROOT = Path(__file__).resolve().parent.parent / "artifacts"
+
+_SOURCE_DIRS: dict[str, Path] = {
+    "mapbox": _ARTIFACTS_ROOT / "run_output",
+    "ign": _ARTIFACTS_ROOT / "run_output_ign",
+}
+
+_DEFAULT_SOURCE = "mapbox"
 
 
 def _get_mapbox_token() -> str:
@@ -17,30 +27,74 @@ def _get_mapbox_token() -> str:
 IMAGE_STAGE_MAP = {
     "original": "stages/01_preprocess/rgb_normalized.png",
     "detection": "stages/03_detection/overlay_detections.png",
-    "mask": "stages/02_segmentation/mask_refined.png",
     "postprocess": "stages/04_postprocess/overlay_postprocess.png",
 }
 
+_IMAGE_STAGES = ("original", "segmentation", "detection", "postprocess")
 
-def _get_run_dirs():
+
+def _segmentation_overlay_response(run_dir: Path):
+    """Serve precomputed overlay or build it from rgb_normalized + mask_refined."""
+    prebuilt = run_dir / "stages/02_segmentation/overlay_segmentation.png"
+    if prebuilt.is_file():
+        return send_file(prebuilt, mimetype="image/png", max_age=3600)
+    orig = run_dir / "stages/01_preprocess/rgb_normalized.png"
+    mask_path = run_dir / "stages/02_segmentation/mask_refined.png"
+    if not orig.is_file() or not mask_path.is_file():
+        abort(
+            404,
+            description="Segmentation overlay not found (need overlay_segmentation.png or "
+            "rgb_normalized.png + mask_refined.png).",
+        )
+    rgb = np.array(Image.open(orig).convert("RGB"))
+    mask_l = np.array(Image.open(mask_path).convert("L"))
+    if rgb.shape[:2] != mask_l.shape:
+        abort(404, description="rgb_normalized and mask_refined size mismatch.")
+    alpha = 0.45
+    tint = np.array([0, 220, 120], dtype=np.float32)
+    base = rgb.astype(np.float32)
+    blended = base * (1.0 - alpha) + tint * alpha
+    parkable = (mask_l > 0)[..., np.newaxis]
+    out = np.where(parkable, blended, base)
+    out_u8 = np.clip(out, 0, 255).astype(np.uint8)
+    buf = io.BytesIO()
+    Image.fromarray(out_u8, mode="RGB").save(buf, format="PNG")
+    buf.seek(0)
+    return send_file(buf, mimetype="image/png", max_age=3600)
+
+
+def _scan_run_dirs(artifacts_dir: Path) -> list[str]:
     """Return sorted list of run directory names that contain a manifest."""
-    if not ARTIFACTS_DIR.is_dir():
+    if not artifacts_dir.is_dir():
         return []
     return sorted(
         d.name
-        for d in ARTIFACTS_DIR.iterdir()
+        for d in artifacts_dir.iterdir()
         if d.is_dir() and (d / "manifest.json").exists()
     )
 
 
-RUN_DIRS = _get_run_dirs()
+_RUN_CACHE: dict[str, list[str]] = {
+    src: _scan_run_dirs(path) for src, path in _SOURCE_DIRS.items()
+}
 
 
-def _validate_run(name: str) -> Path:
-    """Validate run name and return its path, or abort 404."""
-    if name not in RUN_DIRS:
-        abort(404, description=f"Run '{name}' not found")
-    return ARTIFACTS_DIR / name
+def _resolve_source() -> str:
+    """Read ``?source=`` query param (default: mapbox)."""
+    src = request.args.get("source", _DEFAULT_SOURCE).strip().lower()
+    if src not in _SOURCE_DIRS:
+        abort(400, description=f"Unknown source '{src}'. Use: {list(_SOURCE_DIRS)}")
+    return src
+
+
+def _validate_run(name: str, source: str | None = None) -> Path:
+    """Validate run name for the given source and return its path, or abort 404."""
+    if source is None:
+        source = _resolve_source()
+    runs = _RUN_CACHE.get(source, [])
+    if name not in runs:
+        abort(404, description=f"Run '{name}' not found in source '{source}'")
+    return _SOURCE_DIRS[source] / name
 
 
 def _compute_parking_zone(affine, width, height):
@@ -85,16 +139,28 @@ def index():
         __import__("flask").render_template("index.html")
 
 
+@app.route("/api/sources")
+def list_sources():
+    sources = []
+    for src in _SOURCE_DIRS:
+        runs = _RUN_CACHE.get(src, [])
+        sources.append({"name": src, "count": len(runs)})
+    return jsonify({"sources": sources, "default": _DEFAULT_SOURCE})
+
+
 @app.route("/api/runs")
 def list_runs():
-    return jsonify({"runs": RUN_DIRS, "count": len(RUN_DIRS)})
+    source = _resolve_source()
+    runs = _RUN_CACHE.get(source, [])
+    return jsonify({"runs": runs, "count": len(runs), "source": source})
 
 
 @app.route("/api/runs/<name>")
 def get_run(name):
-    run_dir = _validate_run(name)
+    source = _resolve_source()
+    run_dir = _validate_run(name, source)
+    runs = _RUN_CACHE.get(source, [])
 
-    # Read meta.json for parking zone
     meta_path = run_dir / "stages" / "00_gis_input" / "meta.json"
     if not meta_path.exists():
         abort(404, description="meta.json not found")
@@ -106,7 +172,6 @@ def get_run(name):
     height = data["height"]
     parking_zone = _compute_parking_zone(affine, width, height)
 
-    # Read slots GeoJSON — send full polygon geometry for map rendering
     geojson_path = run_dir / "slots_wgs84.geojson"
     slots = []
     if geojson_path.exists():
@@ -125,11 +190,12 @@ def get_run(name):
                 "source": props.get("source", "unknown"),
             })
 
-    run_index = RUN_DIRS.index(name)
+    run_index = runs.index(name)
     return jsonify({
         "name": name,
+        "source": source,
         "index": run_index,
-        "total": len(RUN_DIRS),
+        "total": len(runs),
         "parking_zone": parking_zone,
         "slots": slots,
         "num_slots": len(slots),
@@ -141,10 +207,13 @@ def get_run(name):
 
 @app.route("/api/runs/<name>/image/<stage>")
 def get_image(name, stage):
-    run_dir = _validate_run(name)
-    rel_path = IMAGE_STAGE_MAP.get(stage)
-    if rel_path is None:
-        abort(400, description=f"Unknown stage '{stage}'. Use: {list(IMAGE_STAGE_MAP)}")
+    source = _resolve_source()
+    run_dir = _validate_run(name, source)
+    if stage not in _IMAGE_STAGES:
+        abort(400, description=f"Unknown stage '{stage}'. Use: {list(_IMAGE_STAGES)}")
+    if stage == "segmentation":
+        return _segmentation_overlay_response(run_dir)
+    rel_path = IMAGE_STAGE_MAP[stage]
     image_path = run_dir / rel_path
     if not image_path.exists():
         abort(404, description=f"Image not found: {rel_path}")
@@ -166,6 +235,7 @@ if __name__ == "__main__":
     _load_env()
 
     token = _get_mapbox_token()
-    print(f"Found {len(RUN_DIRS)} pipeline runs in {ARTIFACTS_DIR}")
+    for src, runs in _RUN_CACHE.items():
+        print(f"  [{src}] {len(runs)} pipeline runs in {_SOURCE_DIRS[src]}")
     print(f"Mapbox token: {'set' if token else 'not set'}")
     app.run(debug=True, port=5050)

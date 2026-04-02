@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, BinaryIO, Sequence, Union
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "GeoRasterSlice",
+    "compute_gsd_meters",
     "read_geotiff_rgb",
     "crop_geotiff_by_pixels",
     "crop_geotiff_by_bounds",
@@ -53,6 +55,44 @@ class GeoRasterSlice:
             raise ValueError("rgb must be uint8")
         if self.height != int(self.rgb.shape[0]) or self.width != int(self.rgb.shape[1]):
             raise ValueError("rgb spatial dimensions must match height and width")
+
+
+def compute_gsd_meters(
+    transform: Affine,
+    crs: CRS | None,
+    lat_hint: float | None = None,
+) -> float | None:
+    """Estimate the ground sampling distance (metres/pixel) from the affine transform.
+
+    For EPSG:4326 (degrees), the pixel size in metres depends on latitude.
+    *lat_hint* overrides automatic latitude estimation when supplied.
+
+    Returns ``None`` when the CRS is missing or unrecognised.
+    """
+    if crs is None:
+        return None
+
+    pixel_dx = abs(transform.a)
+    pixel_dy = abs(transform.e)
+
+    epsg = crs.to_epsg()
+    if epsg == 4326:
+        if lat_hint is not None:
+            lat = lat_hint
+        else:
+            lat = abs(transform.f)
+
+        meters_per_deg_lat = 111_320.0
+        meters_per_deg_lon = 111_320.0 * math.cos(math.radians(lat))
+        gsd_x = pixel_dx * meters_per_deg_lon
+        gsd_y = pixel_dy * meters_per_deg_lat
+        return (gsd_x + gsd_y) / 2.0
+
+    if crs.is_projected:
+        linear_unit = crs.linear_units_factor[1] if crs.linear_units_factor else 1.0
+        return ((pixel_dx + pixel_dy) / 2.0) * linear_unit
+
+    return None
 
 
 def read_geotiff_rgb(

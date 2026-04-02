@@ -73,6 +73,38 @@ header h1 {
     background: #e94560;
 }
 
+#source-selector {
+    display: flex;
+    gap: 4px;
+    margin-right: 8px;
+    padding-right: 12px;
+    border-right: 1px solid #0f3460;
+}
+
+.source-btn {
+    padding: 5px 12px;
+    border: 1px solid #0f3460;
+    border-radius: 4px;
+    background: transparent;
+    color: #a0a0b0;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    transition: all 0.2s;
+}
+
+.source-btn:hover {
+    background: #0f3460;
+    color: #e0e0e0;
+}
+
+.source-btn.active {
+    background: #e94560;
+    color: #fff;
+    border-color: #e94560;
+}
+
 #nav-label {
     font-size: 0.85rem;
     color: #a0a0b0;
@@ -89,8 +121,8 @@ main {
 
 #image-panels {
     display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
     gap: 6px;
     padding: 6px;
     overflow: auto;
@@ -140,5 +172,10 @@ main {
     main {
         grid-template-columns: 1fr;
         grid-template-rows: 1fr 1fr;
+    }
+
+    #image-panels {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, minmax(140px, 1fr));
     }
 }

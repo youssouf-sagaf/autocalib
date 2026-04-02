@@ -208,6 +208,7 @@ def annotate_spot_detections_overlay(
     rgb_hwc: np.ndarray,
     result: SpotDetectionResult,
     *,
+    result_on_mask: SpotDetectionResult | None = None,
     occupied_color: tuple[int, int, int] = (0, 200, 0),
     empty_color: tuple[int, int, int] = (255, 180, 0),
     center_color: tuple[int, int, int] = (255, 0, 0),

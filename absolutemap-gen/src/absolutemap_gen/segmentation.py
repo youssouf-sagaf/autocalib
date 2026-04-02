@@ -1,4 +1,4 @@
-"""Semantic segmentation (U-Net / APKLOT): binary parkable mask and postprocessing."""
+"""Semantic segmentation (SegFormer): binary parkable mask and postprocessing."""
 
 from __future__ import annotations
 
@@ -20,9 +20,10 @@ if TYPE_CHECKING:
 
 __all__ = [
     "SegmentationOutput",
-    "UNetParkableSegmenter",
+    "SegFormerParkableSegmenter",
     "generate_mask_from_labels",
     "find_label_file",
+    "overlay_parkable_mask_on_rgb",
     "postprocess_parkable_mask",
     "refined_mask_to_multipolygon",
 ]
@@ -197,6 +198,41 @@ def simplify_mask_boundary(
     return canvas
 
 
+def overlay_parkable_mask_on_rgb(
+    rgb_hwc: np.ndarray,
+    mask_uint8: np.ndarray,
+    *,
+    alpha: float = 0.45,
+    tint_rgb: tuple[int, int, int] = (0, 220, 120),
+) -> np.ndarray:
+    """Tint *rgb_hwc* with *tint_rgb* wherever *mask_uint8* > 0 (for visualization).
+
+    Args:
+        rgb_hwc: RGB image (H, W, 3), uint8.
+        mask_uint8: Binary mask (H, W), parkable pixels > 0.
+        alpha: Blend strength in [0, 1] over parkable pixels.
+        tint_rgb: Overlay colour (R, G, B).
+
+    Returns:
+        RGB uint8 array, same shape as *rgb_hwc*.
+    """
+    if rgb_hwc.ndim != 3 or rgb_hwc.shape[2] != 3:
+        raise ValueError(f"rgb_hwc must be HWC RGB, got shape {rgb_hwc.shape}")
+    if mask_uint8.ndim != 2:
+        raise ValueError(f"mask must be 2D, got shape {mask_uint8.shape}")
+    if rgb_hwc.shape[:2] != mask_uint8.shape:
+        raise ValueError(
+            f"rgb_hwc and mask shape mismatch: {rgb_hwc.shape[:2]} vs {mask_uint8.shape}"
+        )
+    a = float(np.clip(alpha, 0.0, 1.0))
+    base = rgb_hwc.astype(np.float32)
+    tint = np.array(tint_rgb, dtype=np.float32).reshape(1, 1, 3)
+    blended = base * (1.0 - a) + tint * a
+    parkable = (mask_uint8 > 0)[..., np.newaxis]
+    out = np.where(parkable, blended, base)
+    return np.clip(out, 0, 255).astype(np.uint8)
+
+
 def postprocess_parkable_mask(
     mask_uint8: np.ndarray,
     settings: SegmentationSettings,
@@ -263,165 +299,62 @@ def _resolve_torch_device(preference: str | None) -> "torch.device":
 
 
 # ---------------------------------------------------------------------------
-# U-Net architecture (must match the training checkpoint)
+# SegFormer (Hugging Face Transformers)
 # ---------------------------------------------------------------------------
 
-def _build_unet_modules() -> tuple[type, type, type, type]:
-    """Lazily import torch and define U-Net building blocks.
 
-    Returns ``(ConvBlock, DownBlock, UpBlock, UNet)`` classes backed by torch.nn.
+class SegFormerParkableSegmenter:
+    """Binary SegFormer segmentation: background (0) vs parkable (1).
+
+    Expects a local directory in Hugging Face format (``from_pretrained``):
+    ``config.json``, ``preprocessor_config.json``, and model weights
+    (e.g. ``model.safetensors``).
     """
-    import torch
-    import torch.nn as nn
-    import torch.nn.functional as F
-
-    class ConvBlock(nn.Module):
-        def __init__(self, in_channels: int, out_channels: int) -> None:
-            super().__init__()
-            self.block = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, 3, padding=1, bias=False),
-                nn.BatchNorm2d(out_channels),
-                nn.ReLU(True),
-                nn.Conv2d(out_channels, out_channels, 3, padding=1, bias=False),
-                nn.BatchNorm2d(out_channels),
-                nn.ReLU(True),
-            )
-
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            return self.block(x)
-
-    class DownBlock(nn.Module):
-        def __init__(self, in_channels: int, out_channels: int) -> None:
-            super().__init__()
-            self.conv = ConvBlock(in_channels, out_channels)
-            self.pool = nn.MaxPool2d(2)
-
-        def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-            skip = self.conv(x)
-            return self.pool(skip), skip
-
-    class UpBlock(nn.Module):
-        def __init__(self, in_channels: int, out_channels: int) -> None:
-            super().__init__()
-            self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
-            self.conv = ConvBlock(in_channels, out_channels)
-
-        def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
-            x = self.up(x)
-            if x.shape != skip.shape:
-                x = F.pad(x, [0, skip.shape[3] - x.shape[3], 0, skip.shape[2] - x.shape[2]])
-            return self.conv(torch.cat([skip, x], dim=1))
-
-    class UNet(nn.Module):
-        def __init__(self, in_channels: int = 3, num_classes: int = 2, base_filters: int = 32) -> None:
-            super().__init__()
-            f = base_filters
-            self.down1 = DownBlock(in_channels, f)
-            self.down2 = DownBlock(f, f * 2)
-            self.down3 = DownBlock(f * 2, f * 4)
-            self.down4 = DownBlock(f * 4, f * 8)
-            self.bottleneck = ConvBlock(f * 8, f * 16)
-            self.up4 = UpBlock(f * 16 + f * 8, f * 8)
-            self.up3 = UpBlock(f * 8 + f * 4, f * 4)
-            self.up2 = UpBlock(f * 4 + f * 2, f * 2)
-            self.up1 = UpBlock(f * 2 + f, f)
-            self.head = nn.Conv2d(f, num_classes, 1)
-
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            x, s1 = self.down1(x)
-            x, s2 = self.down2(x)
-            x, s3 = self.down3(x)
-            x, s4 = self.down4(x)
-            x = self.bottleneck(x)
-            x = self.up4(x, s4)
-            x = self.up3(x, s3)
-            x = self.up2(x, s2)
-            x = self.up1(x, s1)
-            return self.head(x)
-
-    return ConvBlock, DownBlock, UpBlock, UNet
-
-
-# Colab checkpoints used abbreviated layer names — remap to the full names.
-_COLAB_KEY_MAP = {
-    "d1.": "down1.",
-    "d2.": "down2.",
-    "d3.": "down3.",
-    "d4.": "down4.",
-    "bn.": "bottleneck.",
-    "u4.": "up4.",
-    "u3.": "up3.",
-    "u2.": "up2.",
-    "u1.": "up1.",
-}
-
-
-def _remap_state_dict(state: dict) -> dict:
-    remapped = {}
-    for key, value in state.items():
-        new_key = key
-        for old_prefix, new_prefix in _COLAB_KEY_MAP.items():
-            if key.startswith(old_prefix):
-                new_key = new_prefix + key[len(old_prefix):]
-                break
-        remapped[new_key] = value
-    return remapped
-
-
-# ImageNet normalisation (same as training pipeline)
-_IMAGE_MEAN = [0.485, 0.456, 0.406]
-_IMAGE_STD = [0.229, 0.224, 0.225]
-
-
-class UNetParkableSegmenter:
-    """U-Net binary segmentation: background (0) vs parkable (1)."""
 
     def __init__(
         self,
         settings: SegmentationSettings,
         *,
-        checkpoint_path: str | None = None,
+        checkpoint_dir: str | Path | None = None,
     ) -> None:
-        ckpt = checkpoint_path if checkpoint_path is not None else settings.unet_checkpoint_path
-        if not ckpt:
+        raw = checkpoint_dir if checkpoint_dir is not None else settings.segformer_checkpoint_dir
+        if not raw:
             raise ValueError(
-                "U-Net checkpoint path is missing. Set UNET_CHECKPOINT_PATH or pass checkpoint_path=."
+                "SegFormer checkpoint directory is missing. Set SEGFORMER_CHECKPOINT_DIR in .env "
+                "or pass checkpoint_dir= (Hugging Face model folder)."
             )
-        self._checkpoint_path = Path(ckpt)
-        self._input_size = settings.unet_input_size
+        self._checkpoint_dir = Path(raw).resolve()
         self._settings = settings
         self._device = _resolve_torch_device(settings.device_preference)
         self._model = None
+        self._processor = None
 
     def _lazy_load(self) -> None:
         if self._model is not None:
             return
         import torch
+        from transformers import AutoImageProcessor, SegformerForSemanticSegmentation
 
-        _, _, _, UNet = _build_unet_modules()
+        if not self._checkpoint_dir.is_dir():
+            raise FileNotFoundError(f"SegFormer checkpoint directory not found: {self._checkpoint_dir}")
+        cfg = self._checkpoint_dir / "config.json"
+        if not cfg.is_file():
+            raise FileNotFoundError(f"Missing config.json in SegFormer checkpoint dir: {self._checkpoint_dir}")
 
-        ckpt = torch.load(self._checkpoint_path, map_location=self._device, weights_only=False)
-        state = ckpt["state_dict"] if "state_dict" in ckpt else ckpt
-        state = _remap_state_dict(state)
-
-        head_weight = state.get("head.weight")
-        base_filters = head_weight.shape[1] if head_weight is not None else 32
-
-        self._model = UNet(in_channels=3, num_classes=2, base_filters=base_filters)
-        self._model.load_state_dict(state, strict=True)
+        self._processor = AutoImageProcessor.from_pretrained(self._checkpoint_dir)
+        self._model = SegformerForSemanticSegmentation.from_pretrained(self._checkpoint_dir)
         self._model.to(self._device)
         self._model.eval()
         logger.info(
-            "Loaded U-Net from %s (base_filters=%d, device=%s)",
-            self._checkpoint_path,
-            base_filters,
+            "Loaded SegFormer from %s (device=%s)",
+            self._checkpoint_dir,
             self._device,
         )
 
     def predict_mask_raw(self, rgb_hwc: np.ndarray) -> np.ndarray:
         """Run inference; return uint8 parkable mask 0/255, same H x W as ``rgb_hwc``."""
         import torch
-        from torchvision import transforms as T
+        import torch.nn.functional as F
 
         if rgb_hwc.ndim != 3 or rgb_hwc.shape[2] != 3:
             raise ValueError(f"Expected HWC RGB uint8, got shape {rgb_hwc.shape}")
@@ -429,28 +362,27 @@ class UNetParkableSegmenter:
             raise ValueError(f"Expected uint8 RGB, got dtype {rgb_hwc.dtype}")
 
         self._lazy_load()
-        assert self._model is not None
+        assert self._model is not None and self._processor is not None
 
         original_h, original_w = rgb_hwc.shape[:2]
-        size = self._input_size
-
-        image = Image.fromarray(rgb_hwc, mode="RGB").resize((size, size), Image.BILINEAR)
-        tensor = T.Normalize(mean=_IMAGE_MEAN, std=_IMAGE_STD)(T.ToTensor()(image))
-        tensor = tensor.unsqueeze(0).to(self._device)
+        image = Image.fromarray(rgb_hwc, mode="RGB")
+        inputs = self._processor(images=image, return_tensors="pt")
+        inputs = inputs.to(self._device)
 
         with torch.inference_mode():
-            logits = self._model(tensor)                        # [1, 2, size, size]
-            pred = logits.argmax(dim=1)[0].cpu().numpy()        # [size, size]
-
-        pred_resized = np.array(
-            Image.fromarray((pred * 255).astype(np.uint8)).resize(
-                (original_w, original_h), Image.NEAREST
+            logits = self._model(**inputs).logits
+            up = F.interpolate(
+                logits,
+                size=(original_h, original_w),
+                mode="bilinear",
+                align_corners=False,
             )
-        )
-        return pred_resized
+            pred = up.argmax(dim=1).squeeze(0).cpu().numpy()
+
+        return (pred * 255).astype(np.uint8)
 
     def predict(self, rgb_hwc: np.ndarray) -> SegmentationOutput:
-        """Raw U-Net mask plus postprocessed (morphology + simplification) mask."""
+        """Raw SegFormer mask plus postprocessed (morphology + simplification) mask."""
         raw = self.predict_mask_raw(rgb_hwc)
         refined = postprocess_parkable_mask(raw, self._settings)
         return SegmentationOutput(mask_raw=raw, mask_refined=refined)

@@ -1,4 +1,4 @@
-"""Tests for parkable mask postprocessing (no U-Net weights required)."""
+"""Tests for parkable mask postprocessing (no SegFormer weights required)."""
 
 from __future__ import annotations
 
@@ -7,8 +7,9 @@ import pytest
 
 from absolutemap_gen.config import SegmentationSettings
 from absolutemap_gen.segmentation import (
-    UNetParkableSegmenter,
+    SegFormerParkableSegmenter,
     fill_small_holes,
+    overlay_parkable_mask_on_rgb,
     postprocess_parkable_mask,
     refined_mask_to_multipolygon,
 )
@@ -40,7 +41,7 @@ def test_postprocess_preserves_large_blob() -> None:
     m = np.zeros((64, 64), dtype=np.uint8)
     m[16:48, 16:48] = 255
     settings = SegmentationSettings(
-        unet_checkpoint_path=None,
+        segformer_checkpoint_dir=None,
         morph_close_kernel=3,
         morph_open_kernel=3,
         max_hole_area_px=100,
@@ -54,9 +55,20 @@ def test_postprocess_preserves_large_blob() -> None:
 
 
 def test_segmenter_raises_without_checkpoint() -> None:
-    settings = SegmentationSettings(unet_checkpoint_path=None)
-    with pytest.raises(ValueError, match="checkpoint path"):
-        UNetParkableSegmenter(settings)
+    settings = SegmentationSettings(segformer_checkpoint_dir=None)
+    with pytest.raises(ValueError, match="checkpoint directory"):
+        SegFormerParkableSegmenter(settings)
+
+
+def test_overlay_parkable_mask_tints_parkable_pixels() -> None:
+    rgb = np.zeros((8, 8, 3), dtype=np.uint8)
+    rgb[:, :] = [100, 100, 100]
+    mask = np.zeros((8, 8), dtype=np.uint8)
+    mask[2:6, 2:6] = 255
+    out = overlay_parkable_mask_on_rgb(rgb, mask, alpha=1.0, tint_rgb=(0, 200, 0))
+    assert out.shape == rgb.shape
+    assert tuple(out[3, 3]) == (0, 200, 0)
+    assert tuple(out[0, 0]) == (100, 100, 100)
 
 
 def test_refined_mask_to_multipolygon_returns_polygon() -> None:

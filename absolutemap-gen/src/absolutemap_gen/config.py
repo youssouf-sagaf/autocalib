@@ -5,15 +5,22 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 __all__ = [
     "PACKAGE_ROOT",
     "load_dotenv_if_present",
+    "ImageSource",
+    "ImageSourceSettings",
+    "image_source_settings_from_env",
+    "default_segformer_checkpoint_dir",
     "SegmentationSettings",
     "segmentation_settings_from_env",
     "DetectionSettings",
     "detection_settings_from_env",
 ]
+
+ImageSource = Literal["mapbox", "ign"]
 
 
 def _package_root() -> Path:
@@ -36,13 +43,56 @@ def load_dotenv_if_present() -> None:
 
 
 @dataclass(frozen=True)
-class SegmentationSettings:
-    """U-Net APKLOT binary segmentation and mask postprocessing."""
+class ImageSourceSettings:
+    """Which imagery provider to use for satellite/ortho image acquisition."""
 
-    unet_checkpoint_path: str | None
-    """Path to the trained U-Net ``.pth`` checkpoint (local file)."""
-    unet_input_size: int = 256
-    """Square resolution fed to the U-Net (must match training, typically 256)."""
+    source: ImageSource = "mapbox"
+    """``"mapbox"`` (default) or ``"ign"`` (Géoplateforme BD ORTHO, free, France only)."""
+    ign_layer: str = "ORTHOIMAGERY.ORTHOPHOTOS"
+    """WMS layer name for the IGN Géoplateforme service."""
+    ign_image_format: str = "image/jpeg"
+    """Image format requested from the IGN WMS-Raster service."""
+    ign_default_radius_m: float = 32.0
+    """Half-side (metres) of the square captured around each centre point for IGN.
+
+    With 1280 px this yields ~0.05 m/px, matching the Mapbox zoom-20 ground footprint.
+    """
+
+    def __post_init__(self) -> None:
+        if self.source not in ("mapbox", "ign"):
+            raise ValueError(
+                f"IMAGE_SOURCE must be 'mapbox' or 'ign', got {self.source!r}"
+            )
+        if self.ign_default_radius_m <= 0:
+            raise ValueError("ign_default_radius_m must be positive")
+
+
+def image_source_settings_from_env() -> ImageSourceSettings:
+    """Build image-source settings from the environment."""
+    load_dotenv_if_present()
+    source_raw = os.environ.get("IMAGE_SOURCE", "mapbox").strip().lower()
+    layer = os.environ.get("IGN_LAYER", "ORTHOIMAGERY.ORTHOPHOTOS").strip()
+    fmt = os.environ.get("IGN_IMAGE_FORMAT", "image/jpeg").strip()
+    radius_s = os.environ.get("IGN_DEFAULT_RADIUS_M", "128.0").strip()
+    return ImageSourceSettings(
+        source=source_raw,  # type: ignore[arg-type]
+        ign_layer=layer,
+        ign_image_format=fmt,
+        ign_default_radius_m=float(radius_s),
+    )
+
+
+def default_segformer_checkpoint_dir() -> Path:
+    """Hugging Face–style folder (``config.json``, ``preprocessor_config.json``, weights)."""
+    return PACKAGE_ROOT / "artifacts" / "checkpoints" / "segformer-b0-parkable-best"
+
+
+@dataclass(frozen=True)
+class SegmentationSettings:
+    """SegFormer binary segmentation (Hugging Face checkpoint dir) and mask postprocessing."""
+
+    segformer_checkpoint_dir: str | None = None
+    """Directory with a fine-tuned ``SegformerForSemanticSegmentation`` (local path)."""
     device_preference: str | None = None
     morph_close_kernel: int = 5
     morph_open_kernel: int = 3
@@ -51,8 +101,6 @@ class SegmentationSettings:
     min_polygon_area_px: float = 100.0
 
     def __post_init__(self) -> None:
-        if self.unet_input_size < 32:
-            raise ValueError("unet_input_size must be >= 32")
         if self.morph_close_kernel < 1 or self.morph_open_kernel < 1:
             raise ValueError("Morphology kernel sizes must be >= 1")
         if self.morph_close_kernel % 2 == 0 or self.morph_open_kernel % 2 == 0:
@@ -67,21 +115,37 @@ def segmentation_settings_from_env(*, require_checkpoint: bool = False) -> Segme
     """Build settings from environment (after optional ``.env`` load).
 
     Args:
-        require_checkpoint: If True, raises when ``UNET_CHECKPOINT_PATH`` is unset.
+        require_checkpoint: If True, raises when the SegFormer checkpoint directory is missing
+            or invalid (no ``config.json``).
     """
     load_dotenv_if_present()
-    ckpt_path = os.environ.get("UNET_CHECKPOINT_PATH", "").strip() or None
-    if require_checkpoint and not ckpt_path:
-        raise ValueError(
-            "UNET_CHECKPOINT_PATH is not set. Add it to absolutemap-gen/.env with a "
-            "local path to the trained U-Net .pth checkpoint "
-            "(e.g. artifacts/best_unet_apklot.pth)."
-        )
+    env_dir = os.environ.get("SEGFORMER_CHECKPOINT_DIR", "").strip() or None
+    if env_dir:
+        ckpt_dir = Path(env_dir)
+        if not ckpt_dir.is_absolute():
+            ckpt_dir = (PACKAGE_ROOT / ckpt_dir).resolve()
+        else:
+            ckpt_dir = ckpt_dir.resolve()
+        ckpt_str = str(ckpt_dir)
+    else:
+        ckpt_dir = default_segformer_checkpoint_dir()
+        ckpt_str = str(ckpt_dir.resolve())
+
+    if require_checkpoint:
+        if not ckpt_dir.is_dir():
+            raise ValueError(
+                f"SegFormer checkpoint directory does not exist: {ckpt_dir}. "
+                "Set SEGFORMER_CHECKPOINT_DIR in absolutemap-gen/.env or place a fine-tuned "
+                "model under artifacts/checkpoints/ (see default_segformer_checkpoint_dir())."
+            )
+        if not (ckpt_dir / "config.json").is_file():
+            raise ValueError(
+                f"Invalid SegFormer checkpoint directory (missing config.json): {ckpt_dir}"
+            )
+
     device_pref = os.environ.get("SEGMENTATION_DEVICE", "").strip() or None
-    input_size_raw = os.environ.get("UNET_INPUT_SIZE", "256").strip()
     return SegmentationSettings(
-        unet_checkpoint_path=ckpt_path,
-        unet_input_size=int(input_size_raw) if input_size_raw else 256,
+        segformer_checkpoint_dir=ckpt_str,
         device_preference=device_pref,
     )
 

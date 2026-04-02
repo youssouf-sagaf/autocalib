@@ -11,6 +11,7 @@
     <header>
         <h1>Parking Slot Detection Viewer</h1>
         <nav id="navigation">
+            <div id="source-selector"></div>
             <button id="btn-prev" disabled>&larr; Previous</button>
             <span id="nav-label">Loading...</span>
             <button id="btn-next">&rarr; Next</button>
@@ -23,6 +24,10 @@
             <div class="panel">
                 <h3>Original</h3>
                 <img id="img-original" alt="Original image" />
+            </div>
+            <div class="panel">
+                <h3>Segmentation (mask on image)</h3>
+                <img id="img-segmentation" alt="Parkable mask overlaid on original" />
             </div>
             <div class="panel">
                 <h3>Detection Overlay</h3>

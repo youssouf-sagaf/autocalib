@@ -5,6 +5,11 @@ Defaults:
     --input  artifacts/mapbox_detection_dataset
     --out    artifacts/run_output
 
+Use ``--source`` to switch between image providers without specifying paths:
+    --source mapbox   (default)  artifacts/mapbox_detection_dataset → artifacts/run_output
+    --source ign                 artifacts/ign_detection_dataset   → artifacts/run_output_ign
+    --source all                 runs both sequentially
+
 When ``--input`` is a directory the script processes each ``*.tif`` found
 inside it and writes per-file results under ``<out>/<stem>/``.
 """
@@ -24,8 +29,10 @@ from absolutemap_gen.artifacts_io import RunContext  # noqa: E402
 from absolutemap_gen.config import load_dotenv_if_present  # noqa: E402
 from absolutemap_gen.pipeline import run_parking_pipeline  # noqa: E402
 
-_DEFAULT_INPUT = "artifacts/mapbox_detection_dataset"
-_DEFAULT_OUT = "artifacts/run_output"
+_SOURCE_PRESETS: dict[str, tuple[str, str]] = {
+    "mapbox": ("artifacts/mapbox_detection_dataset", "artifacts/run_output"),
+    "ign": ("artifacts/ign_detection_dataset", "artifacts/run_output_ign"),
+}
 _DEFAULT_LABELS = "artifacts/parkable_labels"
 
 
@@ -73,22 +80,63 @@ def _run_single(geotiff: Path, out_dir: Path, args: argparse.Namespace) -> None:
     )
 
 
+def _run_batch(
+    input_path: Path, out_root: Path, args: argparse.Namespace, label: str = "",
+) -> int:
+    """Process a single file or every .tif in a directory. Returns 0 on success."""
+    input_path = input_path.resolve()
+
+    if input_path.is_file():
+        tif_files = [input_path]
+    elif input_path.is_dir():
+        tif_files = sorted(input_path.glob("*.tif"))
+        if not tif_files:
+            print(f"No .tif files found in {input_path}", file=sys.stderr)
+            return 2
+    else:
+        print(f"Input path not found: {input_path}", file=sys.stderr)
+        return 2
+
+    out_root = out_root.resolve()
+    total = len(tif_files)
+    tag = f"[{label}] " if label else ""
+
+    for idx, tif in enumerate(tif_files, 1):
+        stem = tif.stem
+        file_out = out_root / stem if total > 1 else out_root
+        print(f"\n{tag}[{idx}/{total}] {tif.name} → {file_out}")
+        try:
+            _run_single(tif, file_out, args)
+            print(f"  ✓ done")
+        except Exception as exc:
+            print(f"  ✗ failed: {exc}", file=sys.stderr)
+
+    print(f"\n{tag}All done — results in {out_root}")
+    return 0
+
+
 def main() -> int:
     load_dotenv_if_present()
     parser = argparse.ArgumentParser(
         description="Run absolutemap-gen on a GeoTIFF (or a folder of GeoTIFFs).",
     )
     parser.add_argument(
+        "--source",
+        choices=["mapbox", "ign", "all"],
+        default="mapbox",
+        help="Image source preset. 'all' runs both mapbox and ign sequentially (default: mapbox)",
+    )
+    parser.add_argument(
         "--input",
         type=Path,
-        default=_DEFAULT_INPUT,
-        help=f"Single .tif file or directory of .tif files (default: {_DEFAULT_INPUT})",
+        default=None,
+        help="Override: single .tif file or directory of .tif files",
     )
     parser.add_argument(
         "--out",
         type=Path,
-        default=_DEFAULT_OUT,
-        help=f"Output root directory (default: {_DEFAULT_OUT})",
+        default=None,
+        help="Override: output root directory",
     )
     parser.add_argument(
         "--bbox",
@@ -112,7 +160,7 @@ def main() -> int:
         help="Directory with YOLO polygon label files (<stem>.txt). When a "
              "matching label exists, a parkable mask is generated from the "
              "annotated polygons and used for the geometric engine instead "
-             f"of the U-Net mask (default: {_DEFAULT_LABELS}).",
+             f"of the SegFormer mask (default: {_DEFAULT_LABELS}).",
     )
     parser.add_argument(
         "--no-stage-artifacts",
@@ -121,34 +169,22 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    input_path = args.input.resolve()
+    sources = list(_SOURCE_PRESETS) if args.source == "all" else [args.source]
+    worst_rc = 0
 
-    if input_path.is_file():
-        tif_files = [input_path]
-    elif input_path.is_dir():
-        tif_files = sorted(input_path.glob("*.tif"))
-        if not tif_files:
-            print(f"No .tif files found in {input_path}", file=sys.stderr)
-            return 2
-    else:
-        print(f"Input path not found: {input_path}", file=sys.stderr)
-        return 2
+    for src in sources:
+        default_input, default_out = _SOURCE_PRESETS[src]
+        input_path = Path(args.input) if args.input else Path(default_input)
+        out_root = Path(args.out) if args.out else Path(default_out)
 
-    out_root = args.out.resolve()
-    total = len(tif_files)
+        print(f"\n{'=' * 60}")
+        print(f"  Source: {src}   input={input_path}   out={out_root}")
+        print(f"{'=' * 60}")
 
-    for idx, tif in enumerate(tif_files, 1):
-        stem = tif.stem
-        file_out = out_root / stem if total > 1 else out_root
-        print(f"\n[{idx}/{total}] {tif.name} → {file_out}")
-        try:
-            _run_single(tif, file_out, args)
-            print(f"  ✓ done")
-        except Exception as exc:
-            print(f"  ✗ failed: {exc}", file=sys.stderr)
+        rc = _run_batch(input_path, out_root, args, label=src)
+        worst_rc = max(worst_rc, rc)
 
-    print(f"\nAll done — results in {out_root}")
-    return 0
+    return worst_rc
 
 
 if __name__ == "__main__":

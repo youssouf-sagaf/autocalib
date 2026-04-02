@@ -1,0 +1,12 @@
+path: /content/extracted_data/dataset  # root dataset directory (Colab)
+
+train: train/images   # train images relative to 'path'
+val: val/images       # val images relative to 'path'
+
+# Number of classes
+nc: 2
+
+# Class names
+names:
+  0: empty_slot
+  1: occupied_slot

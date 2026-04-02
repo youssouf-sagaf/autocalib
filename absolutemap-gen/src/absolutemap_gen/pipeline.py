@@ -41,15 +41,17 @@ from absolutemap_gen.export_geojson import (
 )
 from absolutemap_gen.io_geotiff import (
     GeoRasterSlice,
+    compute_gsd_meters,
     crop_geotiff_by_bounds,
     crop_geotiff_by_pixels,
     read_geotiff_rgb,
 )
 from absolutemap_gen.preprocess import rgb_hwc_percentile_stretch
 from absolutemap_gen.segmentation import (
-    UNetParkableSegmenter,
+    SegFormerParkableSegmenter,
     find_label_file,
     generate_mask_from_labels,
+    overlay_parkable_mask_on_rgb,
     refined_mask_to_multipolygon,
 )
 
@@ -201,7 +203,7 @@ def run_parking_pipeline(
     Stages:
       00_gis_input     → load / crop GeoTIFF
       01_preprocess    → percentile stretch for display
-      02_segmentation  → U-Net binary parkable mask
+      02_segmentation  → SegFormer binary parkable mask
       03_detection     → YOLO-OBB oriented parking spot detection
       04_postprocess   → geometric enrichment (gap fill, row extension, mask recovery)
       05_export        → WGS84 GeoJSON with slot footprints
@@ -210,7 +212,7 @@ def run_parking_pipeline(
         labels_dir: Optional directory with YOLO polygon label files
             (``<stem>.txt``).  When a matching label file exists, the pipeline
             generates a parkable mask from the annotated polygons and uses it
-            for the geometric post-processing stage instead of the U-Net mask.
+            for the geometric post-processing stage instead of the SegFormer mask.
     """
     out = ctx.out_dir.resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -240,9 +242,16 @@ def run_parking_pipeline(
         return p
 
     # ── 00 GIS input ──────────────────────────────────────────────────────────
+    gsd_m = compute_gsd_meters(transform, crs)
+    if gsd_m is not None:
+        print(f"[00_gis_input] {w}x{h}px, GSD ~{gsd_m:.3f} m/px")
+
     if stages:
         s0 = stage("00_gis_input")
         write_rgb_geotiff(s0 / "crop_rgb.tif", slice_.rgb, transform=slice_.transform, crs=crs)
+        extra_meta = {}
+        if gsd_m is not None:
+            extra_meta["gsd_meters"] = round(gsd_m, 6)
         ctx.write_gis_input_meta(
             source_path=geotiff_path,
             transform=transform,
@@ -250,6 +259,7 @@ def run_parking_pipeline(
             width=slice_.width,
             height=slice_.height,
             nodata=slice_.nodata,
+            extra=extra_meta or None,
         )
     ctx.record_stage(
         "00_gis_input",
@@ -275,12 +285,14 @@ def run_parking_pipeline(
     )
 
     # ── 02 segmentation ──────────────────────────────────────────────────────
-    segmenter = UNetParkableSegmenter(seg_settings)
+    segmenter = SegFormerParkableSegmenter(seg_settings)
     seg_out = segmenter.predict(rgb)
     if stages:
         s2 = stage("02_segmentation")
         Image.fromarray(seg_out.mask_raw, mode="L").save(s2 / "mask_raw.png")
         Image.fromarray(seg_out.mask_refined, mode="L").save(s2 / "mask_refined.png")
+        seg_overlay = overlay_parkable_mask_on_rgb(stretched, seg_out.mask_refined)
+        Image.fromarray(seg_overlay, mode="RGB").save(s2 / "overlay_segmentation.png")
         mp = refined_mask_to_multipolygon(seg_out.mask_refined)
         if mp is not None and not mp.is_empty and crs is not None:
             mp_wgs = transform_geometry_pixels_to_wgs84(mp, transform, crs)
@@ -292,7 +304,16 @@ def run_parking_pipeline(
         write_json_atomic(s2 / "parkable.geojson", parkable_fc)
     ctx.record_stage(
         "02_segmentation",
-        artifacts=(["mask_raw.png", "mask_refined.png", "parkable.geojson"] if stages else []),
+        artifacts=(
+            [
+                "mask_raw.png",
+                "mask_refined.png",
+                "overlay_segmentation.png",
+                "parkable.geojson",
+            ]
+            if stages
+            else []
+        ),
     )
 
     # ── 03 detection (YOLO-OBB parking spots) ────────────────────────────────
@@ -325,11 +346,17 @@ def run_parking_pipeline(
             s3 / "detections.json",
             spot_detections_to_serializable_dict(spot_result),
         )
-        overlay = annotate_spot_detections_overlay(rgb, spot_result)
+        write_json_atomic(
+            s3 / "detections_raw.json",
+            spot_detections_to_serializable_dict(spot_result_all),
+        )
+        overlay = annotate_spot_detections_overlay(
+            rgb, spot_result_all, result_on_mask=spot_result,
+        )
         ctx.write_stage_png(STAGE_DETECTION, "overlay_detections.png", overlay)
     ctx.record_stage(
         "03_detection",
-        artifacts=(["detections.json", "overlay_detections.png"] if stages else []),
+        artifacts=(["detections.json", "detections_raw.json", "overlay_detections.png"] if stages else []),
     )
     print(
         f"[03_detection] {len(spot_result_all.spots)} YOLO raw → "
@@ -341,9 +368,9 @@ def run_parking_pipeline(
     # When polygon labels exist, generate a mask from them — these cover the
     # full parkable area and give the geometric engine proper coverage for
     # extensions, gap fills, and Stage C mask recovery.
-    # Falls back to the U-Net mask when no labels are available.
+    # Falls back to the SegFormer mask when no labels are available.
     geo_mask = seg_out.mask_refined
-    geo_mask_source = "unet"
+    geo_mask_source = "segformer"
     if labels_dir is not None:
         label_file = find_label_file(labels_dir, geotiff_path.stem)
         if label_file is not None:
