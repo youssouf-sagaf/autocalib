@@ -6,6 +6,7 @@
 *-adminsdk-*.json
 *.credentials.json
 service-account*.json
+scripts/static_data_device_*.json
 
 # ========================================
 # Heavy data directories
@@ -19,6 +20,12 @@ absolutemap-gen/tests/koutaki_2016_parking_extraction/.cache/
 absolutemap-gen/tests/koutaki_2016_parking_extraction/runs_mapbox/
 models/
 papers/
+
+# ========================================
+# ML training outputs (outside artifacts/)
+# ========================================
+absolutemap-gen/segformer/checkpoints/
+absolutemap-gen/segformer/output/
 
 # ========================================
 # Virtual environments
@@ -37,6 +44,9 @@ env/
 *.hdf5
 *.pkl
 *.pickle
+*.zip
+*.tar.gz
+*.tar.bz2
 
 # ========================================
 # Generated images (outputs — not source code)

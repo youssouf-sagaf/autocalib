@@ -54,7 +54,7 @@ Pipeline: **Detection* + *SegFormer + automated post-processing** → provisiona
 
 ![Two-map synchronized scrolling](images/Maquette%20Sagaf%20-%20incl%20Autocalib%20-%20two%20map%20sync%20scrolling.jpg)
 
-Toolbox and modes sit alongside the maps (add, delete, copy, reprocess, alignment, etc.).
+Toolbox and modes sit alongside the maps (**add**, **single delete**, **bulk / multi-select delete**, **copy**, **reprocess**, **row straightening**, etc.). The bulk-delete flow is first-class tooling, not an edge case.
 
 ![Map sync with tooling](images/Maquette%20Sagaf%20-%20incl%20Autocalib%20-%20map%20synch%20with%20tooling.jpg)
 
@@ -63,17 +63,25 @@ Toolbox and modes sit alongside the maps (add, delete, copy, reprocess, alignmen
 Target edits (shortcut legends):
 
 - **Add (A)** — missing slots: hold **A**, click to place.
-- **Remove / delete (D)** — false detections: click each b-box to remove.
+- **Remove / delete (D)** — false detections: click each b-box to remove (**single-slot** delete).
+- **Bulk delete (“Blocked deletion”)** — **select many slots at once**, then delete in one action: e.g. **lasso / freehand loop** (or marquee) around the bad b-boxes; every slot whose footprint or centroid falls inside the region is **preview-highlighted**; operator **confirms** to remove all of them. Use when dozens of false boxes appear (e.g. boats in a marina); per-click `(D)` does not scale.
 - **Modify (M)** — slot geometry: orientation, alignment, fine adjustments.
 - **Copy (C)** — duplicate a reference b-box and place it (avoid slow right-click copy/paste flows).
-- **Reprocess (R)** — after drawing a **round** or region around a missed pocket, **auto-add** from one example (pattern completion in that area).
+- **Reprocess / auto-add (R)** — **one reference + one scoped region**: the operator gives the system **one correct slot** (pattern) and delimits **where** to complete; the **post-processing helper** proposes **additional slots** inside that region using the SegFormer **mask** and geometry (row extension / gap fill). Confirm or undo.
 
+**Auto-add — intended interaction (workshop / maquette)**  
+When the engine **skips a whole pocket** (no detections there), per-click `(A)` is too slow:
 
-Ergonomics called out in workshops:
+1. **Reference slot** — place **one** manual b-box (or use **Copy** from a good neighbor) so the system knows **orientation, size, and spacing** you expect on that row.
+2. **Scope** — draw a **round / lasso / closed region** around the **missed area** (the “pocket”). That limits **where** auto-add is allowed so you do not pollute nearby rows or non-parking pixels.
+3. **Trigger** — activate **Reprocess (R)** (or equivalent toolbox control). The pipeline **re-runs completion** inside the mask, guided by your example, and **fills** the rest of the row or pocket until the mask or consistency stops it.
+4. **Review** — accept the proposed boxes or fall back to manual edits / delete outliers.
+
+This is the **Reprocessing Helper**: human provides **high-signal constraints** (one example + region); the geometric engine does the repetitive placement.
 
 ![Auto-add after one example + round](images/Maquette%20Sagaf%20-%20incl%20Autocalib%20-%20auto%20add%20missed%20bbox%20after%20adding%20one%20example.jpg)
 
-**Bulk delete** (scribble “everything inside this lasso”) was identified as important when many bad boxes appear (e.g. boats in a marina); today’s per-click delete does not scale.
+**Mockup — bulk selection for delete** (“Blocked deletion”): yellow loop shows **multi-slot selection** before a single confirm-delete.
 
 ![Blocked deletion — delete many b-boxes](images/Maquette%20Sagaf%20-%20incl%20Autocalib%20-%20blocked%20deletion%20to%20delete%20more%20bboxes.jpg)
 
