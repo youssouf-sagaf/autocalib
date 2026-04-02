@@ -84,7 +84,7 @@ def image_source_settings_from_env() -> ImageSourceSettings:
 
 def default_segformer_checkpoint_dir() -> Path:
     """Hugging Face–style folder (``config.json``, ``preprocessor_config.json``, weights)."""
-    return PACKAGE_ROOT / "artifacts" / "checkpoints" / "segformer-b0-parkable-best"
+    return PACKAGE_ROOT / "artifacts" / "checkpoints" / "segformer-b2-parkable-best"
 
 
 @dataclass(frozen=True)

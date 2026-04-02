@@ -13,9 +13,9 @@ from tqdm import tqdm
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).resolve().parent
-CHECKPOINT = SCRIPT_DIR / "checkpoints" / "segformer-b0-parkable-best"
+CHECKPOINT = SCRIPT_DIR.parent / "artifacts" / "checkpoints" / "segformer-b2-parkable-best"
 INPUT_DIR = SCRIPT_DIR.parent / "artifacts" / "mapbox_detection_dataset"
-OUTPUT_DIR = SCRIPT_DIR / "output" / "mapbox_b0_inference"
+OUTPUT_DIR = SCRIPT_DIR / "output" / "mapbox_b2_inference"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 PALETTE = np.array([[0, 0, 0], [0, 255, 128]], dtype=np.uint8)

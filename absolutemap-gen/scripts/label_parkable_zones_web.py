@@ -27,7 +27,7 @@ from urllib.parse import urlparse
 # Paths (resolved at startup, overridable via CLI)
 # ---------------------------------------------------------------------------
 DATASET_DIR: Path = Path("artifacts/mapbox_detection_dataset")
-LABELS_DIR: Path = Path("artifacts/parkable_labels")
+LABELS_DIR: Path = Path("artifacts/segmentation_labels")
 
 
 # ---------------------------------------------------------------------------
@@ -618,8 +618,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--labels", type=Path,
-        default=Path("artifacts/parkable_labels"),
-        help="Directory for label .txt files (default: artifacts/parkable_labels)",
+        default=Path("artifacts/segmentation_labels"),
+        help="Directory for label .txt files (default: artifacts/segmentation_labels)",
     )
     parser.add_argument(
         "--port", type=int, default=5050,

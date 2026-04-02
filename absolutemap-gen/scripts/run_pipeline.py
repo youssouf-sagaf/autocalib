@@ -33,7 +33,6 @@ _SOURCE_PRESETS: dict[str, tuple[str, str]] = {
     "mapbox": ("artifacts/mapbox_detection_dataset", "artifacts/run_output"),
     "ign": ("artifacts/ign_detection_dataset", "artifacts/run_output_ign"),
 }
-_DEFAULT_LABELS = "artifacts/parkable_labels"
 
 
 def _parse_bbox(s: str) -> tuple[float, float, float, float]:
@@ -61,13 +60,11 @@ def _parse_window(s: str) -> tuple[int, int, int, int]:
 def _run_single(geotiff: Path, out_dir: Path, args: argparse.Namespace) -> None:
     """Process one GeoTIFF and write artifacts into *out_dir*."""
     ctx = RunContext(out_dir=out_dir.resolve(), write_stage_artifacts=not args.no_stage_artifacts)
-    lbl_dir = args.labels_dir.resolve() if args.labels_dir is not None else None
     cli_snapshot = {
         "geotiff": str(geotiff),
         "out": str(ctx.out_dir),
         "bbox": list(args.bbox) if args.bbox is not None else None,
         "window": list(args.window) if args.window is not None else None,
-        "labels_dir": str(lbl_dir) if lbl_dir else None,
         "no_stage_artifacts": bool(args.no_stage_artifacts),
     }
     run_parking_pipeline(
@@ -75,7 +72,6 @@ def _run_single(geotiff: Path, out_dir: Path, args: argparse.Namespace) -> None:
         geotiff,
         bbox=args.bbox,
         window=args.window,
-        labels_dir=lbl_dir,
         cli_args=cli_snapshot,
     )
 
@@ -151,16 +147,6 @@ def main() -> int:
         default=None,
         metavar="COL,ROW,W,H",
         help="Crop by pixel window: col_off,row_off,width,height",
-    )
-    parser.add_argument(
-        "--labels-dir",
-        type=Path,
-        default=_DEFAULT_LABELS,
-        metavar="DIR",
-        help="Directory with YOLO polygon label files (<stem>.txt). When a "
-             "matching label exists, a parkable mask is generated from the "
-             "annotated polygons and used for the geometric engine instead "
-             f"of the SegFormer mask (default: {_DEFAULT_LABELS}).",
     )
     parser.add_argument(
         "--no-stage-artifacts",

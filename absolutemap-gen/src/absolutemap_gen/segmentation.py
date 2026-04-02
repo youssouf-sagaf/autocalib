@@ -21,60 +21,12 @@ if TYPE_CHECKING:
 __all__ = [
     "SegmentationOutput",
     "SegFormerParkableSegmenter",
-    "generate_mask_from_labels",
-    "find_label_file",
     "overlay_parkable_mask_on_rgb",
     "postprocess_parkable_mask",
     "refined_mask_to_multipolygon",
 ]
 
 logger = logging.getLogger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Label-based mask generation (YOLO polygon annotations → binary mask)
-# ---------------------------------------------------------------------------
-
-def find_label_file(labels_dir: Path, stem: str) -> Path | None:
-    """Find a YOLO segmentation label file matching *stem* in *labels_dir*.
-
-    Supports both direct names (``<stem>.txt``) and Roboflow-hashed names
-    (``<stem>_png.rf.<hash>.txt``).  Returns the first match or ``None``.
-    """
-    direct = labels_dir / f"{stem}.txt"
-    if direct.is_file():
-        return direct
-    candidates = sorted(labels_dir.glob(f"{stem}*.txt"))
-    return candidates[0] if candidates else None
-
-
-def generate_mask_from_labels(label_path: Path, height: int, width: int) -> np.ndarray:
-    """Convert a YOLO segmentation label file into a binary mask.
-
-    Each line in the label file has the format:
-    ``class_id  x1 y1  x2 y2  ...  xN yN``
-    where coordinates are normalised to [0, 1].
-
-    All polygons are drawn as filled regions regardless of ``class_id``
-    (class 0 = parkable area in Daniel's annotation convention).
-
-    Returns:
-        uint8 mask (H, W), 0 = background, 255 = parkable.
-    """
-    mask = np.zeros((height, width), dtype=np.uint8)
-    with open(label_path) as fh:
-        for line in fh:
-            parts = line.strip().split()
-            if len(parts) < 7:
-                continue
-            coords = list(map(float, parts[1:]))
-            pts = np.array(
-                [[int(coords[i] * width), int(coords[i + 1] * height)]
-                 for i in range(0, len(coords), 2)],
-                dtype=np.int32,
-            )
-            cv2.fillPoly(mask, [pts], 255)
-    return mask
 
 
 @dataclass(frozen=True)

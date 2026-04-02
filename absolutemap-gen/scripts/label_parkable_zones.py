@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Interactive tool to draw parkable zone polygons on dataset images.
 
-Opens each image that lacks a label file in artifacts/parkable_labels/.
+Opens each image that lacks a label file in the labels directory (see ``--labels``).
 Click to place polygon vertices, then use keyboard shortcuts to manage.
 
 Controls:
@@ -135,8 +135,8 @@ def main() -> int:
     parser.add_argument(
         "--labels",
         type=Path,
-        default="artifacts/parkable_labels",
-        help="Directory for output label files (default: artifacts/parkable_labels)",
+        default="artifacts/segmentation_labels",
+        help="Directory for output label files (default: artifacts/segmentation_labels)",
     )
     parser.add_argument(
         "--all",

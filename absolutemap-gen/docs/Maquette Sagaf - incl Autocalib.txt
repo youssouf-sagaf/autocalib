@@ -1,0 +1,97 @@
+ROI registrator - 3/10Front / mapping
+Bilateral map syncher - 3/10Front / mapping
+Autoabsmap generator engine - High brain - 9/10AI engine
+Systematic engine retraining loop - 10format ? 
+Abs Map lightning edition module - 6/10Mapping + product engineering + UX
+Absmap generator reprocessing helper - 7/10AI inputs quality + front
+Alignment “mise au carré” automation tool - 7/10Maths Algo + front
+Formalize vision of retraining loop - what will be registered during and after the manual process and what will be launched to assess the new performance of the updated models
+
+Mise au carré: write method
+
+Write modular architecture And their interfaces
+
+************************
+
+Detail specs by moduleFast POC with OPUS 4.6
+
+Click on launch “abs map automation”
+Inputs ?
+Stabiloting of covered areas ? - A + hold click and draw
+B + hold click and draw
+Model + segformer + postprocessing automated
+Visualization of result
+Scroll - existing abs map visible
+Activation of “ROI registration mode” via keyboard or click
+ROI: region on map (w map coordinates - lat lng of 4 corners etc..)
+Make sure there is no overlap
+ROI registered
+
+Left side: map without parking
+Map syncronized scrolling and zooming
+Add slots or remove slots
+Modify slots (oreintation, alignment…)
+
+Left side: map without parking
+Map syncronized scrolling and zooming
+Add slots or remove slots
+Modify slots (oreintation, alignment…)
+A
+B
+C
+D
+DELETE
+COPY
+ADD
+
+Auto add after adding 1 example + round
+Map syncronized scrolling and zooming
+Add slots or remove slots
+Modify slots (oreintation, alignment…)
+A
+B
+C
+D
+
+R
+DELETE
+COPY
+ADD
+REPROCESS
+Base
+Reprocessed steps
+Manual additions
+Weakness report - processsable by AI
+New model + segformer
+Retest on former cases and quantify
+
+Left side: map without parking
+Map syncronized scrolling and zooming
+Add slots or remove slots
+Modify slots (oreintation, alignment…)
+A
+B
+C
+D
+
+Al
+DELETE
+COPY
+ADD
+Alignment automate
+
+Hover on dots
+Auto detects line with neigboring points
+Selects bboxes on the line
+Align angles and molette allows for rotation
+Save all elements - bboxes + dots
+1
+18
+
+
+Blocked deletion
+
+Scroll - existing abs map visible
+Activation of “ROI registration mode” via keyboard or click
+ROI: region on map (w map coordinates - lat lng of 4 corners etc..)
+ROI registered

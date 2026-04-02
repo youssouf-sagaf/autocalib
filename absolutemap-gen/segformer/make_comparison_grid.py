@@ -6,8 +6,8 @@ from pathlib import Path
 from PIL import Image
 
 INPUT_DIR = Path(__file__).resolve().parent.parent / "artifacts" / "mapbox_detection_dataset"
-INFERENCE_DIR = Path(__file__).resolve().parent / "output" / "mapbox_b0_inference"
-OUTPUT_DIR = Path(__file__).resolve().parent / "output" / "mapbox_b0_comparison"
+INFERENCE_DIR = Path(__file__).resolve().parent / "output" / "mapbox_b2_inference"
+OUTPUT_DIR = Path(__file__).resolve().parent / "output" / "mapbox_b2_comparison"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 images = sorted(INPUT_DIR.glob("*.png"))

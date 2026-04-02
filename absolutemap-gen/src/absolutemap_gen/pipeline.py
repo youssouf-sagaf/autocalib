@@ -49,8 +49,6 @@ from absolutemap_gen.io_geotiff import (
 from absolutemap_gen.preprocess import rgb_hwc_percentile_stretch
 from absolutemap_gen.segmentation import (
     SegFormerParkableSegmenter,
-    find_label_file,
-    generate_mask_from_labels,
     overlay_parkable_mask_on_rgb,
     refined_mask_to_multipolygon,
 )
@@ -195,7 +193,6 @@ def run_parking_pipeline(
     window: tuple[int, int, int, int] | None = None,
     seg_settings: SegmentationSettings | None = None,
     det_settings: DetectionSettings | None = None,
-    labels_dir: Path | None = None,
     cli_args: dict[str, Any] | None = None,
 ) -> Path:
     """Execute the parking slot extraction pipeline.
@@ -208,11 +205,6 @@ def run_parking_pipeline(
       04_postprocess   → geometric enrichment (gap fill, row extension, mask recovery)
       05_export        → WGS84 GeoJSON with slot footprints
 
-    Args:
-        labels_dir: Optional directory with YOLO polygon label files
-            (``<stem>.txt``).  When a matching label file exists, the pipeline
-            generates a parkable mask from the annotated polygons and uses it
-            for the geometric post-processing stage instead of the SegFormer mask.
     """
     out = ctx.out_dir.resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -365,18 +357,10 @@ def run_parking_pipeline(
     )
 
     # ── 04 postprocess (geometric enrichment) ─────────────────────────────────
-    # When polygon labels exist, generate a mask from them — these cover the
-    # full parkable area and give the geometric engine proper coverage for
-    # extensions, gap fills, and Stage C mask recovery.
-    # Falls back to the SegFormer mask when no labels are available.
+    # Geometric engine uses the refined SegFormer mask (morphology, hole fill,
+    # simplification — see SegFormerParkableSegmenter / postprocess_parkable_mask).
     geo_mask = seg_out.mask_refined
     geo_mask_source = "segformer"
-    if labels_dir is not None:
-        label_file = find_label_file(labels_dir, geotiff_path.stem)
-        if label_file is not None:
-            geo_mask = generate_mask_from_labels(label_file, h, w)
-            geo_mask_source = "labels"
-            print(f"[04_postprocess] Mask generated from labels ({label_file.name})")
 
     engine = GeometricEngine()
     enriched_result = engine.enrich(spot_result_all, geo_mask)
