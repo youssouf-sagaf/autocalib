@@ -1,0 +1,11 @@
+---
+description: Enforce concise communication style
+alwaysApply: false
+---
+# Concise Style
+
+- Reply concisely. No filler, no unnecessary repetition.
+- Get to the point. One clear explanation per concept.
+- Avoid restating what the user just said unless clarifying ambiguity.
+- Prefer short sentences over long compound ones.
+- Use bullet points or tables for structured information instead of verbose paragraphs.

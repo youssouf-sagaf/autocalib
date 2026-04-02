@@ -6,7 +6,7 @@
 - **New clean package** (`autocalib/absmap/`): production-ready rewrite with layered architecture, Pydantic models, proper logging, injectable ML backends. This is what `absmap-api` imports.
 - **Cocopilot-FE** (`Cocopilot-FE/src`): React 18 + TS + Vite + Redux Toolkit + Google Maps. Existing `absoluteMapInternal` page (to be replaced).
 - **B2B API** (`user-interface-data-system/backend-b2b`): FastAPI, `POST/GET/PUT /geography/slots` → Firestore → Cloud Functions duplicate to `on_street/slots_static` + `slots_dynamic`. No change needed.
-- **Goal**: POC fast with any tile-based map renderer (Leaflet, Mapbox GL JS, OpenLayers — decision deferred), then swap renderer for Google Maps on Cocopilot-FE integration. **Zero business logic rewrite.** The `IMapProvider` interface is the only renderer contract.
+- **Goal**: POC fast with **Mapbox GL JS** as the display renderer, then swap to Google Maps on Cocopilot-FE integration. **Zero business logic rewrite.** The `IMapProvider` interface is the only renderer contract.
 - **Imagery for ML**: completely separate from the display map. The `ImageryProvider` protocol (Mapbox Static, IGN WMTS, GeoTIFF, …) fetches high-resolution rasters on job launch — never tied to map scrolling.
 
 ---
@@ -16,20 +16,20 @@
 ```mermaid
 flowchart TD
     subgraph poc [POC — absmap-frontend + absmap-api]
-        UI_POC["Absmap FE\n(React + IMapProvider)"]
-        API_POC["absmap-api\n(FastAPI standalone)"]
+        UI_POC["Absmap FE (React + IMapProvider)"]
+        API_POC["absmap-api (FastAPI standalone)"]
         Orch["MultiCropOrchestrator"]
-        Pkg["absmap\n(clean Python package)"]
+        Pkg["absmap (clean Python package)"]
         UI_POC -->|"REST/SSE"| API_POC
         API_POC --> Orch
         Orch --> Pkg
     end
 
     subgraph integration [Cocopilot-FE integration]
-        UI_INT["Absmap FE\n(same components,\nGoogleMapsProvider)"]
-        B2B["backend-b2b\n(FastAPI)"]
-        Firestore["Firestore\ngeography/slots"]
-        CF["Cloud Functions\non_street sync"]
+        UI_INT["Absmap FE (same components, GoogleMapsProvider)"]
+        B2B["backend-b2b (FastAPI)"]
+        Firestore["Firestore geography/slots"]
+        CF["Cloud Functions on_street sync"]
         UI_INT -->|"axios + JWT"| B2B
         B2B --> Firestore
         Firestore --> CF
@@ -38,14 +38,14 @@ flowchart TD
     API_POC -->|"PUT /geography/slots (same contract)"| B2B
 
     subgraph absmap_layers [absmap package — layered]
-        config["config/\nPydantic settings"]
-        io_layer["io/\nGeoTIFF read/write"]
-        imagery["imagery/\nImageryProvider protocol\n+ concrete impls"]
-        ml["ml/\nSegmenter + Detector\nProtocol interfaces"]
-        geometry["geometry/\nGeometricEngine\nRowStraightener"]
-        export_layer["export/\nGeoJSON single schema"]
-        pipeline_layer["pipeline/\nParkingSlotPipeline.run()"]
-        session_layer["session/\nEditEvent trace store"]
+        config["config/ Pydantic settings"]
+        io_layer["io/ GeoTIFF read/write"]
+        imagery["imagery/ ImageryProvider protocol + concrete impls"]
+        ml["ml/ Segmenter + Detector Protocol interfaces"]
+        geometry["geometry/ GeometricEngine RowStraightener"]
+        export_layer["export/ GeoJSON single schema"]
+        pipeline_layer["pipeline/ ParkingSlotPipeline.run()"]
+        session_layer["session/ EditEvent trace store"]
 
         config --> io_layer
         config --> imagery
@@ -61,7 +61,7 @@ flowchart TD
     end
 
     Pkg --> absmap_layers
-    RD["absolutemap-gen/src/\nabsolutemap_gen/\n(R&D archive — read only)"]
+    RD["absolutemap-gen/src/absolutemap_gen/ (R&D archive — read only)"]
 ```
 
 ---
@@ -86,6 +86,40 @@ This is the **central rewrite**. The R&D archive (`absolutemap-gen/src/absolutem
 - `ign_ortho.py`: SSL `CERT_NONE` fallback; no HTTP retry/backoff
 - `detection.py`: `assert` in library hot path; `result_on_mask` ignored
 
+**Parity validation — R&D → absmap rewrite:**
+
+The rewrite is module-by-module, each validated against the R&D pipeline before moving on. A small golden-file suite (`tests/golden/`) captures R&D outputs on 5–10 representative GeoTIFFs before any rewrite begins.
+
+| Order | Module | Parity check |
+|---|---|---|
+| 1 | `io/` (GeoTIFF read) | Byte-identical raster loads |
+| 2 | `ml/segmentation` | Pixel-identical masks (same model, same input) |
+| 3 | `ml/detection` | Identical YOLO outputs (same checkpoint) |
+| 4 | `geometry/engine` | Golden-file comparison: slot count delta, matched-pair IoU, unmatched slots |
+| 5 | `export/geojson` | Schema-identical GeoJSON output |
+| 6 | `pipeline/runner` | End-to-end golden-file match |
+
+Golden-file structure:
+
+```
+tests/golden/
+  case_001/
+    input.tif                     # or a reference pointer (large files not in git)
+    segmentation_mask.npy         # R&D SegFormer output
+    detections_raw.json           # R&D YOLO-OBB before GeometricEngine
+    detections_post.json          # R&D after GeometricEngine (the one that matters)
+    export.geojson                # R&D final GeoJSON
+    meta.json                     # model versions, config, slot count
+  case_002/
+    ...
+```
+
+The comparison harness flags any case where slot count changes >5 % or mean matched-pair IoU drops below threshold. This is parity testing (old code vs new code), not accuracy benchmarking — no ground truth needed.
+
+`GeometrySettings` defaults are extracted from the R&D `geometric_engine.py` values before rewriting, so the clean code starts with identical behavior.
+
+During the rewrite period, `absolutemap-gen` stays runnable as a shadow pipeline: if an operator reports odd results, re-run the same input through R&D and diff.
+
 **Layered structure (each layer only imports from layers above it):**
 
 ```
@@ -96,7 +130,7 @@ autocalib/absmap/
     settings.py          # Pydantic BaseSettings: SegFormer, YOLO, imagery, pipeline, geometry
   io/
     __init__.py
-    geotiff.py           # GeoRasterSlice, read/crop — clean version of io_geotiff.py
+    geotiff.py           # GeoRasterSlice (pixels + crs_epsg + affine + gsd_m), read/crop
     atomic.py            # write_json_atomic, write_geotiff (single impl, no duplicates)
   imagery/
     __init__.py
@@ -238,7 +272,7 @@ After each accepted slot, **update the corridor direction** with that slot's ang
 **Step 4 — Stop conditions.**
 - No valid slot found within the corridor (gap too large)
 - Angle breaks sharply (different row orientation)
-- Segmentation mask boundary reached
+- ~~Segmentation mask boundary reached~~ — **V1: not used.** The straightener operates only on the slot list; mask-based stop requires persisted masks per job/crop, which is not yet in the data path. To be revisited when per-crop masks are retained beyond the pipeline run.
 
 **Step 5 — Apply correction.**
 Once the full row is collected:
@@ -246,8 +280,17 @@ Once the full row is collected:
 - **Alignment**: snap centroids onto the fitted row axis (removes side-to-side wobble); optionally smooth spacing along the row
 - **Footprints**: slot width and length unchanged in V1 (only center + angle move)
 
-**Curved rows (tight radius — second pass):**
-After the walk, fit a smooth curve (polynomial or B-spline) through the collected centroids. Project each centroid onto the curve. Align each slot angle to the **local tangent** at its projected position. Each slot gets a locally correct angle, not one fixed global angle.
+**Edge cases (V1 behavior):**
+
+| Case | V1 handling |
+|---|---|
+| Very short row (2–3 slots) | Straighten normally — median of 2–3 angles is still meaningful. Minimum row size: 2 slots. |
+| Isolated slot (no neighbor in corridor) | Return empty list — no correction proposed. Operator sees nothing, no harm done. |
+| T-intersection (two rows cross) | The corridor is narrow (1–1.5× slot width) and angle-filtered — it follows one row and ignores the perpendicular one. If the wrong row is picked, the operator cancels and clicks a slot in the other row. |
+| Angled lot (multiple orientations) | Each straighten call discovers one row only. The operator clicks one slot per row orientation. No global "straighten all" in V1. |
+
+**Curved rows — deferred to V2:**
+~~After the walk, fit a smooth curve (polynomial or B-spline) through the collected centroids.~~ The B-spline/curve fitting adds significant complexity for a rare case. V1 applies the straight-line correction only (median angle + axis snap). Curved rows are handled by the operator making multiple straighten calls on subsections, or manual edits. Revisit when real usage data shows how often curved rows appear.
 
 ```python
 class RowStraightener:
@@ -337,12 +380,23 @@ absmap-api/
       sessions.py
     services/
       pipeline_service.py       # builds ImageryProvider + ParkingSlotPipeline from config
-      orchestrator.py           # MultiCropOrchestrator: loop crops → merge → deduplicate
+      orchestrator.py           # MultiCropOrchestrator: loop crops → merge → deduplicate (see merge rule below)
       job_store.py              # in-memory dict for POC (swappable to Redis/Firestore)
       imagery_factory.py        # build_imagery_provider(settings) — returns correct impl
   requirements.txt
   Dockerfile
 ```
+
+**Merge rule (rare case — overlapping crops):**
+
+In practice crops rarely overlap: the operator draws adjacent rectangles while scrolling. But when two crops do overlap, the orchestrator must not produce duplicate slots. The rule is simple:
+
+1. Process crops in draw order (first drawn = first processed).
+2. After each crop, add its slots to a running result list.
+3. Before adding a slot from crop N, check IoU against all existing slots in the result list. If IoU > `merge_iou_threshold` (default 0.5) with any existing slot, **keep the existing one and discard the new one** (first-crop-wins).
+4. No averaging, no confidence tie-break — the operator will correct anything wrong in the editing phase anyway.
+
+This keeps the logic trivial and predictable. Edge-case slots at crop boundaries may be slightly mispositioned; the operator sees them and nudges if needed.
 
 > Models (ROI, Slot, EditEvent, PipelineJob) are imported directly from `absmap` — no duplication.
 
@@ -364,12 +418,15 @@ The `ImageryProvider` protocol in `absmap/imagery/protocols.py`:
 
 ```python
 class ImageryProvider(Protocol):
-    def fetch_geotiff(self, roi: GeoJSONPolygon, gsd_m: float) -> GeoRasterSlice:
+    def fetch_geotiff(self, roi: GeoJSONPolygon, target_gsd_m: float) -> GeoRasterSlice:
         """
         Fetch a high-resolution raster for the given ROI.
-        Concrete implementations may subdivide the ROI into tiles internally
-        and stitch them — the pipeline always receives a single GeoRasterSlice.
-        gsd_m: target ground sample distance in metres/pixel (e.g. 0.15 for Mapbox, 0.20 for IGN)
+        - roi is in WGS84 (EPSG:4326).
+        - The provider reprojects to its native metric CRS internally.
+        - Concrete implementations may subdivide the ROI into tiles and stitch them —
+          the pipeline always receives a single GeoRasterSlice.
+        - target_gsd_m is a hint (e.g. 0.15 for Mapbox, 0.20 for IGN);
+          actual GSD is in the returned GeoRasterSlice.gsd_m.
         """
         ...
 ```
@@ -388,11 +445,61 @@ absmap/imagery/
 
 ---
 
-### 2. `absmap-frontend` — React + Vite (POC, renderer TBD)
+### 1c. CRS convention and pixel ↔ world alignment
+
+Three coordinate systems coexist at runtime. Each has a clear role; the boundaries between them must be enforced, not assumed.
+
+| Layer | CRS | Why |
+|---|---|---|
+| **Frontend / API contracts** | WGS84 (EPSG:4326, degrees) | GeoJSON standard, map renderers expect it |
+| **ML raster (internal)** | Metric projection — provider-native (Web Mercator EPSG:3857 for Mapbox, Lambert-93 EPSG:2154 for IGN, UTM zone for others) | `gsd_m` only makes sense in a metric CRS; keeps pixel ↔ metre relationship exact |
+| **Pipeline geometry** | Same metric CRS as the raster | Segmentation masks, OBB pixel coords, and GeometricEngine all operate in pixel space derived from the raster's affine transform |
+
+**Rules:**
+
+1. **`GeoRasterSlice` carries its CRS explicitly.** The model stores the EPSG code and the affine transform (origin, pixel size, rotation). No implicit assumption.
+2. **Reprojection happens at two well-defined gates:**
+   - **Inbound:** the `ImageryProvider` receives the ROI in WGS84, reprojects it to its native CRS internally, fetches tiles, and returns a `GeoRasterSlice` in the provider's metric CRS.
+   - **Outbound:** `export/geojson.py` converts pixel-space OBBs → WGS84 `GeoSlot` using the raster's affine + CRS→WGS84 transform. This is the **only** place where metric → WGS84 conversion happens for slot geometry.
+3. **The pipeline never reprojects mid-run.** Between fetch and export, everything stays in pixel / metric space. No intermediate WGS84 round-trip (which would introduce floating-point drift).
+4. **`gsd_m` is a target, not a guarantee.** The actual GSD comes from the returned raster's affine transform. The pipeline reads it from `GeoRasterSlice.gsd_m` (computed, not configured) so that downstream geometry is always consistent with the real pixel size.
+
+**Updated `GeoRasterSlice` (in `absmap/io/geotiff.py`):**
+
+```python
+class GeoRasterSlice(BaseModel):
+    pixels: np.ndarray                  # H × W × C (RGB or RGBA)
+    crs_epsg: int                       # e.g. 3857, 2154, 32631
+    affine: Affine                      # rasterio-style affine (origin + pixel size)
+    bounds_native: BBox                 # bounding box in native CRS (metres)
+    bounds_wgs84: BBox                  # bounding box in WGS84 (for API / display)
+    gsd_m: float                        # actual ground sample distance (from affine, not from config)
+```
+
+**Updated `ImageryProvider` protocol:**
+
+```python
+class ImageryProvider(Protocol):
+    def fetch_geotiff(self, roi: GeoJSONPolygon, target_gsd_m: float) -> GeoRasterSlice:
+        """
+        Fetch a high-resolution raster for the given ROI.
+        - roi is in WGS84 (EPSG:4326).
+        - The provider reprojects to its native metric CRS internally.
+        - Returns a GeoRasterSlice whose crs_epsg and affine are authoritative.
+        - target_gsd_m is a hint; actual GSD is in the returned slice.
+        """
+        ...
+```
+
+This guarantees that the display map (WGS84 tiles in the browser), the ML raster (metric pixels on the server), and the exported OBBs (WGS84 GeoJSON) stay aligned — with no silent drift from uncontrolled reprojection.
+
+---
+
+### 2. `absmap-frontend` — React + Vite (POC, Mapbox GL JS)
 
 **Location:** `autocalib/absmap-frontend/`
 
-**Key architectural decision:** All feature modules are **map-renderer agnostic**. They communicate with the map through an `IMapProvider` interface. The concrete renderer (Leaflet, Mapbox GL JS, Google Maps, OpenLayers…) is chosen at POC time and swapped at integration time — **zero business logic rewrite**. The app is simply called **absmap** in the UI.
+**Key architectural decision:** All feature modules are **map-renderer agnostic**. They communicate with the map through an `IMapProvider` interface. POC uses **Mapbox GL JS** (`react-map-gl` + `mapbox-gl-draw`); integration swaps to `GoogleMapsMapProvider` — **zero business logic rewrite**. The app is simply called **absmap** in the UI.
 
 Two display maps and one imagery system coexist:
 - **Display map** (left + right panel): rendered by the concrete `IMapProvider` implementation, handles scrolling/panning via native tile loading.
@@ -411,7 +518,7 @@ interface IMapProvider {
   enableFreehandDraw(hintClass: 'A' | 'B'): Promise<GeoJSON.Polygon>;
   fitBounds(bounds: BBox): void;
 }
-// POC:         any tile renderer (Leaflet / Mapbox GL JS / …) implements IMapProvider
+// POC:         MapboxGLMapProvider implements IMapProvider (react-map-gl + mapbox-gl-draw)
 // Integration: GoogleMapsMapProvider implements IMapProvider
 ```
 
@@ -452,7 +559,7 @@ absmap-frontend/
   src/
     map/
       MapProvider.interface.ts
-      AnyTileMapProvider.ts      # POC placeholder — swap with concrete impl at POC start
+      MapboxGLMapProvider.ts     # POC: Mapbox GL JS via react-map-gl + mapbox-gl-draw
       GoogleMapsMapProvider.ts   # ready for Cocopilot-FE integration
     features/
       crops/
@@ -507,6 +614,10 @@ interface AbsmapState {
 
 The display layer for existing slots uses a visually distinct style (muted color, no edit handles) so the operator can clearly differentiate them from the current session's detections.
 
+**Contract notes:**
+- The `GET /geography/slots` endpoint must match the real B2B contract (JWT auth, pagination via `?limit=` + `?offset=` or cursor, max features per response).
+- **Overlap rule on save:** existing slots that fall inside a session's crop ROIs are **replaced** by the session's final slots (the operator has reviewed that zone). Slots outside the crop ROIs are untouched. This avoids duplicates without requiring global dedup.
+
 ---
 
 ### 3. Cocopilot-FE integration (later phase)
@@ -536,6 +647,8 @@ Four distinct steps make up the loop:
 ### Session storage layout
 
 The session is stored per-job, with separate layers for each stage of the pipeline. This enables per-layer CV analysis (SegFormer signals vs YOLO-OBB signals are distinct).
+
+**Retention policy:** session artifacts (masks, GeoTIFFs, `.npy`) are stored on the VM's local disk. After each monthly retraining cycle, processed sessions are purged. Only lightweight outputs (`final_output.geojson`, `edit_trace.ndjson`, `delta_summary.json`) are kept long-term for KPI tracking.
 
 ```
 sessions/{session_id}/
@@ -675,8 +788,9 @@ Before any model bundle is promoted to production:
 autocalib/
   absmap/                   # NEW: clean Python package (the core engine)
   absmap-api/               # NEW: FastAPI service (imports absmap)
-  absmap-frontend/          # NEW: React POC (tile renderer chosen at POC start)
-  absolutemap-gen/          # EXISTING: R&D archive — read-only reference
+  absmap-frontend/          # NEW: React POC (Mapbox GL JS)
+  tests/golden/             # NEW: R&D golden outputs for parity validation (see section 0)
+  absolutemap-gen/          # EXISTING: R&D archive — read-only reference (shadow pipeline during rewrite)
     src/absolutemap_gen/    #   original R&D code (not imported by new code)
     segformer/              #   SegFormer training scripts
     webapp/                 #   original Flask viewer
@@ -711,7 +825,18 @@ class GeoSlot(BaseModel):
     status: SlotStatus
 ```
 
-That is the full responsibility of the CV/AI layer. **Persistence, reconciliation on re-run, and pairing link stability are owned by the fullstack team** (B2B API + Firestore + Cloud Functions). The architecture is modular enough that this logic lives entirely in the save path — zero changes to `absmap` needed when it gets implemented.
+That is the full responsibility of the CV/AI layer. `absmap` generates **ephemeral** UUIDs — they change on every run.
+
+**Stable identity contract (owned by the save path, not by `absmap`):**
+
+The B2B API / Firestore layer is responsible for **stable slot identity**. When the operator saves a session, the save path must:
+
+1. **Match incoming slots to existing Firestore slots** by spatial proximity (centroid distance < threshold, e.g. 1 m) inside the session's crop ROIs.
+2. **Reuse the Firestore `slot_id`** for matched slots. This stable key is what `calib-gen` and `pairing` will **read** downstream — they never generate IDs, only consume them.
+3. **Assign a new Firestore `slot_id`** only for genuinely new slots (no spatial match).
+4. **Delete Firestore slots** inside crop ROIs that have no match in the saved set (operator deleted them).
+
+This logic lives entirely in `POST /sessions/{id}/save` → `PUT /geography/slots`. Zero changes to `absmap` needed — it keeps producing ephemeral UUIDs, and the save path reconciles them into stable Firestore keys.
 
 ### 2. `absmap` models are importable upstream — no circular deps
 
@@ -763,7 +888,9 @@ sequenceDiagram
         Note over Img: Provider agnostic — Mapbox / IGN / GeoTIFF / ...
         Img-->>Orch: GeoRasterSlice
         Orch->>Pkg: ParkingSlotPipeline.run(crop_i_request)
-        Pkg-->>API: StageProgress {crop_index, crop_total, stage, percent}
+        Pkg-->>Orch: StageProgress {stage, percent}
+        Note over Orch: Orchestrator wraps StageProgress into OrchestratorProgress (crop_index, crop_total)
+        Orch-->>API: OrchestratorProgress {crop_index, crop_total, stage, percent}
         API-->>FE: SSE progress
     end
     Orch->>Orch: merge_and_dedup(all_crop_results)
