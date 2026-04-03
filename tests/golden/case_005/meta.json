@@ -1,0 +1,32 @@
+{
+  "case_name": "case_005",
+  "source_run": "0014_fontaine_pajot_la_rochelle",
+  "git_revision": "9ef3bc8",
+  "num_slots": 29,
+  "num_occupied": 21,
+  "num_empty": 8,
+  "gis": {
+    "schema_version": "1",
+    "stage": "00_gis_input",
+    "data": {
+      "source_path": "/Users/youssoufsagaf/work/cocoparks-dev/autocalib/absolutemap-gen/artifacts/mapbox_detection_dataset/0014_fontaine_pajot_la_rochelle.tif",
+      "crs_wkt": "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]",
+      "crs_epsg": 4326,
+      "transform_affine": [
+        6.705522537231445e-07,
+        0.0,
+        -1.1890271080288528,
+        0.0,
+        -4.645171997608166e-07,
+        46.15303883904061
+      ],
+      "width": 1280,
+      "height": 1280,
+      "nodata": null,
+      "extra": {
+        "gsd_meters": 0.05171
+      }
+    }
+  },
+  "captured_from": "/Users/youssoufsagaf/work/cocoparks-dev/autocalib/absolutemap-gen/artifacts/run_output/0014_fontaine_pajot_la_rochelle"
+}

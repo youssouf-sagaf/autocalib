@@ -1,0 +1,237 @@
+{
+  "stage": "03_detection",
+  "schema_version": "2",
+  "mode": "yolo_obb_spots",
+  "image_height": 1280,
+  "image_width": 1280,
+  "class_names": {
+    "0": "empty_slot",
+    "1": "occupied_slot"
+  },
+  "num_spots": 17,
+  "num_occupied": 13,
+  "num_empty": 4,
+  "spots": [
+    {
+      "center_xy": [
+        641.2,
+        477.57
+      ],
+      "width": 35.63,
+      "height": 63.56,
+      "angle_rad": 2.8975,
+      "confidence": 0.9907,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1029.14,
+        534.06
+      ],
+      "width": 35.52,
+      "height": 66.38,
+      "angle_rad": 1.3228,
+      "confidence": 0.9898,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        660.74,
+        640.13
+      ],
+      "width": 34.83,
+      "height": 74.33,
+      "angle_rad": 1.3571,
+      "confidence": 0.9896,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        604.44,
+        489.02
+      ],
+      "width": 36.41,
+      "height": 67.19,
+      "angle_rad": 2.889,
+      "confidence": 0.9855,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        591.34,
+        657.07
+      ],
+      "width": 37.29,
+      "height": 56.64,
+      "angle_rad": 1.288,
+      "confidence": 0.9831,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        566.84,
+        502.25
+      ],
+      "width": 35.36,
+      "height": 66.78,
+      "angle_rad": 2.9197,
+      "confidence": 0.9827,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        964.04,
+        554.17
+      ],
+      "width": 35.09,
+      "height": 59.3,
+      "angle_rad": 1.3419,
+      "confidence": 0.9803,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        461.6,
+        700.21
+      ],
+      "width": 32.5,
+      "height": 60.67,
+      "angle_rad": 1.2759,
+      "confidence": 0.98,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        884.31,
+        580.61
+      ],
+      "width": 35.24,
+      "height": 62.38,
+      "angle_rad": 1.2364,
+      "confidence": 0.9618,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        532.06,
+        514.82
+      ],
+      "width": 34.17,
+      "height": 64.58,
+      "angle_rad": 2.921,
+      "confidence": 0.9536,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        751.12,
+        612.9
+      ],
+      "width": 35.11,
+      "height": 60.39,
+      "angle_rad": 1.3399,
+      "confidence": 0.9307,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        678.19,
+        469.1
+      ],
+      "width": 35.2,
+      "height": 72.17,
+      "angle_rad": 2.8792,
+      "confidence": 0.9286,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        826.81,
+        596.42
+      ],
+      "width": 33.59,
+      "height": 50.09,
+      "angle_rad": 1.2678,
+      "confidence": 0.8721,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        523.73,
+        681.99
+      ],
+      "width": 35.85,
+      "height": 62.36,
+      "angle_rad": 1.2498,
+      "confidence": 0.6506,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        675.45,
+        672.79
+      ],
+      "width": 32.73,
+      "height": 62.5,
+      "angle_rad": 1.2554,
+      "confidence": 0.2486,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        788.97,
+        604.66
+      ],
+      "width": 35.17,
+      "height": 62.37,
+      "angle_rad": 2.9272,
+      "confidence": 0.75,
+      "class_id": 0,
+      "occupied": false,
+      "source": "gap_fill"
+    },
+    {
+      "center_xy": [
+        914.95,
+        552.5
+      ],
+      "width": 35.17,
+      "height": 62.37,
+      "angle_rad": 2.3991,
+      "confidence": 0.75,
+      "class_id": 0,
+      "occupied": false,
+      "source": "gap_fill"
+    }
+  ]
+}

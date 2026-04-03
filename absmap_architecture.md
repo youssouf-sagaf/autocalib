@@ -169,7 +169,7 @@ autocalib/absmap/
 
 - Every module uses `logging.getLogger(__name__)` — zero `print()` calls
 - All data crossing a layer boundary is a **Pydantic model** (validated, serializable, documented)
-- `Segmenter`, `Detector`, and `ImageryProvider` are **Protocols** — `ParkingSlotPipeline` is fully agnostic about imagery source, ML backends, and hardware; test doubles are trivial to write
+- `Segmenter`, `Detector`, and `ImageryProvider` are **Protocols** — `ParkingSlotPipeline` is fully agnostic about imagery source, ML backends, and hardware; 
 - **The pipeline has no concept of "Mapbox" or "IGN"**: the concrete `ImageryProvider` is injected at construction — `ParkingSlotPipeline(imagery=provider, segmenter=..., detector=...)`. Adding a new imagery source (Google, GeoTIFF file, S3 bucket…) requires zero changes to the pipeline
 - `GeometrySettings` exposes all tunable numbers: `angle_tolerance_deg`, `dt_threshold_fraction`, `iou_dedup_threshold`, `max_gap_fill_steps`, etc.
 - A single `GeoJSON schema v1` in `export/geojson.py` — no parallel schemas
