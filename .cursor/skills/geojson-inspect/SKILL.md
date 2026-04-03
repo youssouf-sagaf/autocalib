@@ -1,14 +1,14 @@
 ---
 name: geojson-inspect
 description: >-
-  Inspect, validate, and summarize GeoJSON slot files from the absmap pipeline.
+  Inspect, validate, and summarize GeoJSON slot files from the autoabsmap pipeline.
   Use when the user wants to check a GeoJSON export, debug slot geometry,
   validate schema, or compare two GeoJSON files.
 ---
 
 # GeoJSON Inspect
 
-Validate and analyze GeoJSON files produced by the absmap pipeline.
+Validate and analyze GeoJSON files produced by the autoabsmap pipeline.
 
 ## Quick validation
 
