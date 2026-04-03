@@ -12,9 +12,18 @@ from enum import Enum
 from geojson_pydantic import Polygon as GeoJSONPolygon
 from pydantic import BaseModel, ConfigDict, Field
 
-from autoabsmap.geometry.models import SlotSource
+__all__ = ["SlotSource", "SlotStatus", "LngLat", "GeoSlot"]
 
-__all__ = ["SlotStatus", "LngLat", "GeoSlot"]
+
+class SlotSource(str, Enum):
+    """How a slot was generated — fixed taxonomy for CV error analysis."""
+
+    yolo = "yolo"
+    row_extension = "row_extension"
+    gap_fill = "gap_fill"
+    mask_recovery = "mask_recovery"
+    auto_reprocess = "auto_reprocess"
+    manual = "manual"
 
 
 class SlotStatus(str, Enum):

@@ -13,8 +13,8 @@ from autoabsmap.config.settings import PipelineSettings
 from autoabsmap.export.models import GeoSlot
 from autoabsmap.imagery.protocols import ImageryProvider
 from autoabsmap.ml.protocols import Detector, Segmenter
-from autoabsmap.pipeline.models import PipelineRequest, PipelineResult, RunMeta, StageProgress
-from autoabsmap.pipeline.stages import (
+from autoabsmap.generator_engine.models import PipelineRequest, PipelineResult, RunMeta, StageProgress
+from autoabsmap.generator_engine.stages import (
     ProgressCallback,
     detect,
     detections_to_pixel_slots,
@@ -68,7 +68,7 @@ class ParkingSlotPipeline:
         baseline_geo = export_to_geoslots(pixel_slots, raster, on_progress)
 
         # TODO: GeometricEngine post-processing (gap fill, row extension,
-        #       mask recovery) will be inserted here once geometry/engine.py is built.
+        #       mask recovery) will be inserted here once geometric_engine.py is built.
         #       For now, final = baseline (raw detection output).
         final_geo = list(baseline_geo)
 

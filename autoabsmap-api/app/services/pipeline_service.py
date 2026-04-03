@@ -2,6 +2,7 @@
 
 Single place where ML backends and imagery provider are instantiated.
 The rest of the API only deals with orchestration and HTTP concerns.
+Uses autoabsmap/generator_engine as the core pipeline.
 """
 
 from __future__ import annotations
@@ -11,7 +12,7 @@ import logging
 from autoabsmap.config.settings import PipelineSettings
 from autoabsmap.ml.detection import YoloObbDetector
 from autoabsmap.ml.segmentation import SegFormerSegmenter
-from autoabsmap.pipeline.runner import ParkingSlotPipeline
+from autoabsmap.generator_engine.runner import ParkingSlotPipeline
 from app.services.imagery_factory import build_imagery_provider
 from app.services.orchestrator import MultiCropOrchestrator
 

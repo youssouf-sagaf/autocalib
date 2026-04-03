@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 
 from autoabsmap.config.settings import SegmentationSettings
-from autoabsmap.geometry.postprocess import postprocess_parkable_mask
+from autoabsmap.generator_engine.postprocess import postprocess_parkable_mask
 from autoabsmap.ml.models import SegmentationOutput
 
 logger = logging.getLogger(__name__)

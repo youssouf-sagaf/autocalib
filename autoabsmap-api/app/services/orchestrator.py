@@ -12,8 +12,8 @@ from typing import Callable
 from shapely.geometry import Polygon as ShapelyPolygon
 
 from autoabsmap.export.models import GeoSlot
-from autoabsmap.pipeline.models import PipelineRequest, PipelineResult, StageProgress
-from autoabsmap.pipeline.runner import ParkingSlotPipeline
+from autoabsmap.generator_engine.models import PipelineRequest, PipelineResult, StageProgress
+from autoabsmap.generator_engine.runner import ParkingSlotPipeline
 from app.models import CropRequest, JobResult, OrchestratorProgress
 
 logger = logging.getLogger(__name__)

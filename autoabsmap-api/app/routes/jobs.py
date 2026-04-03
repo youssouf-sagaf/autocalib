@@ -1,11 +1,9 @@
-"""Job endpoints — submit, poll, result, reprocess, straighten.
+"""Job endpoints — submit, poll, result, stream.
 
-POST /api/v1/jobs           → submit multi-crop job → job_id
-GET  /api/v1/jobs/{id}      → poll status + progress
-GET  /api/v1/jobs/{id}/result → merged GeoJSON + per-crop detail
-GET  /api/v1/jobs/{id}/stream → SSE progress stream
-POST /api/v1/jobs/{id}/straighten  → row straightening (TODO: geometry layer)
-POST /api/v1/jobs/{id}/reprocess   → reprocessing helper (TODO: geometry layer)
+POST /api/v1/jobs           -> submit multi-crop job -> job_id
+GET  /api/v1/jobs/{id}      -> poll status + progress
+GET  /api/v1/jobs/{id}/result -> merged GeoJSON + per-crop detail
+GET  /api/v1/jobs/{id}/stream -> SSE progress stream
 """
 
 from __future__ import annotations
@@ -23,8 +21,6 @@ from app.models import (
     JobStatus,
     OrchestratorProgress,
     PipelineJob,
-    ReprocessRequest,
-    StraightenRequest,
 )
 from app.services.job_store import JobStore
 from app.services.pipeline_service import build_orchestrator
@@ -141,42 +137,3 @@ async def stream_progress(job_id: str) -> EventSourceResponse:
                     del _sse_queues[job_id]
 
     return EventSourceResponse(event_generator())
-
-
-@router.post("/{job_id}/straighten")
-async def straighten_row(job_id: str, request: StraightenRequest) -> dict:
-    """Row straightening — click one slot, get corrected row geometries.
-
-    Requires the RowStraightener (geometry/straightener.py) which is not
-    yet implemented. Returns a placeholder response.
-    """
-    job = await job_store.get(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
-    if job.status != JobStatus.done:
-        raise HTTPException(status_code=409, detail="Job must be done before straightening")
-
-    result = await job_store.get_result(job_id)
-    if not result:
-        raise HTTPException(status_code=500, detail="Result missing")
-
-    # TODO: integrate RowStraightener once geometry/straightener.py is built
-    logger.warning("RowStraightener not yet implemented — returning empty proposals")
-    return {"proposed_slots": [], "message": "RowStraightener pending implementation"}
-
-
-@router.post("/{job_id}/reprocess")
-async def reprocess_area(job_id: str, request: ReprocessRequest) -> dict:
-    """Reprocessing helper — reference slot + scope → proposed slots.
-
-    Requires GeometricEngine integration which is not yet implemented.
-    """
-    job = await job_store.get(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
-    if job.status != JobStatus.done:
-        raise HTTPException(status_code=409, detail="Job must be done before reprocessing")
-
-    # TODO: integrate reprocessing once GeometricEngine is built
-    logger.warning("Reprocessing not yet implemented — returning empty proposals")
-    return {"proposed_slots": [], "message": "Reprocessing pending implementation"}

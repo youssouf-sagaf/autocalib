@@ -16,8 +16,8 @@ from pyproj import Transformer
 from rasterio.crs import CRS
 from rasterio.transform import Affine
 
-from autoabsmap.export.models import GeoSlot, LngLat, SlotStatus
-from autoabsmap.geometry.models import PixelSlot, SlotSource
+from autoabsmap.export.models import GeoSlot, LngLat, SlotSource, SlotStatus
+from autoabsmap.generator_engine.models import PixelSlot
 from autoabsmap.io.atomic import write_json_atomic
 
 logger = logging.getLogger(__name__)

@@ -11,7 +11,7 @@ import logging
 from pathlib import Path
 
 from autoabsmap.io.atomic import write_json_atomic
-from autoabsmap.session.models import SessionTrace
+from autoabsmap.learning_loop.models import SessionTrace
 
 logger = logging.getLogger(__name__)
 

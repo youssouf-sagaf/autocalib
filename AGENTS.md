@@ -4,8 +4,12 @@
 
 Monorepo for automated parking slot mapping. Three packages (two new, one archive):
 
-- `autoabsmap/` — Clean Python package. Layered: config → io → imagery → ml → geometry → export → pipeline → session. All cross-layer data is Pydantic. ML backends are Protocols (injectable, testable).
-- `autoabsmap-api/` — FastAPI service. Thin wrapper: job lifecycle, SSE streaming, multi-crop orchestration. No ML logic here.
+- `autoabsmap/` — Clean Python package. **Foundation layers** (config, io, imagery, ml, export) provide shared infrastructure. **Service engines** are first-level modules mapping to named project blocks:
+  - `generator_engine/` — Core AI pipeline (Block 3: detection + segmentation + geometric postprocessing)
+  - `reprocessing_helper/` — Auto-fill missed areas from reference slot + scope (Block 6)
+  - `alignment_tool/` — RowStraightener "mise au carré" (Block 7)
+  - `learning_loop/` — Session capture + dataset builder + model benchmark (Block 4)
+- `autoabsmap-api/` — FastAPI service. Thin wrapper: routes map 1:1 to service engines. Job lifecycle, SSE streaming, multi-crop orchestration. No ML logic here.
 - `autoabsmap-frontend/` — React + Vite + Redux Toolkit + Mapbox GL JS (POC). Feature modules are map-renderer agnostic via `IMapProvider`.
 - `absolutemap-gen/` — R&D archive. Read-only reference. **Never import from this in new code.** Kept runnable as shadow pipeline during the rewrite for parity testing.
 
@@ -37,6 +41,7 @@ Architecture doc: `autoabsmap_architecture.md` (source of truth for all design d
 - **Slot ID:** `autoabsmap` generates ephemeral UUIDs. Stable identity is owned by the save path (B2B/Firestore spatial matching).
 - **Session retention:** heavy artifacts (`.npy`, GeoTIFF) on VM disk, purged monthly after retraining. Lightweight outputs kept long-term.
 - **RowStraightener V1:** straight-line only (median angle + axis snap). Curved rows deferred to V2. Always returns proposals — operator confirms or cancels.
+- **Service engine isolation:** each engine (`generator_engine`, `reprocessing_helper`, `alignment_tool`, `learning_loop`) has a single public entry point, its own `models.py`, and clear inputs/outputs. Foundation layers never import from engines.
 
 ## Do not
 

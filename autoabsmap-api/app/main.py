@@ -1,4 +1,4 @@
-"""FastAPI application — thin wrapper over autoabsmap.pipeline.
+"""FastAPI application — thin wrapper over autoabsmap service engines.
 
 No ML logic here — only job lifecycle, SSE streaming, and CORS.
 In Docker, also serves the frontend static build at /.
@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from app.routes import jobs, sessions
+from app.routes import jobs, reprocess, straighten, sessions
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,6 +36,8 @@ app.add_middleware(
 )
 
 app.include_router(jobs.router)
+app.include_router(reprocess.router)
+app.include_router(straighten.router)
 app.include_router(sessions.router)
 
 

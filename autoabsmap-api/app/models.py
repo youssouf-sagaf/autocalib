@@ -12,8 +12,8 @@ from geojson_pydantic import Polygon as GeoJSONPolygon
 from pydantic import BaseModel, Field
 
 from autoabsmap.export.models import GeoSlot
-from autoabsmap.pipeline.models import HintMasks, PipelineResult
-from autoabsmap.session.models import DifficultyTag, EditEvent, ReprocessStep
+from autoabsmap.generator_engine.models import HintMasks, PipelineResult
+from autoabsmap.learning_loop.models import DifficultyTag, EditEvent, ReprocessStep
 
 __all__ = [
     "CropRequest",

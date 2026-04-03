@@ -1,6 +1,6 @@
 """Session endpoints — save final slots + edit trace.
 
-POST /api/v1/sessions/{session_id}/save → persist + forward to B2B
+POST /api/v1/sessions/{session_id}/save -> persist + forward to B2B
 """
 
 from __future__ import annotations
@@ -10,9 +10,9 @@ import time
 
 from fastapi import APIRouter, HTTPException
 
-from autoabsmap.pipeline.models import RunMeta
-from autoabsmap.session.models import DeltaSummary, EditEventType, SessionTrace
-from autoabsmap.session.store import SessionStore
+from autoabsmap.generator_engine.models import RunMeta
+from autoabsmap.learning_loop.models import DeltaSummary, EditEventType, SessionTrace
+from autoabsmap.learning_loop.capture import SessionStore
 from app.models import SaveRequest
 from app.services.job_store import JobStore
 

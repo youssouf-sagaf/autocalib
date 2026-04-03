@@ -1,4 +1,4 @@
-"""Pipeline data models — request, result, progress.
+"""Generator engine data models — request, result, progress, pixel slots.
 
 ParkingSlotPipeline operates on ONE crop at a time.  It knows nothing
 about which imagery provider fetches the raster, and nothing about the
@@ -8,20 +8,57 @@ responsibility.
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from geojson_pydantic import Polygon as GeoJSONPolygon
 from pydantic import BaseModel, ConfigDict, Field
 
-from autoabsmap.export.models import GeoSlot
+from autoabsmap.export.models import GeoSlot, SlotSource
 
 __all__ = [
+    "PixelSlot",
     "HintMasks",
     "PipelineRequest",
     "StageProgress",
     "RunMeta",
     "PipelineResult",
 ]
+
+
+class PixelSlot(BaseModel):
+    """Internal representation of an oriented parking slot in pixel space.
+
+    Used during geometric post-processing.  Carries ``row_id`` for cluster
+    bookkeeping and ``source`` for provenance tracking.
+    """
+
+    center_x: float
+    center_y: float
+    width: float
+    """Shorter dimension (slot width along the row axis)."""
+    height: float
+    """Longer dimension (slot depth perpendicular to the row)."""
+    angle_rad: float
+    """Angle of the depth (long) axis in radians, normalized to [-pi/2, pi/2]."""
+    confidence: float = Field(ge=0.0, le=1.0)
+    class_id: int = 0
+    source: SlotSource = SlotSource.yolo
+    row_id: int | None = None
+
+    model_config = ConfigDict(frozen=False)
+
+    @property
+    def corners(self) -> list[tuple[float, float]]:
+        """Four corners of the oriented bounding box in pixel space."""
+        hw, hh = self.width / 2.0, self.height / 2.0
+        ct, st = math.cos(self.angle_rad), math.sin(self.angle_rad)
+        offsets = [(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)]
+        return [
+            (self.center_x + dx * ct - dy * st,
+             self.center_y + dx * st + dy * ct)
+            for dx, dy in offsets
+        ]
 
 
 class HintMasks(BaseModel):

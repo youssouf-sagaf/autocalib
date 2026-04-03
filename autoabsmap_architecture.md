@@ -1,13 +1,29 @@
-# Absmap — Modular Architecture
+# Absmap — Service-Oriented Modular Architecture
 
 ## Context & Constraints
 
 - **Existing R&D pipeline** (`autocalib/absolutemap-gen/src/absolutemap_gen/`): kept as reference/archive. **Not imported by anything new.** A clean `autoabsmap` package replaces it.
-- **New clean package** (`autocalib/autoabsmap/`): production-ready rewrite with layered architecture, Pydantic models, proper logging, injectable ML backends. This is what `autoabsmap-api` imports.
+- **New clean package** (`autocalib/autoabsmap/`): production-ready rewrite. **Foundation layers** (config, io, imagery, ml, export) provide shared infrastructure. **Service engines** (generator, reprocessing, alignment, learning loop) are first-level modules with clear inputs/outputs — each one maps directly to a named project block. This is what `autoabsmap-api` imports.
 - **Cocopilot-FE** (`Cocopilot-FE/src`): React 18 + TS + Vite + Redux Toolkit + Google Maps. Existing `absoluteMapInternal` page (to be replaced).
 - **B2B API** (`user-interface-data-system/backend-b2b`): FastAPI, `POST/GET/PUT /geography/slots` → Firestore → Cloud Functions duplicate to `on_street/slots_static` + `slots_dynamic`. No change needed.
 - **Goal**: POC fast with **Mapbox GL JS** as the display renderer, then swap to Google Maps on Cocopilot-FE integration. **Zero business logic rewrite.** The `IMapProvider` interface is the only renderer contract.
 - **Imagery for ML**: completely separate from the display map. The `ImageryProvider` protocol (Mapbox Static, IGN WMTS, GeoTIFF, …) fetches high-resolution rasters on job launch — never tied to map scrolling.
+
+---
+
+## Project Blocks Overview
+
+The system decomposes into **7 named project blocks**. Each block is a distinct functional unit with defined inputs, outputs, and ownership. The 4 backend blocks appear as **first-level modules** inside `autoabsmap/`; the 3 frontend blocks are feature modules in the React app.
+
+| # | Block | Difficulty | Nature | Backend module |
+|---|---|---|---|---|
+| 1 | **ROI Registrator** | 3/10 | Front / mapping | *(frontend only — API receives ROI polygons)* |
+| 2 | **Bilateral Map Syncher** | 3/10 | Front / mapping | *(frontend only — `dual-map/` feature)* |
+| 3 | **Autoabsmap Generator Engine** (High Brain) | 9/10 | AI engine | `autoabsmap/generator_engine/` |
+| 4 | **Systematic Engine Retraining Loop** | 10/10 | Data + ML ops | `autoabsmap/learning_loop/` |
+| 5 | **Abs Map Lightning Edition Module** | 6/10 | Mapping + UX | *(frontend `editing/` feature — API provides edit endpoints + EditEvent logging)* |
+| 6 | **Absmap Generator Reprocessing Helper** | 7/10 | AI + front | `autoabsmap/reprocessing_helper/` |
+| 7 | **Alignment "mise au carré" Automation Tool** | 7/10 | Maths / algo + front | `autoabsmap/alignment_tool/` |
 
 ---
 
@@ -37,30 +53,38 @@ flowchart TD
 
     API_POC -->|"PUT /geography/slots (same contract)"| B2B
 
-    subgraph autoabsmap_layers [autoabsmap package — layered]
-        config["config/ Pydantic settings"]
-        io_layer["io/ GeoTIFF read/write"]
-        imagery["imagery/ ImageryProvider protocol + concrete impls"]
-        ml["ml/ Segmenter + Detector Protocol interfaces"]
-        geometry["geometry/ GeometricEngine RowStraightener"]
-        export_layer["export/ GeoJSON single schema"]
-        pipeline_layer["pipeline/ ParkingSlotPipeline.run()"]
-        session_layer["session/ EditEvent trace store"]
+    subgraph autoabsmap_pkg [autoabsmap package — foundation + service engines]
 
-        config --> io_layer
-        config --> imagery
-        config --> ml
-        io_layer --> imagery
-        ml --> geometry
-        geometry --> export_layer
-        imagery --> pipeline_layer
-        ml --> pipeline_layer
-        geometry --> pipeline_layer
-        export_layer --> pipeline_layer
-        pipeline_layer --> session_layer
+        subgraph foundation [Foundation — shared infrastructure]
+            config["config/ settings"]
+            io_layer["io/ GeoRasterSlice read/write"]
+            imagery["imagery/ ImageryProvider protocol + impls"]
+            ml["ml/ Segmenter + Detector protocols + impls"]
+            export_layer["export/ GeoJSON single schema"]
+            config --> io_layer
+            config --> imagery
+            config --> ml
+        end
+
+        subgraph engines [Service Engines — project blocks]
+            gen["⭐ generator_engine/ Pipeline + GeometricEngine"]
+            reproc["⭐ reprocessing_helper/ Auto-fill from ref slot + scope"]
+            align["⭐ alignment_tool/ RowStraightener"]
+            loop_eng["⭐ learning_loop/ Capture + dataset builder + benchmark"]
+        end
+
+        io_layer --> gen
+        imagery --> gen
+        ml --> gen
+        gen --> export_layer
+        gen --> reproc
+        gen --> align
+        gen --> loop_eng
+        reproc --> loop_eng
+        align --> loop_eng
     end
 
-    Pkg --> autoabsmap_layers
+    Pkg --> autoabsmap_pkg
     RD["absolutemap-gen/src/absolutemap_gen/ (R&D archive — read only)"]
 ```
 
@@ -95,9 +119,9 @@ The rewrite is module-by-module, each validated against the R&D pipeline before 
 | 1 | `io/` (GeoTIFF read) | Byte-identical raster loads |
 | 2 | `ml/segmentation` | Pixel-identical masks (same model, same input) |
 | 3 | `ml/detection` | Identical YOLO outputs (same checkpoint) |
-| 4 | `geometry/engine` | Golden-file comparison: slot count delta, matched-pair IoU, unmatched slots |
+| 4 | `generator_engine/geometric_engine` | Golden-file comparison: slot count delta, matched-pair IoU, unmatched slots |
 | 5 | `export/geojson` | Schema-identical GeoJSON output |
-| 6 | `pipeline/runner` | End-to-end golden-file match |
+| 6 | `generator_engine/runner` | End-to-end golden-file match |
 
 Golden-file structure:
 
@@ -120,62 +144,98 @@ The comparison harness flags any case where slot count changes >5 % or mean matc
 
 During the rewrite period, `absolutemap-gen` stays runnable as a shadow pipeline: if an operator reports odd results, re-run the same input through R&D and diff.
 
-**Layered structure (each layer only imports from layers above it):**
+**Package structure — foundation + service engines:**
+
+The package has two tiers. **Foundation layers** provide shared infrastructure (config, I/O, imagery, ML, export). **Service engines** are the named project blocks — each is a first-level module with clear inputs/outputs, designed as an isolable unit (think: "if I hosted this on a separate VM, what goes in, what comes out?").
+
+Foundation layers only import from other foundation layers. Service engines import from foundation and (selectively) from each other. No circular dependencies.
 
 ```
 autocalib/autoabsmap/
   __init__.py
+  pyproject.toml
+
+  # ═══ FOUNDATION — shared infrastructure ═══
+
   config/
     __init__.py
-    settings.py          # Pydantic BaseSettings: SegFormer, YOLO, imagery, pipeline, geometry
+    settings.py              # Pydantic BaseSettings: SegFormer, YOLO, imagery, geometry, pipeline
+
   io/
     __init__.py
-    geotiff.py           # GeoRasterSlice (pixels + crs_epsg + affine + gsd_m), read/crop
-    atomic.py            # write_json_atomic, write_geotiff (single impl, no duplicates)
+    geotiff.py               # GeoRasterSlice (pixels + crs_epsg + affine + gsd_m), read/crop
+    atomic.py                # write_json_atomic, write_geotiff (single impl, no duplicates)
+
   imagery/
     __init__.py
-    protocols.py         # ImageryProvider protocol (fetch_geotiff(roi) → GeoRasterSlice)
-    mapbox.py            # MapboxImageryProvider — adds retry/backoff, clean token handling
-    ign.py               # IGNImageryProvider — removes SSL workaround for prod, documented fallback
+    protocols.py             # ImageryProvider protocol (fetch_geotiff(roi) → GeoRasterSlice)
+    mapbox.py                # MapboxImageryProvider — retry/backoff, clean token handling
+    ign.py                   # IGNImageryProvider — no SSL workaround in prod
+    geotiff_file.py          # GeoTiffFileProvider — local file, for offline testing / replay
+
   ml/
     __init__.py
-    protocols.py         # Segmenter protocol, Detector protocol (injectable / testable)
-    models.py            # SegmentationOutput, DetectionResult (Pydantic)
-    segmentation.py      # SegFormerSegmenter implements Segmenter
-    detection.py         # YoloObbDetector implements Detector — removes dead param, fixes assert
-  geometry/
-    __init__.py
-    models.py            # PixelSlot, SlotSource enum — Pydantic, single source of truth
-    engine.py            # GeometricEngine — magic numbers → named fields in GeometrySettings
-    straightener.py      # RowStraightener — directed corridor walk (see algorithm below)
-    postprocess.py       # mask morphology/simplify — extracted from segmentation.py
+    protocols.py             # Segmenter protocol, Detector protocol (injectable / testable)
+    models.py                # SegmentationOutput, DetectionResult (Pydantic)
+    segmentation.py          # SegFormerSegmenter implements Segmenter
+    detection.py             # YoloObbDetector implements Detector
+
   export/
     __init__.py
-    models.py            # GeoSlot (Pydantic) — WGS84 slot with provenance fields
-    geojson.py           # single GeoJSON schema v1, atomic write
-  pipeline/
+    models.py                # GeoSlot (Pydantic) — WGS84 slot with provenance fields
+    geojson.py               # single GeoJSON schema v1, atomic write
+
+  # ═══ SERVICE ENGINES — project blocks, first-level ═══
+
+  generator_engine/          # ★ Block 3 — Autoabsmap Generator Engine (High Brain)
     __init__.py
-    models.py            # PipelineRequest, PipelineResult, StageProgress (Pydantic)
-    runner.py            # ParkingSlotPipeline(imagery, segmenter, detector).run(request) → PipelineResult
-    stages.py            # pure functions: fetch_imagery, segment, detect, enrich, export
-  session/
+    models.py                # PipelineRequest, PipelineResult, StageProgress, PixelSlot, SlotSource
+    runner.py                # ParkingSlotPipeline(imagery, segmenter, detector).run(request)
+    stages.py                # pure functions: fetch_imagery, segment, detect, enrich
+    geometric_engine.py      # GeometricEngine — row extension, gap fill, postprocessing
+    postprocess.py           # mask morphology / polygon simplification
+
+  reprocessing_helper/       # ★ Block 6 — Absmap Generator Reprocessing Helper
     __init__.py
-    models.py            # EditEvent, SessionTrace, DifficultyTag (Pydantic)
-    store.py             # SessionStore.save(trace) — filesystem for POC, swappable for Firestore
-  pyproject.toml
+    models.py                # ReprocessRequest(ref_slot, scope, mask), ReprocessResult
+    reprocessor.py           # ReprocessingHelper.reprocess() → proposed slots
+
+  alignment_tool/            # ★ Block 7 — Alignment "mise au carré" Automation Tool
+    __init__.py
+    models.py                # AlignmentRequest, AlignmentResult, RowDiscovery
+    straightener.py          # RowStraightener.straighten(ref_slot_id, all_slots) → corrected slots
+
+  learning_loop/             # ★ Block 4 — Systematic Engine Retraining Loop
+    __init__.py
+    models.py                # SessionTrace, DeltaSummary, DifficultyTag, EditEvent, RunMeta
+    capture.py               # SessionStore.save(trace) — filesystem for POC, Firestore later
+    dataset_builder.py       # Sessions → training-ready data (seg + det signals separated)
+    benchmark.py             # Retest candidate models on historical corrected cases → KPI report
 ```
+
+**Dependency graph between service engines:**
+
+```
+generator_engine  ←── reprocessing_helper   (reprocessor uses GeometricEngine for gap fill)
+generator_engine  ←── alignment_tool        (straightener operates on slots produced by pipeline)
+generator_engine  ←── learning_loop         (capture stores pipeline outputs as baseline)
+reprocessing_helper ←── learning_loop       (capture logs reprocessing steps)
+alignment_tool    ←── learning_loop         (capture logs alignment events)
+```
+
+Arrows mean "imports from". No engine imports from `learning_loop` — data flows in one direction toward capture.
 
 **Key design rules:**
 
 - Every module uses `logging.getLogger(__name__)` — zero `print()` calls
-- All data crossing a layer boundary is a **Pydantic model** (validated, serializable, documented)
-- `Segmenter`, `Detector`, and `ImageryProvider` are **Protocols** — `ParkingSlotPipeline` is fully agnostic about imagery source, ML backends, and hardware; 
-- **The pipeline has no concept of "Mapbox" or "IGN"**: the concrete `ImageryProvider` is injected at construction — `ParkingSlotPipeline(imagery=provider, segmenter=..., detector=...)`. Adding a new imagery source (Google, GeoTIFF file, S3 bucket…) requires zero changes to the pipeline
+- All data crossing a module boundary is a **Pydantic model** (validated, serializable, documented)
+- `Segmenter`, `Detector`, and `ImageryProvider` are **Protocols** — `ParkingSlotPipeline` is fully agnostic about imagery source, ML backends, and hardware
+- **The pipeline has no concept of "Mapbox" or "IGN"**: the concrete `ImageryProvider` is injected at construction — `ParkingSlotPipeline(imagery=provider, segmenter=..., detector=...)`. Adding a new imagery source requires zero pipeline changes
 - `GeometrySettings` exposes all tunable numbers: `angle_tolerance_deg`, `dt_threshold_fraction`, `iou_dedup_threshold`, `max_gap_fill_steps`, etc.
 - A single `GeoJSON schema v1` in `export/geojson.py` — no parallel schemas
-- `ParkingSlotPipeline.run(request)` is the **only public entry point** for the API layer; it emits `StageProgress` events via a callback for SSE streaming
+- Each service engine has a **single public entry point**: `ParkingSlotPipeline.run()`, `ReprocessingHelper.reprocess()`, `RowStraightener.straighten()`, `SessionStore.save()`
 
-**`PipelineRequest` / `PipelineResult` — single crop, pure unit (Pydantic):**
+**`PipelineRequest` / `PipelineResult` — single crop, pure unit (`generator_engine/models.py`):**
 
 ```python
 # ParkingSlotPipeline operates on ONE crop at a time.
@@ -195,6 +255,7 @@ class StageProgress(BaseModel):
 class PipelineResult(BaseModel):
     slots: list[GeoSlot]
     baseline_slots: list[GeoSlot] # snapshot before GeometricEngine (for learning loop diff)
+    seg_mask: np.ndarray | None   # retained for reprocessing_helper (per-crop mask)
     run_meta: RunMeta             # model versions, roi, gsd_m — no source coupling
 ```
 
@@ -247,9 +308,9 @@ job_result = await orchestrator.run(job_request, on_progress=emit_sse)
 
 ---
 
-### 0b. `RowStraightener` — algorithm
+### 0b. `alignment_tool/` — RowStraightener algorithm (Block 7)
 
-**Location:** `autoabsmap/geometry/straightener.py`
+**Location:** `autoabsmap/alignment_tool/straightener.py`
 
 The algorithm is a **directed corridor walk** with a rolling direction update. It handles both straight and gently curved rows without branching logic.
 
@@ -310,20 +371,54 @@ The result is returned as **proposed** slots — the API layer sends them back a
 
 ---
 
+### 0c. `reprocessing_helper/` — auto-fill from reference slot (Block 6)
+
+**Location:** `autoabsmap/reprocessing_helper/`
+
+When the Generator Engine misses an entire pocket (no detections), per-click manual Add is too slow. The Reprocessing Helper takes **one correct slot** (orientation, size, spacing) and a **scoped region**, then auto-fills the missed area using the segmentation mask and geometric row extension.
+
+**Inputs/Outputs:**
+
+```python
+class ReprocessRequest(BaseModel):
+    reference_slot: GeoSlot           # one slot placed by the operator (pattern)
+    scope_polygon: GeoJSONPolygon     # round/lasso region delimiting where to fill
+    existing_slots: list[GeoSlot]     # current slots in the area (avoid duplicates)
+    seg_mask: np.ndarray | None       # segmentation mask from the pipeline run (if retained)
+
+class ReprocessResult(BaseModel):
+    proposed_slots: list[GeoSlot]     # new slots to add (source: 'auto_reprocess')
+```
+
+**Algorithm:**
+
+1. **Extract geometry from reference slot** — orientation angle, width, length, and spacing (estimated from nearest existing neighbor if available).
+2. **Clip the scope** — intersect the scope polygon with the segmentation mask (if available). This restricts auto-fill to driveable/parkable surface only.
+3. **Row extension** — from the reference slot, walk in both directions along the estimated row axis (same directed corridor logic as `RowStraightener`, but for placement, not correction). Place new slots at regular pitch intervals while inside the clipped scope.
+4. **Gap fill** — if the scope contains adjacent rows (detected via perpendicular offset from the reference), extend into those rows too.
+5. **Dedup** — discard any proposed slot with IoU > 0.5 against `existing_slots`.
+6. **Return proposals** — the operator reviews (confirm all / cherry-pick / cancel).
+
+The Reprocessing Helper **composes** the `GeometricEngine` from `generator_engine/` — it does not duplicate row-extension logic. It adds the scope-clipping and reference-slot-guided entry point on top.
+
+---
+
 ### 1. `autoabsmap-api` — FastAPI standalone service
 
 **Location:** `autocalib/autoabsmap-api/`
 
-Thin HTTP wrapper over `autoabsmap.pipeline`. **No ML logic lives here** — it only manages job lifecycle and SSE streaming.
+Thin HTTP wrapper over `autoabsmap` service engines. **No ML logic lives here** — it only manages job lifecycle, SSE streaming, and routes each request to the right engine.
 
-**Endpoints:**
+**Endpoints — mapped to service engines:**
 
-- `POST /api/v1/jobs` — submit `crops: [{roi, hints?}, ...]` → returns `job_id`
-- `GET /api/v1/jobs/{job_id}` — poll status: `pending | running | done | failed`, current `{crop_index, crop_total, stage, percent}`
-- `GET /api/v1/jobs/{job_id}/result` — merged GeoJSON FeatureCollection + per-crop detail
-- `POST /api/v1/jobs/{job_id}/reprocess` — reference slot + scope polygon → proposed slots
-- `POST /api/v1/jobs/{job_id}/straighten` — one `slot_id` → row discovery + corrected geometries
-- `POST /api/v1/sessions/{session_id}/save` — final slots + edit trace + difficulty tags → forwards to `PUT /geography/slots` on B2B
+| Endpoint | Verb | Service engine | Description |
+|---|---|---|---|
+| `/api/v1/jobs` | POST | `generator_engine` | Submit `crops: [{roi, hints?}, ...]` → returns `job_id` |
+| `/api/v1/jobs/{job_id}` | GET | `generator_engine` | Poll status: `pending \| running \| done \| failed` |
+| `/api/v1/jobs/{job_id}/result` | GET | `generator_engine` | Merged GeoJSON FeatureCollection + per-crop detail |
+| `/api/v1/jobs/{job_id}/reprocess` | POST | `reprocessing_helper` | Reference slot + scope polygon → proposed slots |
+| `/api/v1/jobs/{job_id}/straighten` | POST | `alignment_tool` | One `slot_id` → row discovery + corrected geometries |
+| `/api/v1/sessions/{session_id}/save` | POST | `learning_loop` | Final slots + edit trace + difficulty tags → capture + forward to B2B |
 
 **Key data contracts (TypeScript — shared across POC and Cocopilot-FE):**
 
@@ -376,8 +471,10 @@ autoabsmap-api/
   app/
     main.py
     routes/
-      jobs.py
-      sessions.py
+      jobs.py                   # POST/GET /jobs — generator_engine orchestration
+      reprocess.py              # POST /jobs/{id}/reprocess — reprocessing_helper
+      straighten.py             # POST /jobs/{id}/straighten — alignment_tool
+      sessions.py               # POST /sessions/{id}/save — learning_loop capture
     services/
       pipeline_service.py       # builds ImageryProvider + ParkingSlotPipeline from config
       orchestrator.py           # MultiCropOrchestrator: loop crops → merge → deduplicate (see merge rule below)
@@ -386,6 +483,8 @@ autoabsmap-api/
   requirements.txt
   Dockerfile
 ```
+
+Each route file is a thin adapter: deserialize request → call the corresponding `autoabsmap` service engine → serialize response. No business logic in the API layer.
 
 **Merge rule (rare case — overlapping crops):**
 
@@ -398,7 +497,7 @@ In practice crops rarely overlap: the operator draws adjacent rectangles while s
 
 This keeps the logic trivial and predictable. Edge-case slots at crop boundaries may be slightly mispositioned; the operator sees them and nudges if needed.
 
-> Models (ROI, Slot, EditEvent, PipelineJob) are imported directly from `autoabsmap` — no duplication.
+> Models (ROI, Slot, EditEvent, PipelineJob) are imported directly from `autoabsmap` service engine models — no duplication.
 
 ---
 
@@ -631,16 +730,18 @@ The display layer for existing slots uses a visually distinct style (muted color
 
 ---
 
-## Learning Loop Persistence
+## Learning Loop — Block 4: `learning_loop/`
+
+**Location:** `autoabsmap/learning_loop/`
 
 The engineering doc is explicit: "None of the learning signal is throwaway UI state — it must land in stable storage tied to ROI, model versions, and operator session metadata."
 
-Four distinct steps make up the loop:
+The `learning_loop` service engine owns three responsibilities: **capture**, **dataset building**, and **benchmarking**. These map to the four steps of the loop:
 
-1. **Automated baseline run** — pipeline produces raw outputs (segmentation, detection, post-processing)
-2. **Fast human refinement** — operator adds, deletes, modifies, reprocesses, aligns
-3. **Structured capture and persistence** — separate layers stored durably, not just the final diff
-4. **Offline CV improvement + revalidation** — retrain on the captured signal, then benchmark before promotion
+1. **Automated baseline run** — `generator_engine` produces raw outputs (segmentation, detection, post-processing)
+2. **Fast human refinement** — operator adds, deletes, modifies, reprocesses, aligns (Lightning Edition Module + Reprocessing Helper + Alignment Tool)
+3. **Structured capture and persistence** — `learning_loop/capture.py` stores separate layers durably, not just the final diff
+4. **Offline CV improvement + revalidation** — `learning_loop/dataset_builder.py` extracts training data; `learning_loop/benchmark.py` retests candidates before promotion
 
 ---
 
@@ -690,7 +791,7 @@ sessions/{session_id}/
 
 ---
 
-### Session Pydantic models (`autoabsmap/session/models.py`)
+### Session Pydantic models (`autoabsmap/learning_loop/models.py`)
 
 ```python
 class DifficultyTag(str, Enum):
@@ -766,19 +867,55 @@ Lower is better. If a new model bundle does not reduce this number on the held-o
 
 ---
 
-### Model revalidation workflow
+### Model revalidation workflow (`learning_loop/benchmark.py`)
 
-Before any model bundle is promoted to production:
+Before any model bundle is promoted to production, `benchmark.py` orchestrates:
 
 1. **Retest on historical sessions** — run the candidate model on the same `crops_geometry` + `imagery_provider` conditions as past corrected sessions
 2. **Compare outputs** against `baseline_merged.geojson` (old model) and `final_output.geojson` (operator truth)
 3. **Compute KPI delta** — old model vs candidate on all secondary KPIs
 4. **Publish benchmark report** — one report per candidate bundle with product + CV metrics
 
+```python
+class BenchmarkReport(BaseModel):
+    candidate_bundle: str                # e.g. "segformer-v3 + yolo-v2.1"
+    sessions_tested: int
+    primary_kpi_delta: float             # negative = improvement (fewer manual actions)
+    secondary_kpis: dict[str, float]     # KPI name → delta
+    regression_flags: list[str]          # any KPI that got worse beyond threshold
+    promoted: bool                       # go / no-go decision
+```
+
 **Promotion rule (go / no-go):**
 - Promote only if the **primary KPI** (manual effort) shows a net reduction
 - And **no secondary KPI** shows a major operational regression
 - If not met: keep current production bundle, continue the loop
+
+### Dataset builder (`learning_loop/dataset_builder.py`)
+
+Transforms captured sessions into training-ready datasets. Separates SegFormer signals from YOLO-OBB signals because their learning paths are distinct.
+
+```python
+class DatasetBuilder:
+    def build_segmentation_dataset(
+        self, sessions: list[Path]
+    ) -> SegmentationTrainingSet:
+        """
+        From sessions: extract seg masks, manual additions in mask-excluded
+        areas (FN evidence), manual deletions in mask-included areas (FP evidence),
+        difficulty tags for hard-case curriculum.
+        """
+
+    def build_detection_dataset(
+        self, sessions: list[Path]
+    ) -> DetectionTrainingSet:
+        """
+        From sessions: extract missed detections (manual adds → FN),
+        false detections (manual deletes → FP + hard negatives),
+        geometry corrections (center/angle/size edits → OBB regression targets),
+        source attribution for error localization by generation path.
+        """
+```
 
 ---
 
@@ -872,14 +1009,15 @@ sequenceDiagram
     participant FE as Absmap FE
     participant API as autoabsmap-api
     participant Orch as MultiCropOrchestrator
-    participant Pkg as autoabsmap Pipeline
+    participant Gen as generator_engine
     participant Img as ImageryProvider
+    participant Reproc as reprocessing_helper
+    participant Align as alignment_tool
+    participant Loop as learning_loop
     participant B2B as backend-b2b
 
-    Op->>FE: Scroll + draw rectangle 1
-    Op->>FE: Scroll + draw rectangle 2
-    Op->>FE: Scroll + draw rectangle N
-    Op->>FE: Optional hints (A/B) per crop
+    Note over Op,B2B: Phase 1 — Pipeline run (generator_engine)
+    Op->>FE: Scroll + draw rectangle 1..N + optional hints (A/B)
     Op->>FE: Launch job
     FE->>API: POST /jobs {crops: [roi1, roi2, ...roiN]}
     loop For each crop i of N
@@ -887,18 +1025,33 @@ sequenceDiagram
         Orch->>Img: fetch_geotiff(roi_i)
         Note over Img: Provider agnostic — Mapbox / IGN / GeoTIFF / ...
         Img-->>Orch: GeoRasterSlice
-        Orch->>Pkg: ParkingSlotPipeline.run(crop_i_request)
-        Pkg-->>Orch: StageProgress {stage, percent}
-        Note over Orch: Orchestrator wraps StageProgress into OrchestratorProgress (crop_index, crop_total)
-        Orch-->>API: OrchestratorProgress {crop_index, crop_total, stage, percent}
+        Orch->>Gen: ParkingSlotPipeline.run(crop_i_request)
+        Gen-->>Orch: StageProgress {stage, percent}
+        Note over Orch: Wraps into OrchestratorProgress (crop_index, crop_total)
+        Orch-->>API: OrchestratorProgress
         API-->>FE: SSE progress
     end
     Orch->>Orch: merge_and_dedup(all_crop_results)
-    API-->>FE: JobResult (merged slots)
+    API-->>FE: JobResult (merged slots + seg_masks retained)
     FE->>Op: Show dual-map with detections
-    Op->>FE: Edit (add/delete/reprocess/align)
-    Op->>FE: Save
-    FE->>API: POST /sessions/{id}/save {slots, edit_trace}
+
+    Note over Op,B2B: Phase 2 — Lightning Edition + Reprocessing + Alignment
+    Op->>FE: Edit (add/delete/bulk_delete/copy/modify)
+    Op->>FE: Reprocess missed pocket (ref slot + scope)
+    FE->>API: POST /jobs/{id}/reprocess {ref_slot, scope, mask}
+    API->>Reproc: ReprocessingHelper.reprocess()
+    Reproc-->>API: proposed_slots
+    API-->>FE: proposed_slots (operator confirms/cancels)
+    Op->>FE: Straighten a row (click one slot)
+    FE->>API: POST /jobs/{id}/straighten {slot_id}
+    API->>Align: RowStraightener.straighten()
+    Align-->>API: corrected_slots
+    API-->>FE: corrected_slots (operator confirms/cancels)
+
+    Note over Op,B2B: Phase 3 — Save (learning_loop capture)
+    Op->>FE: Save + difficulty tags
+    FE->>API: POST /sessions/{id}/save {slots, edit_trace, tags}
+    API->>Loop: SessionStore.save(trace)
     API->>B2B: PUT /geography/slots
     B2B->>Firestore: Write slots
 ```

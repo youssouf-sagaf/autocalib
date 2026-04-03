@@ -13,13 +13,12 @@ from geojson_pydantic import Polygon as GeoJSONPolygon
 from rasterio.transform import Affine
 
 from autoabsmap.export.geojson import pixel_slots_to_geoslots
-from autoabsmap.export.models import GeoSlot
-from autoabsmap.geometry.models import PixelSlot, SlotSource
+from autoabsmap.export.models import GeoSlot, SlotSource
+from autoabsmap.generator_engine.models import PixelSlot, StageProgress
 from autoabsmap.imagery.protocols import ImageryProvider
 from autoabsmap.io.geotiff import GeoRasterSlice
 from autoabsmap.ml.models import DetectionResult, SegmentationOutput
 from autoabsmap.ml.protocols import Detector, Segmenter
-from autoabsmap.pipeline.models import StageProgress
 
 logger = logging.getLogger(__name__)
 

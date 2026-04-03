@@ -1,4 +1,4 @@
-"""Session data models for the learning loop.
+"""Learning loop data models — session trace, difficulty tags, deltas.
 
 These models capture everything needed for CV improvement:
 operator edits, difficulty assessment, and computed deltas.
@@ -13,7 +13,7 @@ from geojson_pydantic import Polygon as GeoJSONPolygon
 from pydantic import BaseModel, Field
 
 from autoabsmap.export.models import GeoSlot
-from autoabsmap.pipeline.models import RunMeta
+from autoabsmap.generator_engine.models import RunMeta
 
 __all__ = [
     "EditEventType",
@@ -45,7 +45,7 @@ class EditEvent(BaseModel):
 
 
 class ReprocessStep(BaseModel):
-    """Record of one reprocessing call (reference slot + scope → proposed slots)."""
+    """Record of one reprocessing call (reference slot + scope -> proposed slots)."""
 
     trigger_slot_id: str
     scope_polygon: GeoJSONPolygon
