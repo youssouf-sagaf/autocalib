@@ -1,18 +1,20 @@
 import type { ReactNode } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { toggleDualMap } from '../../store/autoabsmap-slice';
+import { SearchBar } from './SearchBar';
 import styles from './AppShell.module.css';
 
 interface AppShellProps {
   children: ReactNode;
   sidebar?: ReactNode;
   isDrawing?: boolean;
+  onFlyTo?: (lng: number, lat: number) => void;
 }
 
-export function AppShell({ children, sidebar, isDrawing }: AppShellProps) {
+export function AppShell({ children, sidebar, isDrawing, onFlyTo }: AppShellProps) {
   const dispatch = useAppDispatch();
   const dualMapActive = useAppSelector((s) => s.absmap.dualMapActive);
-  const hasSlots = useAppSelector((s) => s.absmap.slots.length > 0);
+  const hasSlots = useAppSelector((s) => s.absmap.slots.length > 0 || s.absmap.baselineSlots.length > 0);
 
   return (
     <div className={styles.shell}>
@@ -21,6 +23,7 @@ export function AppShell({ children, sidebar, isDrawing }: AppShellProps) {
           <span className={styles.logoMark}>C</span>
           <span className={styles.title}>autoabsmap</span>
         </div>
+        {onFlyTo && <SearchBar onFlyTo={onFlyTo} />}
         <div className={styles.actions}>
           <button
             className={`${styles.dualBtn} ${dualMapActive ? styles.active : ''}`}

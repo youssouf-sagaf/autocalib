@@ -75,7 +75,7 @@ const absmapSlice = createSlice({
       }
     },
     toggleDualMap(state) {
-      if (state.slots.length > 0) {
+      if (state.slots.length > 0 || state.baselineSlots.length > 0) {
         state.dualMapActive = !state.dualMapActive;
       }
     },
@@ -113,7 +113,8 @@ const absmapSlice = createSlice({
           state.job.status = 'done';
           state.job.progress = undefined;
         }
-        if (action.payload.slots.length > 0) {
+        const totalSlots = action.payload.slots.length + action.payload.baseline_slots.length;
+        if (totalSlots > 0) {
           state.dualMapActive = true;
         }
       });

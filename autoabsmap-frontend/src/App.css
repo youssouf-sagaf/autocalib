@@ -56,7 +56,7 @@ body {
 }
 
 .dualMapDivider {
-  width: 3px;
+  width: 1px;
   background: var(--color-border);
   cursor: col-resize;
   z-index: 5;

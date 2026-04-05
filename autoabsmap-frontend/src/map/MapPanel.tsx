@@ -68,7 +68,9 @@ export function MapPanel({
   label,
 }: MapPanelProps) {
   const crops = useAppSelector((s) => s.absmap.crops);
-  const slots = useAppSelector((s) => s.absmap.slots);
+  const finalSlots = useAppSelector((s) => s.absmap.slots);
+  const baselineSlots = useAppSelector((s) => s.absmap.baselineSlots);
+  const slots = finalSlots.length > 0 ? finalSlots : baselineSlots;
   const [popupSlot, setPopupSlot] = useState<Slot | null>(null);
   const [hovering, setHovering] = useState(false);
 

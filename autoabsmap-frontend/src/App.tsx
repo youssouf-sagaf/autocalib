@@ -22,6 +22,11 @@ export default function App() {
     (evt: { viewState: MapViewState }) => setViewState(evt.viewState),
     [],
   );
+  const handleFlyTo = useCallback(
+    (lng: number, lat: number) =>
+      setViewState((prev) => ({ ...prev, longitude: lng, latitude: lat, zoom: 17 })),
+    [],
+  );
 
   /* ── Rectangle drawing ── */
   const onCropComplete = useCallback(
@@ -59,7 +64,7 @@ export default function App() {
   );
 
   return (
-    <AppShell isDrawing={isDrawing} sidebar={sidebar}>
+    <AppShell isDrawing={isDrawing} sidebar={sidebar} onFlyTo={handleFlyTo}>
       {dualMapActive ? (
         <div className="dualMapContainer">
           <MapPanel

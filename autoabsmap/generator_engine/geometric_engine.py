@@ -172,7 +172,7 @@ def _process_row(
             continue
 
         street_dir = vec / dist
-        derived_angle = _normalize_angle(math.atan2(street_dir[1], street_dir[0]))
+        derived_angle = _normalize_angle(math.atan2(street_dir[1], street_dir[0]) + math.pi / 2)
         dist_along = abs(float(np.dot(vec, w_dir)))
 
         if dist_along > s.gap_fill_threshold * row_wp:
@@ -194,7 +194,7 @@ def _process_row(
         vec = np.array([start.center_x - ref.center_x, start.center_y - ref.center_y])
         norm = float(np.linalg.norm(vec))
         street_dir = vec / norm if norm > 0 else _width_dir(row_angle)
-        derived_angle = _normalize_angle(math.atan2(street_dir[1], street_dir[0]))
+        derived_angle = _normalize_angle(math.atan2(street_dir[1], street_dir[0]) + math.pi / 2)
         step = sign * row_wp * street_dir
         curr = np.array([start.center_x, start.center_y])
 
@@ -233,7 +233,7 @@ def _pca_angle(mask_region: np.ndarray, min_pts: int) -> float:
     _, eigvecs, _ = cv2.PCACompute2(pts, mean=None)
     v = eigvecs[0]
     v = v / np.linalg.norm(v)
-    return _normalize_angle(float(math.atan2(v[1], v[0])))
+    return _normalize_angle(float(math.atan2(v[1], v[0])) + math.pi / 2)
 
 
 def _recover_uncovered(
@@ -284,7 +284,10 @@ def _recover_uncovered(
 
         seed_x, seed_y = max_loc
         angle = _pca_angle(island, s.pca_min_points)
-        street_dir = _width_dir(angle)
+        street_dir = np.array([
+            math.cos(angle - math.pi / 2),
+            math.sin(angle - math.pi / 2),
+        ])
 
         def _fill_island(direction_sign: float) -> None:
             curr = np.array([seed_x, seed_y], dtype=float)
@@ -344,7 +347,7 @@ def _dedup_and_validate(
         iy, ix = int(slot.center_y), int(slot.center_x)
         if not (0 <= iy < h_max and 0 <= ix < w_max):
             continue
-        if binary_mask[iy, ix] == 0:
+        if slot.source != SlotSource.yolo and binary_mask[iy, ix] == 0:
             continue
 
         slot_box = _corners_float(

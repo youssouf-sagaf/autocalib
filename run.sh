@@ -38,8 +38,9 @@ if [ -f "$ENV_FILE" ]; then
     log "Loaded env from $ENV_FILE"
 fi
 
-# Prevent transformers from importing broken TensorFlow
-export TRANSFORMERS_NO_TF=1
+# Pipeline uses PyTorch only — prevent transformers from loading broken TF
+export USE_TF=0
+export USE_TORCH=1
 
 # ---------- Kill stale processes ----------
 lsof -ti:8000 | xargs kill -9 2>/dev/null || true

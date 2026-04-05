@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
+
+os.environ.setdefault("USE_TF", "0")
+os.environ.setdefault("USE_TORCH", "1")
 
 import numpy as np
 
@@ -61,7 +65,9 @@ class SegFormerSegmenter:
         if not (self._ckpt_dir / "config.json").is_file():
             raise FileNotFoundError(f"Missing config.json in: {self._ckpt_dir}")
 
-        self._processor = AutoImageProcessor.from_pretrained(self._ckpt_dir)
+        self._processor = AutoImageProcessor.from_pretrained(
+            self._ckpt_dir, use_fast=False,
+        )
         self._model = SegformerForSemanticSegmentation.from_pretrained(self._ckpt_dir)
         self._model.to(self._device)
         self._model.eval()

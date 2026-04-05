@@ -1,5 +1,5 @@
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { removeCrop, clearCrops, launchJob } from '../../store/autoabsmap-slice';
+import { removeCrop, clearCrops, launchJob, resetSession } from '../../store/autoabsmap-slice';
 import { JobProgress } from '../pipeline/JobProgress';
 import styles from './CropPanel.module.css';
 
@@ -18,7 +18,10 @@ export function CropPanel({
   const crops = useAppSelector((s) => s.absmap.crops);
   const job = useAppSelector((s) => s.absmap.job);
   const slotCount = useAppSelector((s) => s.absmap.slots.length);
+  const baselineCount = useAppSelector((s) => s.absmap.baselineSlots.length);
+  const displayCount = slotCount || baselineCount;
   const isRunning = job?.status === 'running' || job?.status === 'pending';
+  const hasResults = job?.status === 'done' && displayCount > 0;
 
   return (
     <div className={styles.panel}>
@@ -90,12 +93,83 @@ export function CropPanel({
 
         <JobProgress />
 
-        {job?.status === 'done' && slotCount > 0 && (
+        {job?.status === 'done' && displayCount > 0 && (
           <div className={styles.resultSummary}>
-            {slotCount} slot{slotCount !== 1 ? 's' : ''} detected
+            {displayCount} slot{displayCount !== 1 ? 's' : ''} detected
+            {slotCount === 0 && baselineCount > 0 && (
+              <span className={styles.resultNote}> (baseline)</span>
+            )}
           </div>
         )}
       </div>
+
+      {hasResults && (
+        <>
+          <div className={styles.section}>
+            <h3 className={styles.heading}>Lightning Edition</h3>
+            <div className={styles.actionGrid}>
+              <button className={styles.actionBtn} disabled title="Hold A + click to place a slot">
+                <span className={styles.actionIcon}>+</span>
+                <span>Add <kbd className={styles.kbd}>A</kbd></span>
+              </button>
+              <button className={styles.actionBtn} disabled title="Click a slot to remove it">
+                <span className={styles.actionIcon}>&minus;</span>
+                <span>Delete <kbd className={styles.kbd}>D</kbd></span>
+              </button>
+              <button className={styles.actionBtn} disabled title="Lasso select + confirm delete">
+                <span className={styles.actionIcon}>&#x25AD;</span>
+                <span>Bulk Delete</span>
+              </button>
+              <button className={styles.actionBtn} disabled title="Duplicate a reference slot">
+                <span className={styles.actionIcon}>&#x2398;</span>
+                <span>Copy <kbd className={styles.kbd}>C</kbd></span>
+              </button>
+              <button className={styles.actionBtn} disabled title="Adjust orientation / geometry">
+                <span className={styles.actionIcon}>&#x270E;</span>
+                <span>Modify <kbd className={styles.kbd}>M</kbd></span>
+              </button>
+              <button className={styles.actionBtn} disabled title="Undo last edit">
+                <span className={styles.actionIcon}>&#x21B6;</span>
+                <span>Undo <kbd className={styles.kbd}>Z</kbd></span>
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <h3 className={styles.heading}>AI Assist</h3>
+            <div className={styles.actionGrid2}>
+              <button className={styles.actionBtn} disabled title="Ref slot + scope region → auto-fill missed area">
+                <span className={styles.actionIcon}>&#x21BB;</span>
+                <span>Reprocess <kbd className={styles.kbd}>R</kbd></span>
+              </button>
+              <button className={styles.actionBtn} disabled title="Click one slot → align entire row (mise au carré)">
+                <span className={styles.actionIcon}>&#x2261;</span>
+                <span>Straighten</span>
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <h3 className={styles.heading}>Session</h3>
+            <div className={styles.actionGrid2}>
+              <button className={styles.actionBtn} disabled title="Save slots + edit trace + difficulty tags">
+                <span className={styles.actionIcon}>&#x2713;</span>
+                Save
+              </button>
+              <button className={styles.actionBtn} disabled title="Download GeoJSON file">
+                <span className={styles.actionIcon}>&#x21E9;</span>
+                Export
+              </button>
+            </div>
+            <button
+              className={styles.resetBtn}
+              onClick={() => dispatch(resetSession())}
+            >
+              Reset Session
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
