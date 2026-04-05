@@ -14,6 +14,7 @@ from autoabsmap.export.models import GeoSlot
 from autoabsmap.imagery.protocols import ImageryProvider
 from autoabsmap.ml.protocols import Detector, Segmenter
 from autoabsmap.generator_engine.models import PipelineRequest, PipelineResult, RunMeta, StageProgress
+from autoabsmap.generator_engine.geometric_engine import GeometricEngine
 from autoabsmap.generator_engine.stages import (
     ProgressCallback,
     detect,
@@ -54,7 +55,7 @@ class ParkingSlotPipeline:
     ) -> PipelineResult:
         """Run the full pipeline on a single crop ROI.
 
-        Stages: fetch_imagery → segment → detect → (geometry TBD) → export.
+        Stages: fetch_imagery → segment → detect → geometric_engine → export.
         Emits StageProgress events via *on_progress* for SSE streaming.
         """
         target_gsd = self._settings.imagery.target_gsd_m
@@ -67,10 +68,9 @@ class ParkingSlotPipeline:
 
         baseline_geo = export_to_geoslots(pixel_slots, raster, on_progress)
 
-        # TODO: GeometricEngine post-processing (gap fill, row extension,
-        #       mask recovery) will be inserted here once geometric_engine.py is built.
-        #       For now, final = baseline (raw detection output).
-        final_geo = list(baseline_geo)
+        geo_engine = GeometricEngine(self._settings.geometry)
+        enriched_slots = geo_engine.process(pixel_slots, seg_output.mask_refined)
+        final_geo = export_to_geoslots(enriched_slots, raster, on_progress)
 
         run_meta = RunMeta(
             segformer_checkpoint=self._settings.segmentation.segformer_checkpoint_dir,

@@ -90,6 +90,17 @@ htmlcov/
 .DS_Store
 
 # ========================================
+# Logs (keep directory, ignore contents)
+# ========================================
+logs/*.log
+
+# ========================================
+# Frontend build + deps
+# ========================================
+autoabsmap-frontend/node_modules/
+autoabsmap-api/static/
+
+# ========================================
 # IDE / editor
 # ========================================
 .claude/

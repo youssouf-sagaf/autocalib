@@ -8,7 +8,11 @@ from pathlib import Path
 import numpy as np
 
 from autoabsmap.config.settings import SegmentationSettings
-from autoabsmap.generator_engine.postprocess import postprocess_parkable_mask
+from autoabsmap.generator_engine.postprocess import (
+    fill_small_holes,
+    morph_close_open,
+    simplify_mask_boundary,
+)
 from autoabsmap.ml.models import SegmentationOutput
 
 logger = logging.getLogger(__name__)
@@ -66,8 +70,16 @@ class SegFormerSegmenter:
     def predict(self, rgb_hwc: np.ndarray) -> SegmentationOutput:
         """Run SegFormer inference + post-processing."""
         raw = self._predict_mask_raw(rgb_hwc)
-        refined = postprocess_parkable_mask(raw, self._settings)
-        return SegmentationOutput(mask_raw=raw, mask_refined=refined)
+        s = self._settings
+        work = raw.astype(np.uint8, copy=True)
+        work = morph_close_open(work, s.morph_close_kernel, s.morph_open_kernel)
+        work = fill_small_holes(work, s.max_hole_area_px)
+        work = simplify_mask_boundary(
+            work,
+            tolerance_px=s.simplify_tolerance_px,
+            min_polygon_area_px=s.min_polygon_area_px,
+        )
+        return SegmentationOutput(mask_raw=raw, mask_refined=work)
 
     def _predict_mask_raw(self, rgb_hwc: np.ndarray) -> np.ndarray:
         import torch

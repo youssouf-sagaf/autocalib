@@ -191,6 +191,62 @@ class GeometrySettings(BaseSettings):
 
 
 # ---------------------------------------------------------------------------
+# Alignment tool (RowStraightener)
+# ---------------------------------------------------------------------------
+
+class AlignmentSettings(BaseSettings):
+    """RowStraightener corridor walk and correction parameters."""
+
+    neighbor_count: int = 6
+    """Number of nearest neighbors for initial direction estimation."""
+
+    corridor_width_factor: float = 1.5
+    """Corridor width (perpendicular) = factor × slot width."""
+
+    angle_tolerance_deg: float = 15.0
+    """Max angle difference (degrees) for accepting a slot into the row."""
+
+    pitch_tolerance_factor: float = 0.5
+    """Accepted spacing deviation: ±factor × estimated pitch."""
+
+    max_gap_steps: int = 2
+    """Stop the walk after this many consecutive misses in one direction."""
+
+    rolling_alpha: float = 0.3
+    """EMA weight for rolling direction update (0 = ignore new, 1 = fully adopt)."""
+
+    model_config = {"env_prefix": "ALIGN_"}
+
+
+# ---------------------------------------------------------------------------
+# Reprocessing helper
+# ---------------------------------------------------------------------------
+
+class ReprocessingSettings(BaseSettings):
+    """ReprocessingHelper auto-fill parameters."""
+
+    iou_dedup_threshold: float = 0.5
+    """Proposed slot discarded when IoU with any existing slot exceeds this."""
+
+    max_row_slots: int = 50
+    """Safety limit: max candidates per direction in a single row."""
+
+    parallel_row_search: bool = True
+    """Try filling adjacent parallel rows within the scope."""
+
+    max_parallel_rows: int = 3
+    """Max number of parallel rows to try on each side of the reference row."""
+
+    pitch_fallback_factor: float = 1.1
+    """When no angle-compatible neighbor exists, pitch = factor × slot width."""
+
+    reprocess_confidence: float = 0.75
+    """Confidence assigned to auto-reprocessed slots."""
+
+    model_config = {"env_prefix": "REPROC_"}
+
+
+# ---------------------------------------------------------------------------
 # Pipeline-level settings (aggregates the above)
 # ---------------------------------------------------------------------------
 
@@ -201,5 +257,7 @@ class PipelineSettings(BaseSettings):
     segmentation: SegmentationSettings = Field(default_factory=SegmentationSettings)
     detection: DetectionSettings = Field(default_factory=DetectionSettings)
     geometry: GeometrySettings = Field(default_factory=GeometrySettings)
+    alignment: AlignmentSettings = Field(default_factory=AlignmentSettings)
+    reprocessing: ReprocessingSettings = Field(default_factory=ReprocessingSettings)
 
     model_config = {"env_prefix": "ABSMAP_"}

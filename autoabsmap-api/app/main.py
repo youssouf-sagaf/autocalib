@@ -7,19 +7,41 @@ In Docker, also serves the frontend static build at /.
 from __future__ import annotations
 
 import logging
+import time
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from app.routes import jobs, reprocess, straighten, sessions
+from app.routes import jobs, logs, reprocess, straighten, sessions
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)-8s %(name)s — %(message)s",
-)
+# ── Logging setup: console + file handlers ──
+
+LOG_DIR = Path(__file__).resolve().parent.parent.parent / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+LOG_FORMAT = "%(asctime)s %(levelname)-8s %(name)s — %(message)s"
+LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
+
+def _add_file_handler(logger_name: str | None, filename: str, level: int = logging.DEBUG) -> None:
+    handler = RotatingFileHandler(LOG_DIR / filename, maxBytes=5_000_000, backupCount=3)
+    handler.setLevel(level)
+    handler.setFormatter(logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT))
+    logging.getLogger(logger_name).addHandler(handler)
+
+_add_file_handler(None, "backend.log")
+_add_file_handler("app.requests", "requests.log")
+
+front_logger = logging.getLogger("app.frontend")
+front_logger.propagate = False
+_add_file_handler("app.frontend", "front.log", level=logging.DEBUG)
+
+req_logger = logging.getLogger("app.requests")
 
 app = FastAPI(
     title="autoabsmap-api",
@@ -35,10 +57,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log every HTTP request with method, path, status, and duration."""
+    start = time.perf_counter()
+    response = await call_next(request)
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    req_logger.info(
+        "%s %s → %d (%.0fms)",
+        request.method,
+        request.url.path,
+        response.status_code,
+        elapsed_ms,
+    )
+    return response
+
+
 app.include_router(jobs.router)
 app.include_router(reprocess.router)
 app.include_router(straighten.router)
 app.include_router(sessions.router)
+app.include_router(logs.router)
 
 
 @app.get("/health")

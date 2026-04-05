@@ -69,6 +69,7 @@ async def save_session(session_id: str, request: SaveRequest) -> dict:
         edit_events=request.edit_events,
         reprocessed_steps=request.reprocessed_steps,
         final_slots=request.final_slots,
+        baseline_slots=request.baseline_slots,
         difficulty_tags=request.difficulty_tags,
         other_difficulty_note=request.other_difficulty_note,
         delta=delta,

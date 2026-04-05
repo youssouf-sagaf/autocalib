@@ -1,0 +1,15 @@
+export const tokens = {
+  primary: '#967adc',
+  primaryDark: '#7c5fbf',
+  primaryLight: '#bcaae9',
+  secondary: '#55595c',
+  success: '#37bc9b',
+  info: '#3bafda',
+  warning: '#f6bb42',
+  danger: '#da4453',
+  bg: '#f8f9fa',
+  surface: '#ffffff',
+  text: '#2d3436',
+  textMuted: '#6c757d',
+  border: '#e1e4e8',
+} as const;

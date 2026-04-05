@@ -92,6 +92,7 @@ class SaveRequest(BaseModel):
     """Session save — final slots + full edit trace → persistence + B2B forward."""
 
     final_slots: list[GeoSlot]
+    baseline_slots: list[GeoSlot] = Field(default_factory=list)
     edit_events: list[EditEvent]
     reprocessed_steps: list[ReprocessStep] = Field(default_factory=list)
     difficulty_tags: list[DifficultyTag] = Field(default_factory=list)

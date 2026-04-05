@@ -36,18 +36,17 @@ _sse_queues: dict[str, list[asyncio.Queue]] = {}
 
 async def _run_job(job_id: str, request: JobRequest) -> None:
     """Background task: run orchestrator and update job store."""
-    queues = _sse_queues.get(job_id, [])
+    loop = asyncio.get_running_loop()
 
     def on_progress(progress: OrchestratorProgress) -> None:
-        asyncio.get_event_loop().call_soon_threadsafe(
-            _broadcast_progress, job_id, progress,
-        )
+        loop.call_soon_threadsafe(_broadcast_progress, job_id, progress)
 
     def _broadcast_progress(jid: str, prog: OrchestratorProgress) -> None:
         for q in _sse_queues.get(jid, []):
             q.put_nowait(prog)
 
     try:
+        logger.info("Job %s starting — %d crop(s)", job_id, len(request.crops))
         await job_store.update_progress(
             job_id,
             OrchestratorProgress(crop_index=0, crop_total=len(request.crops), stage="starting", percent=0),
@@ -57,14 +56,19 @@ async def _run_job(job_id: str, request: JobRequest) -> None:
         result = await orchestrator.run(request.crops, job_id, on_progress)
         await job_store.mark_done(job_id, result)
 
+        logger.info(
+            "Job %s done — %d slots merged, %d baseline",
+            job_id, len(result.slots), len(result.baseline_slots),
+        )
+
         for q in _sse_queues.get(job_id, []):
             q.put_nowait(None)
 
     except Exception as exc:
-        logger.exception("Job %s failed", job_id)
+        logger.exception("Job %s FAILED: %s", job_id, exc)
         await job_store.mark_failed(job_id, str(exc))
         for q in _sse_queues.get(job_id, []):
-            q.put_nowait(None)
+            q.put_nowait("__FAILED__")
 
 
 @router.post("", response_model=PipelineJob)
@@ -125,6 +129,9 @@ async def stream_progress(job_id: str) -> EventSourceResponse:
                 msg = await queue.get()
                 if msg is None:
                     yield {"event": "done", "data": "{}"}
+                    break
+                if msg == "__FAILED__":
+                    yield {"event": "failed", "data": "{}"}
                     break
                 yield {
                     "event": "progress",

@@ -12,35 +12,37 @@ import cv2
 import numpy as np
 from shapely.geometry import Polygon
 
-from autoabsmap.config.settings import SegmentationSettings
-
 logger = logging.getLogger(__name__)
 
-__all__ = ["postprocess_parkable_mask"]
+__all__ = [
+    "morph_close_open",
+    "fill_small_holes",
+    "simplify_mask_boundary",
+]
 
 
-def _ensure_odd_kernel(size: int) -> int:
+def ensure_odd_kernel(size: int) -> int:
     k = max(1, int(size))
     if k % 2 == 0:
         k += 1
     return k
 
 
-def _morph_close_open(mask_uint8: np.ndarray, close_ksize: int, open_ksize: int) -> np.ndarray:
+def morph_close_open(mask_uint8: np.ndarray, close_ksize: int, open_ksize: int) -> np.ndarray:
     """Apply binary close then open on a 0/255 uint8 mask."""
     m = (mask_uint8 > 0).astype(np.uint8)
     if close_ksize >= 1:
-        kc = _ensure_odd_kernel(close_ksize)
+        kc = ensure_odd_kernel(close_ksize)
         kernel_c = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kc, kc))
         m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, kernel_c)
     if open_ksize >= 1:
-        ko = _ensure_odd_kernel(open_ksize)
+        ko = ensure_odd_kernel(open_ksize)
         kernel_o = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (ko, ko))
         m = cv2.morphologyEx(m, cv2.MORPH_OPEN, kernel_o)
     return (m * 255).astype(np.uint8)
 
 
-def _fill_small_holes(mask_uint8: np.ndarray, max_hole_area_px: int) -> np.ndarray:
+def fill_small_holes(mask_uint8: np.ndarray, max_hole_area_px: int) -> np.ndarray:
     """Fill interior holes whose area is at most *max_hole_area_px* pixels.
 
     Uses RETR_CCOMP: contours with a parent are hole boundaries.
@@ -65,7 +67,7 @@ def _fill_small_holes(mask_uint8: np.ndarray, max_hole_area_px: int) -> np.ndarr
     return (out * 255).astype(np.uint8)
 
 
-def _simplify_mask_boundary(
+def simplify_mask_boundary(
     mask_uint8: np.ndarray,
     *,
     tolerance_px: float,
@@ -122,25 +124,3 @@ def _simplify_mask_boundary(
             if hole.shape[0] >= 3:
                 cv2.fillPoly(canvas, [hole], 0)
     return canvas
-
-
-def postprocess_parkable_mask(
-    mask_uint8: np.ndarray,
-    settings: SegmentationSettings,
-) -> np.ndarray:
-    """Close/open, fill small holes, then simplify external boundaries.
-
-    Full post-processing pipeline for a raw SegFormer binary mask.
-    Defaults in SegmentationSettings reproduce R&D behavior exactly.
-    """
-    if mask_uint8.ndim != 2:
-        raise ValueError(f"mask must be 2D, got shape {mask_uint8.shape}")
-    work = mask_uint8.astype(np.uint8, copy=True)
-    work = _morph_close_open(work, settings.morph_close_kernel, settings.morph_open_kernel)
-    work = _fill_small_holes(work, settings.max_hole_area_px)
-    work = _simplify_mask_boundary(
-        work,
-        tolerance_px=settings.simplify_tolerance_px,
-        min_polygon_area_px=settings.min_polygon_area_px,
-    )
-    return work

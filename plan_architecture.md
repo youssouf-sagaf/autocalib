@@ -598,11 +598,79 @@ This guarantees that the display map (WGS84 tiles in the browser), the ML raster
 
 **Location:** `autocalib/autoabsmap-frontend/`
 
-**Key architectural decision:** All feature modules are **map-renderer agnostic**. They communicate with the map through an `IMapProvider` interface. POC uses **Mapbox GL JS** (`react-map-gl` + `mapbox-gl-draw`); integration swaps to `GoogleMapsMapProvider` — **zero business logic rewrite**. The app is simply called **autoabsmap** in the UI.
+**Key architectural decision:** All feature modules are **map-renderer agnostic**. They communicate with the map through an `IMapProvider` interface. POC uses **Mapbox GL JS** (`react-map-gl` + `mapbox-gl-draw`); integration swaps to `GoogleMapsMapProvider` — **zero business logic rewrite**. The app is called **autoabsmap** in the UI.
 
-Two display maps and one imagery system coexist:
-- **Display map** (left + right panel): rendered by the concrete `IMapProvider` implementation, handles scrolling/panning via native tile loading.
-- **ML imagery**: fetched by the `ImageryProvider` (server-side) only when the user launches a job — completely independent of map scrolling.
+**ML imagery** is fetched by the `ImageryProvider` (server-side) only when the user launches a job — completely independent of map scrolling.
+
+---
+
+#### 2a. Cocoparks branding
+
+The POC follows the **Cocoparks design system** from Cocopilot-FE to ensure visual consistency at integration time.
+
+| Token | Value | Notes |
+|---|---|---|
+| **Primary** | `#967adc` | Cocoparks purple |
+| **Secondary** | `#55595c` | Gray |
+| **Success** | `#37bc9b` | |
+| **Info** | `#3bafda` | |
+| **Warning** | `#f6bb42` | |
+| **Danger** | `#da4453` | |
+| **Font primary** | **Open Sans** | Body text |
+| **Font secondary** | **Muli** | UI / monospace elements |
+| **Logo** | `logo-small.png` (navbar), `coco-logo.png` (splash/login) | From `Cocopilot-FE/src/assets/logos/` |
+
+Slot-layer colors reuse the `SLOT_COLORS` palette from `Cocopilot-FE/src/utils/constants/colors.ts` (purple track family: `#522ead`, `#bcaae9`).
+
+---
+
+#### 2b. UI layout & flow — single map → dual map toggle
+
+The app has **two layout modes**. The operator switches between them with a **"Dual Map" toggle button** in the toolbar.
+
+**Mode 1 — Single full-page map (default on load)**
+
+The map takes the entire viewport. This is the working mode for:
+- Viewing existing slots (muted overlay from Firestore)
+- ROI registration (drawing N crop rectangles while scrolling)
+- Optional hint drawing (freehand class A/B)
+- Launching the pipeline (progress bar overlay / side panel)
+
+The dual-map toggle button is visible but inactive until results exist.
+
+**Mode 2 — Dual synchronized map (toggle on)**
+
+Activated by clicking the **"Dual Map"** button (enabled once `slots.length > 0`). The viewport splits 50/50:
+- **Left**: clean basemap (no detections — visual reference)
+- **Right**: basemap + detected OBBs / centroids
+- **Synchronized** pan and zoom on both panels
+
+All editing tools (Add, Delete, Bulk Delete, Copy, Modify, Reprocess, Row Straighten) operate on the right map. The left map is read-only reference.
+
+Clicking the toggle again collapses back to single map (right map becomes full-page with all layers visible). The operator can switch freely at any time during the editing phase.
+
+**Layout component hierarchy:**
+
+```
+<AppShell>                         ← navbar (Cocoparks logo + app name) + toolbar
+  <MapLayout dualMap={dualMapActive}>
+    {dualMapActive
+      ? <DualMapLayout>            ← 50/50 split, synced pan/zoom
+          <MapPanel side="left" />   ← clean basemap
+          <MapPanel side="right" />  ← basemap + slot layers + edit tools
+        </DualMapLayout>
+      : <SingleMapLayout>          ← full-page map with all layers
+          <MapPanel />
+        </SingleMapLayout>
+    }
+  </MapLayout>
+  <Toolbar />                      ← ROI draw, hints, pipeline trigger, dual-map toggle, editing tools
+</AppShell>
+```
+
+---
+
+#### 2c. `IMapProvider` interface
 
 ```typescript
 // src/map/MapProvider.interface.ts
@@ -611,7 +679,6 @@ interface IMapProvider {
   addSlotLayer(slots: Slot[], opts: SlotLayerOptions): LayerHandle;
   updateSlotLayer(handle: LayerHandle, slots: Slot[]): void;
   removeLayer(handle: LayerHandle): void;
-  // Multi-crop: user draws N rectangles while scrolling the parking lot
   enableMultiRectDraw(): Promise<GeoJSON.Polygon[]>;
   enableLassoDraw(): Promise<GeoJSON.Polygon>;
   enableFreehandDraw(hintClass: 'A' | 'B'): Promise<GeoJSON.Polygon>;
@@ -621,10 +688,13 @@ interface IMapProvider {
 // Integration: GoogleMapsMapProvider implements IMapProvider
 ```
 
-**Feature modules (each is a self-contained folder):**
+---
+
+#### 2d. Feature modules (each is a self-contained folder)
 
 | Module | Responsibility | Key components |
 |---|---|---|
+| `layout/` | App shell, single/dual map toggle, toolbar container | `AppShell`, `MapLayout`, `DualMapToggle` |
 | `crops/` | Draw N rectangles while scrolling, manage crop list | `CropDrawer`, `CropList`, `CropPanel` |
 | `hints/` | Freehand mask hints (class A/B) per crop | `HintLayer`, `HintToolbar` |
 | `pipeline/` | Trigger multi-crop job, stream per-crop progress | `PipelineTrigger`, `JobStatus` |
@@ -636,22 +706,34 @@ interface IMapProvider {
 | `session/` | Edit history (undo/redo), dirty flag | `useEditHistory` hook |
 | `save/` | Difficulty tags + final save | `SavePanel`, `DifficultyPicker` |
 
-**Redux slice — `autoabsmap-slice.ts`:**
+---
+
+#### 2e. Redux slice — `autoabsmap-slice.ts`
 
 ```typescript
 interface AbsmapState {
-  crops: CropRequest[];       // N rectangles drawn by the user (grows as user draws)
-  job: PipelineJob | null;    // current job (multi-crop)
-  slots: Slot[];              // merged result across all crops
-  baselineSlots: Slot[];      // immutable snapshot for diff (learning loop)
-  selection: string[];        // selected slot_ids
-  editHistory: EditEvent[];   // full trace for learning loop
-  editIndex: number;          // pointer for undo/redo
+  // --- layout ---
+  dualMapActive: boolean;       // toggled by DualMapToggle button
+  // --- ROI + pipeline ---
+  crops: CropRequest[];         // N rectangles drawn by the user (grows as user draws)
+  job: PipelineJob | null;      // current job (multi-crop)
+  // --- slots ---
+  existingSlots: Slot[];        // loaded on mount — read-only reference overlay
+  slots: Slot[];                // merged result across all crops (editable)
+  baselineSlots: Slot[];        // immutable snapshot for diff (learning loop)
+  // --- editing ---
+  selection: string[];          // selected slot_ids
+  editHistory: EditEvent[];     // full trace for learning loop
+  editIndex: number;            // pointer for undo/redo
   isDirty: boolean;
 }
 ```
 
-**File structure:**
+**Toggle logic:** `toggleDualMap` action flips `dualMapActive`. The button is enabled only when `slots.length > 0` (results exist). On first result load, the UI can auto-activate dual map (configurable).
+
+---
+
+#### 2f. File structure
 
 ```
 autoabsmap-frontend/
@@ -661,6 +743,7 @@ autoabsmap-frontend/
       MapboxGLMapProvider.ts     # POC: Mapbox GL JS via react-map-gl + mapbox-gl-draw
       GoogleMapsMapProvider.ts   # ready for Cocopilot-FE integration
     features/
+      layout/                    # app shell, single/dual toggle, toolbar
       crops/
       hints/
       pipeline/
@@ -676,6 +759,8 @@ autoabsmap-frontend/
       store.ts
     api/
       autoabsmap-api.ts             # typed axios client for autoabsmap-api
+    theme/
+      tokens.ts                     # Cocoparks colors, fonts, spacing
     App.tsx
   package.json
   vite.config.ts

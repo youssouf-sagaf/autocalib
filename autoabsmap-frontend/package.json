@@ -1,0 +1,29 @@
+{
+  "name": "autoabsmap-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.11.2",
+    "axios": "^1.14.0",
+    "mapbox-gl": "^3.21.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-map-gl": "^8.1.0",
+    "react-redux": "^9.2.0"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3"
+  }
+}

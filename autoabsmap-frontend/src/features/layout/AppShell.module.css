@@ -1,0 +1,126 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 16px;
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  font-family: var(--font-secondary);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.title {
+  font-family: var(--font-secondary);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--color-text);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dualBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dualBtn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.dualBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dualBtn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.drawBanner {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 20px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 13px;
+  font-family: var(--font-primary);
+  border-radius: 0 0 8px 8px;
+  z-index: 15;
+  white-space: nowrap;
+}
+
+.drawBanner kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.25);
+  font-size: 12px;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.mapArea {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  background: #fff;
+  border-left: 1px solid var(--color-border);
+  overflow-y: auto;
+  z-index: 10;
+}
