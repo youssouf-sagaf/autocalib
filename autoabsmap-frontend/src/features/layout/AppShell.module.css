@@ -104,6 +104,29 @@
   font-size: 12px;
 }
 
+.modeBanner {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 20px;
+  background: var(--color-info, #3bafda);
+  color: #fff;
+  font-size: 13px;
+  font-family: var(--font-primary);
+  border-radius: 0 0 8px 8px;
+  z-index: 15;
+  white-space: nowrap;
+}
+
+.modeBanner kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.25);
+  font-size: 12px;
+}
+
 .content {
   display: flex;
   flex: 1;

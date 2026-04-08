@@ -1,19 +1,47 @@
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { removeCrop, clearCrops, launchJob, resetSession, toggleOverlay } from '../../store/autoabsmap-slice';
+import { removeCrop, clearCrops, launchJob, saveSession, resetSession, toggleOverlay } from '../../store/autoabsmap-slice';
 import { JobProgress } from '../pipeline/JobProgress';
-import type { OverlayLayer } from '../../types';
+import type { EditMode, OverlayLayer } from '../../types';
 import styles from './CropPanel.module.css';
 
 interface CropPanelProps {
   isDrawing: boolean;
   onStartDraw: () => void;
   onStopDraw: () => void;
+  onToggleAddMode?: () => void;
+  onConfirmAdd?: () => void;
+  onCancelAdd?: () => void;
+  hasPendingSlot?: boolean;
+  onToggleDeleteMode?: () => void;
+  onConfirmDelete?: () => void;
+  onCancelDelete?: () => void;
+  onToggleCopyMode?: () => void;
+  onToggleModifyMode?: () => void;
+  onCancelModify?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 }
 
 export function CropPanel({
   isDrawing,
   onStartDraw,
   onStopDraw,
+  onToggleAddMode,
+  onConfirmAdd,
+  onCancelAdd,
+  hasPendingSlot = false,
+  onToggleDeleteMode,
+  onConfirmDelete,
+  onCancelDelete,
+  onToggleCopyMode,
+  onToggleModifyMode,
+  onCancelModify,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
 }: CropPanelProps) {
   const dispatch = useAppDispatch();
   const crops = useAppSelector((s) => s.absmap.crops);
@@ -23,6 +51,15 @@ export function CropPanel({
   const displayCount = slotCount || baselineCount;
   const dualMapActive = useAppSelector((s) => s.absmap.dualMapActive);
   const overlayVisibility = useAppSelector((s) => s.absmap.overlayVisibility);
+  const editMode: EditMode = useAppSelector((s) => s.absmap.editMode);
+  const isAddMode = editMode === 'add';
+  const isDeleteMode = editMode === 'delete';
+  const isCopyMode = editMode === 'copy';
+  const isModifyMode = editMode === 'modify';
+  const isDirty = useAppSelector((s) => s.absmap.isDirty);
+  const isSaving = useAppSelector((s) => s.absmap.isSaving);
+  const lastSavedAt = useAppSelector((s) => s.absmap.lastSavedAt);
+  const saveError = useAppSelector((s) => s.absmap.saveError);
   const isRunning = job?.status === 'running' || job?.status === 'pending';
   const hasResults = job?.status === 'done' && displayCount > 0;
 
@@ -132,73 +169,165 @@ export function CropPanel({
         </div>
       )}
 
-      {hasResults && (
-        <>
-          <div className={styles.section}>
-            <h3 className={styles.heading}>Lightning Edition</h3>
-            <div className={styles.actionGrid}>
-              <button className={styles.actionBtn} disabled title="Hold A + click to place a slot">
-                <span className={styles.actionIcon}>+</span>
-                <span>Add <kbd className={styles.kbd}>A</kbd></span>
-              </button>
-              <button className={styles.actionBtn} disabled title="Click a slot to remove it">
-                <span className={styles.actionIcon}>&minus;</span>
-                <span>Delete <kbd className={styles.kbd}>D</kbd></span>
-              </button>
-              <button className={styles.actionBtn} disabled title="Lasso select + confirm delete">
-                <span className={styles.actionIcon}>&#x25AD;</span>
-                <span>Bulk Delete</span>
-              </button>
-              <button className={styles.actionBtn} disabled title="Duplicate a reference slot">
-                <span className={styles.actionIcon}>&#x2398;</span>
-                <span>Copy <kbd className={styles.kbd}>C</kbd></span>
-              </button>
-              <button className={styles.actionBtn} disabled title="Adjust orientation / geometry">
-                <span className={styles.actionIcon}>&#x270E;</span>
-                <span>Modify <kbd className={styles.kbd}>M</kbd></span>
-              </button>
-              <button className={styles.actionBtn} disabled title="Undo last edit">
-                <span className={styles.actionIcon}>&#x21B6;</span>
-                <span>Undo <kbd className={styles.kbd}>Z</kbd></span>
-              </button>
-            </div>
-          </div>
+      <div className={styles.section}>
+        <h3 className={styles.heading}>Lightning Edition</h3>
+        <div className={styles.actionGrid2}>
+          <button
+            className={`${styles.actionBtn} ${isAddMode ? styles.actionBtnActive : ''}`}
+            onClick={onToggleAddMode}
+            disabled={!hasResults}
+            title="Press A to toggle — click map to place a slot"
+          >
+            <span className={styles.actionIcon}>+</span>
+            <span>Add <kbd className={styles.kbd}>A</kbd></span>
+          </button>
+          <button
+            className={`${styles.actionBtn} ${isDeleteMode ? styles.actionBtnActive : ''}`}
+            onClick={onToggleDeleteMode}
+            disabled={!hasResults}
+            title="Press D to toggle — click a slot to remove it"
+          >
+            <span className={styles.actionIcon}>&minus;</span>
+            <span>Delete <kbd className={styles.kbd}>D</kbd></span>
+          </button>
+          <button
+            className={`${styles.actionBtn} ${isCopyMode ? styles.actionBtnActive : ''}`}
+            onClick={onToggleCopyMode}
+            disabled={!hasResults}
+            title="Press C to toggle — click a slot to duplicate it"
+          >
+            <span className={styles.actionIcon}>&#x2398;</span>
+            <span>Copy <kbd className={styles.kbd}>C</kbd></span>
+          </button>
+          <button
+            className={`${styles.actionBtn} ${isModifyMode ? styles.actionBtnActive : ''}`}
+            onClick={onToggleModifyMode}
+            disabled={!hasResults}
+            title="Press M to toggle — click a slot to reposition/rotate it"
+          >
+            <span className={styles.actionIcon}>&#x270E;</span>
+            <span>Modify <kbd className={styles.kbd}>M</kbd></span>
+          </button>
+        </div>
+        <div className={styles.actionGrid2}>
+          <button
+            className={styles.actionBtn}
+            onClick={onUndo}
+            disabled={!canUndo}
+            title="Undo last edit"
+          >
+            <span className={styles.actionIcon}>&#x21B6;</span>
+            <span>Undo <kbd className={styles.kbd}>Z</kbd></span>
+          </button>
+          <button
+            className={styles.actionBtn}
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="Redo last undone edit"
+          >
+            <span className={styles.actionIcon}>&#x21B7;</span>
+            <span>Redo <kbd className={styles.kbd}>&#x21E7;Z</kbd></span>
+          </button>
+        </div>
 
-          <div className={styles.section}>
-            <h3 className={styles.heading}>AI Assist</h3>
-            <div className={styles.actionGrid2}>
-              <button className={styles.actionBtn} disabled title="Ref slot + scope region → auto-fill missed area">
-                <span className={styles.actionIcon}>&#x21BB;</span>
-                <span>Reprocess <kbd className={styles.kbd}>R</kbd></span>
-              </button>
-              <button className={styles.actionBtn} disabled title="Click one slot → align entire row (mise au carré)">
-                <span className={styles.actionIcon}>&#x2261;</span>
-                <span>Straighten</span>
-              </button>
-            </div>
+        {isAddMode && (
+          <div className={styles.modeBar}>
+            <span className={styles.modeBarLabel}>
+              {hasPendingSlot
+                ? 'Move mouse to rotate · Click to confirm'
+                : 'Click on the map to place a slot'}
+            </span>
+            {hasPendingSlot && (
+              <div className={styles.modeBarActions}>
+                <button className={styles.confirmBtn} onClick={onConfirmAdd}>
+                  Save <kbd className={styles.kbd}>Enter</kbd>
+                </button>
+                <button className={styles.cancelBtn} onClick={onCancelAdd}>
+                  Cancel <kbd className={styles.kbd}>Esc</kbd>
+                </button>
+              </div>
+            )}
           </div>
+        )}
 
-          <div className={styles.section}>
-            <h3 className={styles.heading}>Session</h3>
-            <div className={styles.actionGrid2}>
-              <button className={styles.actionBtn} disabled title="Save slots + edit trace + difficulty tags">
-                <span className={styles.actionIcon}>&#x2713;</span>
-                Save
+        {isDeleteMode && (
+          <div className={styles.modeBar}>
+            <span className={styles.modeBarLabel}>Click a slot to select, then confirm</span>
+            <div className={styles.modeBarActions}>
+              <button className={styles.confirmBtn} onClick={onConfirmDelete}>
+                Confirm <kbd className={styles.kbd}>Enter</kbd>
               </button>
-              <button className={styles.actionBtn} disabled title="Download GeoJSON file">
-                <span className={styles.actionIcon}>&#x21E9;</span>
-                Export
+              <button className={styles.cancelBtn} onClick={onCancelDelete}>
+                Cancel <kbd className={styles.kbd}>Esc</kbd>
               </button>
             </div>
-            <button
-              className={styles.resetBtn}
-              onClick={() => dispatch(resetSession())}
-            >
-              Reset Session
-            </button>
           </div>
-        </>
-      )}
+        )}
+
+        {isCopyMode && (
+          <div className={styles.modeBar}>
+            <span className={styles.modeBarLabel}>Click a slot to duplicate it</span>
+          </div>
+        )}
+
+        {isModifyMode && (
+          <div className={styles.modeBar}>
+            <span className={styles.modeBarLabel}>Click a slot · Drag to move · Click to rotate · Click to confirm</span>
+            <div className={styles.modeBarActions}>
+              <button className={styles.cancelBtn} onClick={onCancelModify}>
+                Cancel <kbd className={styles.kbd}>Esc</kbd>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className={styles.section}>
+        <h3 className={styles.heading}>AI Assist</h3>
+        <div className={styles.actionGrid2}>
+          <button className={styles.actionBtn} disabled title="Ref slot + scope region → auto-fill missed area">
+            <span className={styles.actionIcon}>&#x21BB;</span>
+            <span>Reprocess <kbd className={styles.kbd}>R</kbd></span>
+          </button>
+          <button className={styles.actionBtn} disabled title="Click one slot → align entire row (mise au carré)">
+            <span className={styles.actionIcon}>&#x2261;</span>
+            <span>Straighten</span>
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <h3 className={styles.heading}>Session</h3>
+        <div className={styles.actionGrid2}>
+          <button
+            className={`${styles.actionBtn} ${isDirty ? styles.actionBtnDirty : ''}`}
+            disabled={!isDirty || isSaving || !job?.id}
+            onClick={() => void dispatch(saveSession())}
+            title={isDirty ? 'Save slots + edit trace to server' : 'No unsaved changes'}
+          >
+            <span className={styles.actionIcon}>{isSaving ? '⏳' : '&#x2713;'}</span>
+            {isSaving ? 'Saving…' : 'Save'}
+          </button>
+          <button className={styles.actionBtn} disabled title="Download GeoJSON file">
+            <span className={styles.actionIcon}>&#x21E9;</span>
+            Export
+          </button>
+        </div>
+        {lastSavedAt && !isDirty && (
+          <div className={styles.savedNote}>
+            Saved {new Date(lastSavedAt).toLocaleTimeString()}
+          </div>
+        )}
+        {saveError && (
+          <div className={styles.saveError}>{saveError}</div>
+        )}
+        <button
+          className={styles.resetBtn}
+          onClick={() => dispatch(resetSession())}
+        >
+          Reset Session
+        </button>
+      </div>
     </div>
   );
 }

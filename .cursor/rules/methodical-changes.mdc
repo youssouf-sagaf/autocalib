@@ -1,0 +1,21 @@
+---
+description: Enforce methodical, minimal, and well-reasoned code changes
+alwaysApply: true
+---
+
+# Methodical Code Changes
+
+## Scope of changes
+
+- Only modify code directly relevant to the specific request. Do not touch unrelated functionality.
+- Never replace code with placeholders like `// ... rest of the processing ...`. Always include complete code.
+
+## Problem-solving approach
+
+- Break problems into smaller steps. Think through each step separately before implementing.
+- Always provide a complete **PLAN** with **REASONING** based on evidence from code and logs before making changes.
+
+## Debugging workflow
+
+- Explain **OBSERVATIONS** clearly, then provide **REASONING** to identify the exact issue.
+- Add console logs / debug prints when needed to gather more information before jumping to a fix.

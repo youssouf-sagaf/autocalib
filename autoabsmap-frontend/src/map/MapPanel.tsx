@@ -19,8 +19,17 @@ const PARKING_MARKER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="28" h
   <text x="14" y="17.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="15" fill="white">P</text>
 </svg>`;
 
+const ADD_MARKER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+  <path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 22 14 22s14-11.5 14-22C28 6.27 21.73 0 14 0z" fill="#2979ff"/>
+  <circle cx="14" cy="13" r="9" fill="#2979ff"/>
+  <text x="14" y="17.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="16" fill="white">+</text>
+</svg>`;
+
 const PARKING_MARKER_IMG = new Image(28, 36);
 PARKING_MARKER_IMG.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PARKING_MARKER_SVG)}`;
+
+const ADD_MARKER_IMG = new Image(28, 36);
+ADD_MARKER_IMG.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ADD_MARKER_SVG)}`;
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -52,6 +61,11 @@ interface MapPanelProps {
   showCentroids?: boolean;
   label?: string;
   overlays?: OverlayData;
+  pendingSlot?: Slot | null;
+  selectedSlotId?: string | null;
+  hoveredSlotId?: string | null;
+  modifyingSlot?: Slot | null;
+  isEditMode?: boolean;
 }
 
 // Data-driven color expression: slot source → color
@@ -92,6 +106,11 @@ export function MapPanel({
   showCentroids = true,
   label,
   overlays,
+  pendingSlot,
+  selectedSlotId,
+  hoveredSlotId,
+  modifyingSlot,
+  isEditMode = false,
 }: MapPanelProps) {
   const crops = useAppSelector((s) => s.absmap.crops);
   const finalSlots = useAppSelector((s) => s.absmap.slots);
@@ -183,16 +202,103 @@ export function MapPanel({
 
   const vertexGeoJSON = vertexFeatures ?? EMPTY_POINT_FC;
 
-  /* ── Click handler: slot popup OR external handler ── */
+  const pendingBboxGeoJSON: GeoJSON.FeatureCollection = useMemo(
+    () =>
+      pendingSlot
+        ? {
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature' as const,
+                properties: {},
+                geometry: pendingSlot.polygon,
+              },
+            ],
+          }
+        : EMPTY_FC,
+    [pendingSlot],
+  );
+
+  const pendingMarkerGeoJSON: GeoJSON.FeatureCollection = useMemo(
+    () =>
+      pendingSlot
+        ? {
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature' as const,
+                properties: {},
+                geometry: {
+                  type: 'Point' as const,
+                  coordinates: [pendingSlot.center.lng, pendingSlot.center.lat],
+                },
+              },
+            ],
+          }
+        : EMPTY_FC,
+    [pendingSlot],
+  );
+
+  const selectedSlotGeoJSON: GeoJSON.FeatureCollection = useMemo(() => {
+    if (!selectedSlotId) return EMPTY_FC;
+    const slot = slots.find((s) => s.slot_id === selectedSlotId);
+    if (!slot) return EMPTY_FC;
+    return {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature' as const,
+        properties: {},
+        geometry: slot.polygon,
+      }],
+    };
+  }, [selectedSlotId, slots]);
+
+  const hoveredSlotGeoJSON: GeoJSON.FeatureCollection = useMemo(() => {
+    if (!hoveredSlotId) return EMPTY_FC;
+    const slot = slots.find((s) => s.slot_id === hoveredSlotId);
+    if (!slot) return EMPTY_FC;
+    return {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature' as const,
+        properties: {},
+        geometry: slot.polygon,
+      }],
+    };
+  }, [hoveredSlotId, slots]);
+
+  const modifyingBboxGeoJSON: GeoJSON.FeatureCollection = useMemo(
+    () =>
+      modifyingSlot
+        ? {
+            type: 'FeatureCollection',
+            features: [{
+              type: 'Feature' as const,
+              properties: {},
+              geometry: modifyingSlot.polygon,
+            }],
+          }
+        : EMPTY_FC,
+    [modifyingSlot],
+  );
+
+  /* ── Click handler: edit modes forward everything; browse mode shows popup ── */
 
   const handleClick = useCallback(
     (e: MapMouseEvent) => {
+      if (isEditMode) {
+        setPopupSlot(null);
+        onMapClick?.(e);
+        return;
+      }
+
       if (showSlots && e.features && e.features.length > 0) {
         const slotId = e.features[0]?.properties?.slot_id as string | undefined;
         if (slotId) {
           const slot = slots.find((s) => s.slot_id === slotId);
           if (slot) {
             setPopupSlot(slot);
+            onMapClick?.(e);
             return;
           }
         }
@@ -200,7 +306,7 @@ export function MapPanel({
       setPopupSlot(null);
       onMapClick?.(e);
     },
-    [showSlots, slots, onMapClick],
+    [isEditMode, showSlots, slots, onMapClick],
   );
 
   const handleMouseMove = useCallback(
@@ -220,8 +326,12 @@ export function MapPanel({
 
   const onMapLoad = useCallback(() => {
     const map = mapRef.current?.getMap();
-    if (map && !map.hasImage('parking-marker')) {
+    if (!map) return;
+    if (!map.hasImage('parking-marker')) {
       map.addImage('parking-marker', PARKING_MARKER_IMG, { sdf: false });
+    }
+    if (!map.hasImage('add-marker')) {
+      map.addImage('add-marker', ADD_MARKER_IMG, { sdf: false });
     }
   }, []);
 
@@ -318,12 +428,34 @@ export function MapPanel({
           />
         </Source>
 
-        {/* ── Slot fill (invisible, kept for click interaction) ── */}
+        {/* ── Slot polygons (invisible fill for click + colored outline) ── */}
         <Source id="slots" type="geojson" data={slotsGeoJSON}>
           <Layer
             id="slots-fill"
             type="fill"
             paint={{ 'fill-color': '#000000', 'fill-opacity': 0 }}
+          />
+          <Layer
+            id="slots-line"
+            type="line"
+            paint={{
+              'line-color': SOURCE_COLOR,
+              'line-width': 1.5,
+              'line-opacity': 0.85,
+            }}
+          />
+        </Source>
+
+        {/* ── Hovered slot highlight (white glow) ── */}
+        <Source id="hovered-slot" type="geojson" data={hoveredSlotGeoJSON}>
+          <Layer
+            id="hovered-slot-line"
+            type="line"
+            paint={{
+              'line-color': '#ffffff',
+              'line-width': 3,
+              'line-opacity': 0.7,
+            }}
           />
         </Source>
 
@@ -393,6 +525,69 @@ export function MapPanel({
             />
           </Source>
         )}
+
+        {/* ── Pending slot bbox (orange dashed) ── */}
+        <Source id="pending-bbox" type="geojson" data={pendingBboxGeoJSON}>
+          <Layer
+            id="pending-bbox-fill"
+            type="fill"
+            paint={{ 'fill-color': '#f39c12', 'fill-opacity': 0.2 }}
+          />
+          <Layer
+            id="pending-bbox-line"
+            type="line"
+            paint={{
+              'line-color': '#f39c12',
+              'line-width': 2.5,
+              'line-dasharray': [4, 3],
+            }}
+          />
+        </Source>
+
+        {/* ── Pending slot marker (blue) ── */}
+        <Source id="pending-marker" type="geojson" data={pendingMarkerGeoJSON}>
+          <Layer
+            id="pending-marker-symbol"
+            type="symbol"
+            layout={{
+              'icon-image': 'add-marker',
+              'icon-size': 1,
+              'icon-anchor': 'bottom',
+              'icon-allow-overlap': true,
+              'icon-ignore-placement': true,
+            }}
+          />
+        </Source>
+
+        {/* ── Selected slot highlight (red ring) ── */}
+        <Source id="selected-slot" type="geojson" data={selectedSlotGeoJSON}>
+          <Layer
+            id="selected-slot-line"
+            type="line"
+            paint={{
+              'line-color': tokens.danger,
+              'line-width': 3,
+            }}
+          />
+        </Source>
+
+        {/* ── Modifying slot preview (cyan dashed) ── */}
+        <Source id="modifying-bbox" type="geojson" data={modifyingBboxGeoJSON}>
+          <Layer
+            id="modifying-bbox-fill"
+            type="fill"
+            paint={{ 'fill-color': tokens.info, 'fill-opacity': 0.15 }}
+          />
+          <Layer
+            id="modifying-bbox-line"
+            type="line"
+            paint={{
+              'line-color': tokens.info,
+              'line-width': 2.5,
+              'line-dasharray': [4, 3],
+            }}
+          />
+        </Source>
 
         {/* ── Slot info popup ── */}
         {popupSlot && (

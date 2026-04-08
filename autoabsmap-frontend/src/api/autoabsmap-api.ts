@@ -4,6 +4,8 @@ import type {
   JobResult,
   OrchestratorProgress,
   PipelineJob,
+  SaveSessionRequest,
+  SaveSessionResponse,
 } from '../types';
 
 const client = axios.create({
@@ -22,6 +24,14 @@ export async function getJob(jobId: string): Promise<PipelineJob> {
 
 export async function getJobResult(jobId: string): Promise<JobResult> {
   const { data } = await client.get<JobResult>(`/api/v1/jobs/${jobId}/result`);
+  return data;
+}
+
+export async function saveSession(request: SaveSessionRequest): Promise<SaveSessionResponse> {
+  const { data } = await client.post<SaveSessionResponse>(
+    `/api/v1/jobs/${request.job_id}/save`,
+    request,
+  );
   return data;
 }
 

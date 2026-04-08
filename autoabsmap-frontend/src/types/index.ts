@@ -77,3 +77,17 @@ export interface EditEvent {
   before: Slot[];
   after: Slot[];
 }
+
+export type EditMode = 'none' | 'add' | 'delete' | 'copy' | 'modify';
+
+export interface SaveSessionRequest {
+  job_id: string;
+  slots: Slot[];
+  edit_history: EditEvent[];
+  saved_at: string;
+}
+
+export interface SaveSessionResponse {
+  ok: boolean;
+  saved_at: string;
+}
