@@ -1,1 +1,1 @@
-"""I/O primitives — GeoTIFF read/crop and atomic file writes."""
+"""I/O primitives — GeoRasterSlice model and atomic file writes."""

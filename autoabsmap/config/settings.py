@@ -23,7 +23,6 @@ from pydantic_settings import BaseSettings
 class ImagerySource(str, Enum):
     mapbox = "mapbox"
     ign = "ign"
-    geotiff_file = "geotiff_file"
 
 
 class ImagerySettings(BaseSettings):
@@ -46,9 +45,6 @@ class ImagerySettings(BaseSettings):
     ign_timeout_s: float = 90.0
     ign_max_retries: int = 3
     ign_retry_backoff_s: float = 2.0
-
-    # GeoTIFF file (local, for offline testing / replay)
-    geotiff_file_path: str | None = None
 
     # Common
     default_image_width: int = 1280

@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 
 from autoabsmap.config.settings import ImagerySettings, ImagerySource
-from autoabsmap.imagery.geotiff_file import GeoTiffFileProvider
 from autoabsmap.imagery.ign import IGNImageryProvider
 from autoabsmap.imagery.mapbox import MapboxImageryProvider
 from autoabsmap.imagery.protocols import ImageryProvider
@@ -28,13 +27,5 @@ def build_imagery_provider(settings: ImagerySettings) -> ImageryProvider:
     if settings.source == ImagerySource.ign:
         logger.info("Using IGN Géoplateforme imagery provider")
         return IGNImageryProvider(settings)
-
-    if settings.source == ImagerySource.geotiff_file:
-        if not settings.geotiff_file_path:
-            raise ValueError(
-                "IMAGERY_GEOTIFF_FILE_PATH is required when source=geotiff_file"
-            )
-        logger.info("Using local GeoTIFF file provider: %s", settings.geotiff_file_path)
-        return GeoTiffFileProvider(settings.geotiff_file_path)
 
     raise ValueError(f"Unknown imagery source: {settings.source}")
