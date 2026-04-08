@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import math
+from pathlib import Path
 from typing import Callable
 
 from geojson_pydantic import Polygon as GeoJSONPolygon
@@ -155,7 +156,14 @@ class MultiCropOrchestrator:
         job_id: str,
         on_progress: OrchestratorProgressCallback | None = None,
     ) -> JobResult:
-        target_gsd = self._pipeline._settings.imagery.target_gsd_m
+        settings = self._pipeline._settings
+        target_gsd = settings.imagery.target_gsd_m
+
+        artifacts_base: Path | None = None
+        if settings.debug_artifacts:
+            import autoabsmap
+            pkg_root = Path(autoabsmap.__file__).resolve().parent
+            artifacts_base = pkg_root / "artifacts" / job_id
 
         all_tiles: list[CropRequest] = []
         for crop in crops:
@@ -175,6 +183,10 @@ class MultiCropOrchestrator:
         for idx, tile in enumerate(all_tiles):
             logger.info("Processing tile %d/%d for job %s", idx + 1, crop_total, job_id)
 
+            tile_artifacts = (
+                artifacts_base / f"tile_{idx:02d}" if artifacts_base else None
+            )
+
             def _wrap_progress(sp: StageProgress, _idx: int = idx) -> None:
                 if on_progress:
                     on_progress(OrchestratorProgress(
@@ -186,7 +198,7 @@ class MultiCropOrchestrator:
 
             request = PipelineRequest(roi=tile.polygon, hints=tile.hints)
             result = await asyncio.to_thread(
-                self._pipeline.run, request, _wrap_progress,
+                self._pipeline.run, request, _wrap_progress, tile_artifacts,
             )
 
             crop_results.append(result)

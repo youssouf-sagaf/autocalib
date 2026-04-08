@@ -38,6 +38,7 @@ env/
 # Model weights & large binaries
 # ========================================
 autoabsmap/checkpoints/
+autoabsmap/artifacts/
 *.pth
 *.pt
 *.onnx

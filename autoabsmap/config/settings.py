@@ -256,4 +256,7 @@ class PipelineSettings(BaseSettings):
     alignment: AlignmentSettings = Field(default_factory=AlignmentSettings)
     reprocessing: ReprocessingSettings = Field(default_factory=ReprocessingSettings)
 
+    debug_artifacts: bool = True
+    """Save per-stage debug images under ``autoabsmap/artifacts/``."""
+
     model_config = {"env_prefix": "ABSMAP_"}

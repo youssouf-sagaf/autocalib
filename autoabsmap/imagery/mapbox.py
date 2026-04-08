@@ -165,11 +165,13 @@ class MapboxImageryProvider:
         target_gsd_m: float,
         default_w: int, default_h: int,
     ) -> tuple[int, int]:
-        """Compute image dimensions to achieve *target_gsd_m* for the bbox.
+        """Compute a **square** image size covering the bbox at *target_gsd_m*.
 
-        The Mapbox Static API caps images at 1280×1280.  If the ROI requires
-        more pixels than that, we clamp and log a warning — the caller
-        (multi-crop orchestrator) should tile large ROIs in future.
+        A square request avoids aspect-ratio mismatch with the Mapbox Static
+        API bbox auto-fit (which picks a single zoom for both axes).  The
+        longest ground side determines the image dimension — the shorter
+        axis gets a bit of padding, which ``_actual_bounds_for_bbox_request``
+        already accounts for.
         """
         max_dim = 1280
 
@@ -179,25 +181,23 @@ class MapboxImageryProvider:
 
         ground_w = (east - west) * m_per_deg_lon
         ground_h = (north - south) * m_per_deg_lat
+        ground_max = max(ground_w, ground_h)
 
-        needed_w = max(256, int(math.ceil(ground_w / target_gsd_m)))
-        needed_h = max(256, int(math.ceil(ground_h / target_gsd_m)))
+        needed = max(256, int(math.ceil(ground_max / target_gsd_m)))
+        img_size = min(needed, max_dim)
 
-        img_w = min(needed_w, max_dim)
-        img_h = min(needed_h, max_dim)
-
-        if needed_w > max_dim or needed_h > max_dim:
-            effective_gsd = max(ground_w / img_w, ground_h / img_h)
+        if needed > max_dim:
+            effective_gsd = ground_max / img_size
             logger.warning(
-                "ROI too large for target GSD %.3f m/px: need %dx%d px, "
-                "clamped to %dx%d (effective GSD ≈ %.3f m/px). "
+                "ROI too large for target GSD %.3f m/px: need %dpx, "
+                "clamped to %d (effective GSD ≈ %.3f m/px). "
                 "Draw a smaller ROI (~%.0fm × %.0fm) for best results.",
-                target_gsd_m, needed_w, needed_h, img_w, img_h,
+                target_gsd_m, needed, img_size,
                 effective_gsd,
                 max_dim * target_gsd_m, max_dim * target_gsd_m,
             )
 
-        return img_w, img_h
+        return img_size, img_size
 
     def _build_url(
         self,

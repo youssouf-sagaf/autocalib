@@ -14,9 +14,9 @@ export default function App() {
 
   /* ── Shared viewState for synced maps ── */
   const [viewState, setViewState] = useState<MapViewState>({
-    longitude: 2.3522,
-    latitude: 48.8566,
-    zoom: 17,
+    longitude: 2.3488,
+    latitude: 48.8534,
+    zoom: 12,
   });
   const handleMove = useCallback(
     (evt: { viewState: MapViewState }) => setViewState(evt.viewState),

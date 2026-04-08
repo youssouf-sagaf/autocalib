@@ -25,14 +25,14 @@ __all__ = ["SegFormerSegmenter"]
 
 
 def _resolve_torch_device(preference: str | None) -> "torch.device":
+    """Pick inference device.  MPS is excluded for SegFormer because Apple
+    Metal produces silent garbage on transformer attention layers."""
     import torch
 
     if preference and preference.lower() not in ("", "auto"):
         return torch.device(preference)
     if torch.cuda.is_available():
         return torch.device("cuda")
-    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-        return torch.device("mps")
     return torch.device("cpu")
 
 
