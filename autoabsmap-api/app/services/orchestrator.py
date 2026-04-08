@@ -246,6 +246,8 @@ class MultiCropOrchestrator:
         merged_slots: list[GeoSlot] = []
         merged_baselines: list[GeoSlot] = []
         merged_mask_features: list[dict] = []
+        merged_detection_features: list[dict] = []
+        merged_postprocess_features: list[dict] = []
 
         for idx, tile in enumerate(all_tiles):
             logger.info("Processing tile %d/%d for job %s", idx + 1, crop_total, job_id)
@@ -279,20 +281,29 @@ class MultiCropOrchestrator:
                 merged_mask_features.extend(
                     result.mask_polygons_geojson.get("features", [])
                 )
+            if result.detection_overlay_geojson:
+                merged_detection_features.extend(
+                    result.detection_overlay_geojson.get("features", [])
+                )
+            if result.postprocess_overlay_geojson:
+                merged_postprocess_features.extend(
+                    result.postprocess_overlay_geojson.get("features", [])
+                )
 
         logger.info(
             "Job %s complete: %d tile(s) → %d merged slots",
             job_id, crop_total, len(merged_slots),
         )
 
-        mask_fc: dict | None = None
-        if merged_mask_features:
-            mask_fc = {"type": "FeatureCollection", "features": merged_mask_features}
+        def _to_fc(feats: list[dict]) -> dict | None:
+            return {"type": "FeatureCollection", "features": feats} if feats else None
 
         return JobResult(
             job_id=job_id,
             slots=merged_slots,
             baseline_slots=merged_baselines,
             crop_results=crop_results,
-            mask_polygons=mask_fc,
+            mask_polygons=_to_fc(merged_mask_features),
+            detection_overlay=_to_fc(merged_detection_features),
+            postprocess_overlay=_to_fc(merged_postprocess_features),
         )

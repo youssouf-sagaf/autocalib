@@ -75,6 +75,10 @@ class JobResult(BaseModel):
     crop_results: list[PipelineResult]
     mask_polygons: dict | None = None
     """Merged vectorized segmentation mask (GeoJSON FeatureCollection, WGS84)."""
+    detection_overlay: dict | None = None
+    """Merged detection OBBs overlay (true pixel-space geometry)."""
+    postprocess_overlay: dict | None = None
+    """Merged post-process OBBs overlay (true pixel-space geometry)."""
 
 
 class StraightenRequest(BaseModel):

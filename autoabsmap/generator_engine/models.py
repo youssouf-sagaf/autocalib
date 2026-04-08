@@ -122,3 +122,7 @@ class PipelineResult(BaseModel):
     run_meta: RunMeta
     mask_polygons_geojson: dict[str, Any] | None = None
     """Vectorized segmentation mask as a GeoJSON FeatureCollection (WGS84)."""
+    detection_overlay_geojson: dict[str, Any] | None = None
+    """Baseline OBBs as FeatureCollection — true pixel-space geometry, no export rotation."""
+    postprocess_overlay_geojson: dict[str, Any] | None = None
+    """Enriched OBBs as FeatureCollection — true pixel-space geometry, no export rotation."""

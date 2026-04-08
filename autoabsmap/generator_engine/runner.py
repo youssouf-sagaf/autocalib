@@ -16,7 +16,7 @@ from autoabsmap.imagery.protocols import ImageryProvider
 from autoabsmap.ml.protocols import Detector, Segmenter
 from autoabsmap.generator_engine.models import PipelineRequest, PipelineResult, RunMeta, StageProgress
 from autoabsmap.generator_engine.geometric_engine import GeometricEngine
-from autoabsmap.generator_engine.mask_vectorize import vectorize_mask
+from autoabsmap.generator_engine.mask_vectorize import pixel_slots_to_overlay_fc, vectorize_mask
 from autoabsmap.generator_engine.stage_artifacts import ArtifactDumper
 from autoabsmap.generator_engine.stages import (
     ProgressCallback,
@@ -114,6 +114,9 @@ class ParkingSlotPipeline:
         dumper.dump_detections(raster, pixel_slots)
 
         baseline_geo = export_to_geoslots(pixel_slots, raster, on_progress)
+        detection_overlay = pixel_slots_to_overlay_fc(
+            pixel_slots, raster.affine, raster.crs_epsg,
+        )
 
         geo_engine = GeometricEngine(self._settings.geometry)
         enriched_slots = geo_engine.process(pixel_slots, clipped_mask)
@@ -121,6 +124,9 @@ class ParkingSlotPipeline:
 
         final_geo = export_to_geoslots(enriched_slots, raster, on_progress)
         dumper.dump_export(final_geo)
+        postprocess_overlay = pixel_slots_to_overlay_fc(
+            enriched_slots, raster.affine, raster.crs_epsg,
+        )
 
         run_meta = RunMeta(
             segformer_checkpoint=self._settings.segmentation.segformer_checkpoint_dir,
@@ -141,4 +147,6 @@ class ParkingSlotPipeline:
             baseline_slots=baseline_geo,
             run_meta=run_meta,
             mask_polygons_geojson=mask_geojson,
+            detection_overlay_geojson=detection_overlay,
+            postprocess_overlay_geojson=postprocess_overlay,
         )

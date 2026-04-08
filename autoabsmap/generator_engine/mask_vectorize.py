@@ -21,7 +21,7 @@ from rasterio.transform import Affine
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["vectorize_mask"]
+__all__ = ["vectorize_mask", "pixel_slots_to_overlay_fc"]
 
 MIN_CONTOUR_AREA_PX = 100
 
@@ -132,4 +132,66 @@ def vectorize_mask(
         len(features), len(contours),
     )
 
+    return {"type": "FeatureCollection", "features": features}
+
+
+def pixel_slots_to_overlay_fc(
+    slots: list,
+    affine: tuple[float, float, float, float, float, float],
+    crs_epsg: int,
+) -> dict[str, Any]:
+    """Convert PixelSlots to a GeoJSON FeatureCollection for map overlays.
+
+    Uses ``PixelSlot.corners`` directly — no export-angle rotation — so the
+    overlay polygons match the pipeline's internal OBB geometry exactly.
+    """
+    from autoabsmap.generator_engine.models import PixelSlot  # avoid circular
+
+    aff = Affine(*affine)
+    transformer: Transformer | None = None
+    if crs_epsg != 4326:
+        transformer = Transformer.from_crs(
+            CRS.from_epsg(crs_epsg), CRS.from_epsg(4326), always_xy=True,
+        )
+
+    features: list[dict[str, Any]] = []
+    for slot in slots:
+        slot: PixelSlot
+        pixel_corners = slot.corners
+
+        native = _pixel_to_native(
+            np.array(pixel_corners, dtype=np.float64), aff,
+        )
+
+        if transformer is not None:
+            xs, ys = transformer.transform(native[:, 0], native[:, 1])
+            wgs84 = np.column_stack([xs, ys])
+        else:
+            wgs84 = native
+
+        coords = wgs84.tolist()
+        coords.append(coords[0])
+
+        cx_n = aff.a * slot.center_x + aff.b * slot.center_y + aff.c
+        cy_n = aff.d * slot.center_x + aff.e * slot.center_y + aff.f
+        if transformer is not None:
+            lng, lat = transformer.transform(cx_n, cy_n)
+        else:
+            lng, lat = cx_n, cy_n
+
+        features.append({
+            "type": "Feature",
+            "properties": {
+                "source": slot.source.value,
+                "confidence": slot.confidence,
+                "center_lng": lng,
+                "center_lat": lat,
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [coords],
+            },
+        })
+
+    logger.info("Slot overlay: %d OBBs vectorized", len(features))
     return {"type": "FeatureCollection", "features": features}

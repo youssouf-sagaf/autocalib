@@ -22,6 +22,8 @@ interface AbsmapState {
   isDirty: boolean;
   overlayVisibility: OverlayVisibility;
   maskPolygons: GeoJSON.FeatureCollection | null;
+  detectionOverlay: GeoJSON.FeatureCollection | null;
+  postprocessOverlay: GeoJSON.FeatureCollection | null;
 }
 
 const initialState: AbsmapState = {
@@ -34,6 +36,8 @@ const initialState: AbsmapState = {
   isDirty: false,
   overlayVisibility: { detection: false, mask: false, postprocess: false },
   maskPolygons: null,
+  detectionOverlay: null,
+  postprocessOverlay: null,
 };
 
 export const launchJob = createAsyncThunk(
@@ -104,6 +108,8 @@ const absmapSlice = createSlice({
       state.isDirty = false;
       state.overlayVisibility = { detection: false, mask: false, postprocess: false };
       state.maskPolygons = null;
+      state.detectionOverlay = null;
+      state.postprocessOverlay = null;
     },
   },
   extraReducers: (builder) => {
@@ -122,6 +128,8 @@ const absmapSlice = createSlice({
         state.slots = action.payload.slots;
         state.baselineSlots = action.payload.baseline_slots;
         state.maskPolygons = action.payload.mask_polygons ?? null;
+        state.detectionOverlay = action.payload.detection_overlay ?? null;
+        state.postprocessOverlay = action.payload.postprocess_overlay ?? null;
         if (state.job) {
           state.job.status = 'done';
           state.job.progress = undefined;
