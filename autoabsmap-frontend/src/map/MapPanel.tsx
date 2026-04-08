@@ -32,6 +32,12 @@ export interface MapViewState {
   bearing?: number;
 }
 
+interface OverlayData {
+  detection?: GeoJSON.FeatureCollection;
+  mask?: GeoJSON.FeatureCollection;
+  postprocess?: GeoJSON.FeatureCollection;
+}
+
 interface MapPanelProps {
   viewState: MapViewState;
   onMove: (evt: { viewState: MapViewState }) => void;
@@ -45,6 +51,7 @@ interface MapPanelProps {
   showSlots?: boolean;
   showCentroids?: boolean;
   label?: string;
+  overlays?: OverlayData;
 }
 
 // Data-driven color expression: slot source → color
@@ -84,11 +91,20 @@ export function MapPanel({
   showSlots = true,
   showCentroids = true,
   label,
+  overlays,
 }: MapPanelProps) {
   const crops = useAppSelector((s) => s.absmap.crops);
   const finalSlots = useAppSelector((s) => s.absmap.slots);
   const baselineSlots = useAppSelector((s) => s.absmap.baselineSlots);
-  const slots = finalSlots.length > 0 ? finalSlots : baselineSlots;
+  const overlayVis = useAppSelector((s) => s.absmap.overlayVisibility);
+
+  const slots = useMemo(() => {
+    if (overlays) {
+      const detOnly = overlayVis.detection && !overlayVis.postprocess;
+      if (detOnly && baselineSlots.length > 0) return baselineSlots;
+    }
+    return finalSlots.length > 0 ? finalSlots : baselineSlots;
+  }, [overlays, overlayVis, finalSlots, baselineSlots]);
   const [popupSlot, setPopupSlot] = useState<Slot | null>(null);
   const [hovering, setHovering] = useState(false);
 
@@ -325,6 +341,58 @@ export function MapPanel({
             }}
           />
         </Source>
+
+        {/* ── Overlay: segmentation mask ── */}
+        {overlays?.mask && (
+          <Source id="overlay-mask" type="geojson" data={overlays.mask}>
+            <Layer
+              id="overlay-mask-fill"
+              type="fill"
+              paint={{ 'fill-color': '#27ae60', 'fill-opacity': 0.25 }}
+            />
+            <Layer
+              id="overlay-mask-line"
+              type="line"
+              paint={{ 'line-color': '#27ae60', 'line-width': 1.5, 'line-opacity': 0.6 }}
+            />
+          </Source>
+        )}
+
+        {/* ── Overlay: detection baselines ── */}
+        {overlays?.detection && (
+          <Source id="overlay-detection" type="geojson" data={overlays.detection}>
+            <Layer
+              id="overlay-detection-fill"
+              type="fill"
+              paint={{ 'fill-color': '#e67e22', 'fill-opacity': 0.15 }}
+            />
+            <Layer
+              id="overlay-detection-line"
+              type="line"
+              paint={{
+                'line-color': '#e67e22',
+                'line-width': 1.5,
+                'line-opacity': 0.8,
+              }}
+            />
+          </Source>
+        )}
+
+        {/* ── Overlay: post-process slots by source ── */}
+        {overlays?.postprocess && (
+          <Source id="overlay-postprocess" type="geojson" data={overlays.postprocess}>
+            <Layer
+              id="overlay-postprocess-fill"
+              type="fill"
+              paint={{ 'fill-color': SOURCE_COLOR, 'fill-opacity': 0.35 }}
+            />
+            <Layer
+              id="overlay-postprocess-line"
+              type="line"
+              paint={{ 'line-color': SOURCE_COLOR, 'line-width': 1.5, 'line-opacity': 0.8 }}
+            />
+          </Source>
+        )}
 
         {/* ── Slot info popup ── */}
         {popupSlot && (

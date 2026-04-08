@@ -57,6 +57,15 @@ export interface JobResult {
   slots: Slot[];
   baseline_slots: Slot[];
   crop_results: unknown[];
+  mask_polygons: GeoJSON.FeatureCollection | null;
+}
+
+export type OverlayLayer = 'detection' | 'mask' | 'postprocess';
+
+export interface OverlayVisibility {
+  detection: boolean;
+  mask: boolean;
+  postprocess: boolean;
 }
 
 export interface EditEvent {

@@ -254,3 +254,49 @@
   background: var(--color-danger, #e74c3c);
   color: #fff;
 }
+
+/* ── Overlay toggles ── */
+
+.overlayToggles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.overlayBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.overlayBtn:hover {
+  border-color: var(--overlay-color);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.overlayBtn.overlayActive {
+  border-color: var(--overlay-color);
+  background: color-mix(in srgb, var(--overlay-color) 8%, transparent);
+  font-weight: 600;
+}
+
+.overlayDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}

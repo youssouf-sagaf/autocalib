@@ -120,3 +120,5 @@ class PipelineResult(BaseModel):
     slots: list[GeoSlot]
     baseline_slots: list[GeoSlot]
     run_meta: RunMeta
+    mask_polygons_geojson: dict[str, Any] | None = None
+    """Vectorized segmentation mask as a GeoJSON FeatureCollection (WGS84)."""

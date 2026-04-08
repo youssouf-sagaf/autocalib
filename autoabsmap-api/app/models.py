@@ -73,6 +73,8 @@ class JobResult(BaseModel):
     slots: list[GeoSlot]
     baseline_slots: list[GeoSlot]
     crop_results: list[PipelineResult]
+    mask_polygons: dict | None = None
+    """Merged vectorized segmentation mask (GeoJSON FeatureCollection, WGS84)."""
 
 
 class StraightenRequest(BaseModel):

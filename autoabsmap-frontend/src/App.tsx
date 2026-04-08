@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { addCrop } from './store/autoabsmap-slice';
 import { usePolygonDraw } from './hooks/usePolygonDraw';
@@ -6,6 +6,7 @@ import { useJobStream } from './hooks/useJobStream';
 import { AppShell } from './features/layout/AppShell';
 import { MapPanel, type MapViewState } from './map/MapPanel';
 import { CropPanel } from './features/crops/CropPanel';
+import type { Slot } from './types';
 import './App.css';
 
 export default function App() {
@@ -50,6 +51,38 @@ export default function App() {
   /* ── SSE progress stream ── */
   useJobStream();
 
+  /* ── Overlay data for right map ── */
+  const overlayVisibility = useAppSelector((s) => s.absmap.overlayVisibility);
+  const baselineSlots = useAppSelector((s) => s.absmap.baselineSlots);
+  const finalSlots = useAppSelector((s) => s.absmap.slots);
+  const maskPolygons = useAppSelector((s) => s.absmap.maskPolygons);
+
+  const slotsToFC = useCallback(
+    (slots: Slot[]): GeoJSON.FeatureCollection => ({
+      type: 'FeatureCollection',
+      features: slots.map((s) => ({
+        type: 'Feature' as const,
+        properties: { slot_id: s.slot_id, source: s.source, confidence: s.confidence },
+        geometry: s.polygon,
+      })),
+    }),
+    [],
+  );
+
+  const overlays = useMemo(() => {
+    const data: Record<string, GeoJSON.FeatureCollection> = {};
+    if (overlayVisibility.detection && baselineSlots.length > 0) {
+      data.detection = slotsToFC(baselineSlots);
+    }
+    if (overlayVisibility.mask && maskPolygons) {
+      data.mask = maskPolygons;
+    }
+    if (overlayVisibility.postprocess && finalSlots.length > 0) {
+      data.postprocess = slotsToFC(finalSlots);
+    }
+    return Object.keys(data).length > 0 ? data : undefined;
+  }, [overlayVisibility, baselineSlots, finalSlots, maskPolygons, slotsToFC]);
+
   /* ── Keyboard shortcuts ── */
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -91,6 +124,7 @@ export default function App() {
             showSlots
             showCentroids
             label="Detections"
+            overlays={overlays}
           />
         </div>
       ) : (

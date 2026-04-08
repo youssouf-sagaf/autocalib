@@ -2,6 +2,8 @@ import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/tool
 import type {
   CropRequest,
   OrchestratorProgress,
+  OverlayLayer,
+  OverlayVisibility,
   PipelineJob,
   Slot,
 } from '../types';
@@ -18,6 +20,8 @@ interface AbsmapState {
   baselineSlots: Slot[];
   selection: string[];
   isDirty: boolean;
+  overlayVisibility: OverlayVisibility;
+  maskPolygons: GeoJSON.FeatureCollection | null;
 }
 
 const initialState: AbsmapState = {
@@ -28,6 +32,8 @@ const initialState: AbsmapState = {
   baselineSlots: [],
   selection: [],
   isDirty: false,
+  overlayVisibility: { detection: false, mask: false, postprocess: false },
+  maskPolygons: null,
 };
 
 export const launchJob = createAsyncThunk(
@@ -86,12 +92,18 @@ const absmapSlice = createSlice({
         state.job.progress = undefined;
       }
     },
+    toggleOverlay(state, action: PayloadAction<OverlayLayer>) {
+      const layer = action.payload;
+      state.overlayVisibility[layer] = !state.overlayVisibility[layer];
+    },
     resetSession(state) {
       state.slots = [];
       state.baselineSlots = [];
       state.job = null;
       state.crops = [];
       state.isDirty = false;
+      state.overlayVisibility = { detection: false, mask: false, postprocess: false };
+      state.maskPolygons = null;
     },
   },
   extraReducers: (builder) => {
@@ -109,6 +121,7 @@ const absmapSlice = createSlice({
       .addCase(fetchJobResult.fulfilled, (state, action) => {
         state.slots = action.payload.slots;
         state.baselineSlots = action.payload.baseline_slots;
+        state.maskPolygons = action.payload.mask_polygons ?? null;
         if (state.job) {
           state.job.status = 'done';
           state.job.progress = undefined;
@@ -116,6 +129,7 @@ const absmapSlice = createSlice({
         const totalSlots = action.payload.slots.length + action.payload.baseline_slots.length;
         if (totalSlots > 0) {
           state.dualMapActive = true;
+          state.overlayVisibility.postprocess = true;
         }
       });
   },
@@ -128,6 +142,7 @@ export const {
   updateJobProgress,
   markJobFailed,
   toggleDualMap,
+  toggleOverlay,
   resetSession,
 } = absmapSlice.actions;
 

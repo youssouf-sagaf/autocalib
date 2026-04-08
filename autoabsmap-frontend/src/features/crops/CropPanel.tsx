@@ -1,6 +1,7 @@
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { removeCrop, clearCrops, launchJob, resetSession } from '../../store/autoabsmap-slice';
+import { removeCrop, clearCrops, launchJob, resetSession, toggleOverlay } from '../../store/autoabsmap-slice';
 import { JobProgress } from '../pipeline/JobProgress';
+import type { OverlayLayer } from '../../types';
 import styles from './CropPanel.module.css';
 
 interface CropPanelProps {
@@ -20,6 +21,8 @@ export function CropPanel({
   const slotCount = useAppSelector((s) => s.absmap.slots.length);
   const baselineCount = useAppSelector((s) => s.absmap.baselineSlots.length);
   const displayCount = slotCount || baselineCount;
+  const dualMapActive = useAppSelector((s) => s.absmap.dualMapActive);
+  const overlayVisibility = useAppSelector((s) => s.absmap.overlayVisibility);
   const isRunning = job?.status === 'running' || job?.status === 'pending';
   const hasResults = job?.status === 'done' && displayCount > 0;
 
@@ -87,8 +90,8 @@ export function CropPanel({
           onClick={() => void dispatch(launchJob())}
         >
           {isRunning
-            ? 'Generating…'
-            : `Generate Slots${crops.length > 0 ? ` (${crops.length})` : ''}`}
+            ? 'Mapping…'
+            : `Launch Slot Mapping${crops.length > 0 ? ` (${crops.length})` : ''}`}
         </button>
 
         <JobProgress />
@@ -102,6 +105,32 @@ export function CropPanel({
           </div>
         )}
       </div>
+
+      {hasResults && dualMapActive && (
+        <div className={styles.section}>
+          <h3 className={styles.heading}>Map Overlays</h3>
+          <div className={styles.overlayToggles}>
+            {([
+              { key: 'detection' as OverlayLayer, label: 'Detection', color: '#e67e22' },
+              { key: 'mask' as OverlayLayer, label: 'Seg. Mask', color: '#27ae60' },
+              { key: 'postprocess' as OverlayLayer, label: 'Post-process', color: '#3498db' },
+            ]).map(({ key, label, color }) => (
+              <button
+                key={key}
+                className={`${styles.overlayBtn} ${overlayVisibility[key] ? styles.overlayActive : ''}`}
+                style={{ '--overlay-color': color } as React.CSSProperties}
+                onClick={() => dispatch(toggleOverlay(key))}
+              >
+                <span
+                  className={styles.overlayDot}
+                  style={{ background: overlayVisibility[key] ? color : 'transparent', borderColor: color }}
+                />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {hasResults && (
         <>

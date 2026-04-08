@@ -16,6 +16,7 @@ from autoabsmap.imagery.protocols import ImageryProvider
 from autoabsmap.ml.protocols import Detector, Segmenter
 from autoabsmap.generator_engine.models import PipelineRequest, PipelineResult, RunMeta, StageProgress
 from autoabsmap.generator_engine.geometric_engine import GeometricEngine
+from autoabsmap.generator_engine.mask_vectorize import vectorize_mask
 from autoabsmap.generator_engine.stage_artifacts import ArtifactDumper
 from autoabsmap.generator_engine.stages import (
     ProgressCallback,
@@ -104,6 +105,10 @@ class ParkingSlotPipeline:
         clipped_mask = clip_seg_mask_to_roi(seg_output.mask_refined, raster, request.roi)
         dumper.dump_segmentation(raster, seg_output, clipped_mask)
 
+        mask_geojson = vectorize_mask(
+            clipped_mask, raster.affine, raster.crs_epsg, gsd_m=raster.gsd_m,
+        )
+
         det_result = detect(self._detector, raster, seg_output, on_progress)
         pixel_slots = detections_to_pixel_slots(det_result)
         dumper.dump_detections(raster, pixel_slots)
@@ -135,4 +140,5 @@ class ParkingSlotPipeline:
             slots=final_geo,
             baseline_slots=baseline_geo,
             run_meta=run_meta,
+            mask_polygons_geojson=mask_geojson,
         )
