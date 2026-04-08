@@ -44,16 +44,19 @@ def _obb_corners_world(
     slot: PixelSlot,
     affine: Affine,
 ) -> list[tuple[float, float]]:
-    """Compute oriented bounding box corners in native CRS."""
-    hw, hh = slot.width / 2.0, slot.height / 2.0
-    ct, st = math.cos(slot.angle_rad), math.sin(slot.angle_rad)
-    offsets = [(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)]
-    corners = []
-    for dx, dy in offsets:
-        px = slot.center_x + dx * ct - dy * st
-        py = slot.center_y + dx * st + dy * ct
-        corners.append(_pixel_to_world(px, py, affine))
-    return corners
+    """Compute oriented bounding box corners in native CRS.
+
+    Internally ``angle_rad`` is the depth (long) axis direction.  R&D adds
+    π/2 when exporting so the OBB polygon uses the width-axis convention
+    expected by downstream consumers.  We replicate that here.
+    """
+    export_angle = slot.angle_rad + math.pi / 2.0
+    h_vec = np.array([math.cos(export_angle), math.sin(export_angle)]) * (slot.height / 2.0)
+    w_vec = np.array([-math.sin(export_angle), math.cos(export_angle)]) * (slot.width / 2.0)
+    c = np.array([slot.center_x, slot.center_y])
+    pixel_corners = [c + h_vec + w_vec, c - h_vec + w_vec,
+                     c - h_vec - w_vec, c + h_vec - w_vec]
+    return [_pixel_to_world(float(p[0]), float(p[1]), affine) for p in pixel_corners]
 
 
 def pixel_slots_to_geoslots(

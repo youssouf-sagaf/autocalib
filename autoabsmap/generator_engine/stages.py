@@ -9,6 +9,7 @@ import logging
 import math
 from typing import Callable
 
+import cv2
 import numpy as np
 from geojson_pydantic import Polygon as GeoJSONPolygon
 from rasterio.transform import Affine
@@ -46,6 +47,45 @@ def fetch_imagery(
         raster.width, raster.height, raster.crs_epsg, raster.gsd_m,
     )
     return raster
+
+
+def mask_outside_roi(
+    raster: GeoRasterSlice,
+    roi: GeoJSONPolygon,
+    neutral_rgb: tuple[int, int, int] = (128, 128, 128),
+) -> GeoRasterSlice:
+    """Gray out pixels outside the original ROI polygon.
+
+    The fetched image is often larger than the ROI (square padding).
+    This neutralises the padding so ML models don't hallucinate
+    detections outside the area of interest.
+    """
+    affine = Affine(*raster.affine)
+    inv = ~affine
+
+    coords = roi.coordinates[0]
+    pixel_pts = []
+    for lon, lat in coords:
+        px, py = inv * (lon, lat)
+        pixel_pts.append([int(round(px)), int(round(py))])
+    pixel_pts = np.array(pixel_pts, dtype=np.int32)
+
+    mask = np.zeros((raster.height, raster.width), dtype=np.uint8)
+    cv2.fillPoly(mask, [pixel_pts], 255)
+
+    masked = raster.pixels.copy()
+    bg = np.full_like(masked, neutral_rgb, dtype=np.uint8)
+    mask_3c = mask[:, :, np.newaxis] > 0
+    masked = np.where(mask_3c, masked, bg)
+
+    return GeoRasterSlice(
+        pixels=masked,
+        crs_epsg=raster.crs_epsg,
+        affine=raster.affine,
+        bounds_native=raster.bounds_native,
+        bounds_wgs84=raster.bounds_wgs84,
+        gsd_m=raster.gsd_m,
+    )
 
 
 def segment(

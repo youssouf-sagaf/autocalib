@@ -23,6 +23,7 @@ from autoabsmap.generator_engine.stages import (
     detections_to_pixel_slots,
     export_to_geoslots,
     fetch_imagery,
+    mask_outside_roi,
     segment,
 )
 
@@ -65,7 +66,8 @@ class ParkingSlotPipeline:
         dumper = ArtifactDumper(artifacts_dir)
         target_gsd = self._settings.imagery.target_gsd_m
 
-        raster = fetch_imagery(self._imagery, request.roi, target_gsd, on_progress)
+        raster_raw = fetch_imagery(self._imagery, request.roi, target_gsd, on_progress)
+        raster = mask_outside_roi(raster_raw, request.roi)
         dumper.dump_imagery(raster)
 
         seg_output = segment(self._segmenter, raster, on_progress)

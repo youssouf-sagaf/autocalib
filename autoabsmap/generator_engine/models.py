@@ -50,14 +50,20 @@ class PixelSlot(BaseModel):
 
     @property
     def corners(self) -> list[tuple[float, float]]:
-        """Four corners of the oriented bounding box in pixel space."""
-        hw, hh = self.width / 2.0, self.height / 2.0
-        ct, st = math.cos(self.angle_rad), math.sin(self.angle_rad)
-        offsets = [(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)]
+        """Four corners of the OBB in pixel space — R&D convention.
+
+        ``angle_rad`` is the depth (long) axis direction.  Height goes along
+        (cos a, sin a), width perpendicular (-sin a, cos a).
+        """
+        a = self.angle_rad
+        h_vec_x, h_vec_y = math.cos(a) * self.height / 2, math.sin(a) * self.height / 2
+        w_vec_x, w_vec_y = -math.sin(a) * self.width / 2, math.cos(a) * self.width / 2
+        cx, cy = self.center_x, self.center_y
         return [
-            (self.center_x + dx * ct - dy * st,
-             self.center_y + dx * st + dy * ct)
-            for dx, dy in offsets
+            (cx + h_vec_x + w_vec_x, cy + h_vec_y + w_vec_y),
+            (cx - h_vec_x + w_vec_x, cy - h_vec_y + w_vec_y),
+            (cx - h_vec_x - w_vec_x, cy - h_vec_y - w_vec_y),
+            (cx + h_vec_x - w_vec_x, cy + h_vec_y - w_vec_y),
         ]
 
 

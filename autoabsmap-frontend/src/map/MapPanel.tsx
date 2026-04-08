@@ -1,17 +1,26 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import Map, {
   Source,
   Layer,
   NavigationControl,
   Popup,
 } from 'react-map-gl/mapbox';
-import type { MapMouseEvent } from 'react-map-gl/mapbox';
+import type { MapMouseEvent, MapRef } from 'react-map-gl/mapbox';
 import { useAppSelector } from '../store/hooks';
 import { tokens } from '../theme/tokens';
 import type { Slot } from '../types';
 import type { Feature, Polygon } from 'geojson';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './MapPanel.module.css';
+
+const PARKING_MARKER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+  <path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 22 14 22s14-11.5 14-22C28 6.27 21.73 0 14 0z" fill="#2d3561"/>
+  <circle cx="14" cy="13" r="9" fill="#2d3561"/>
+  <text x="14" y="17.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="15" fill="white">P</text>
+</svg>`;
+
+const PARKING_MARKER_IMG = new Image(28, 36);
+PARKING_MARKER_IMG.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PARKING_MARKER_SVG)}`;
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -172,11 +181,20 @@ export function MapPanel({
   );
 
   const cursor = externalCursor || (hovering ? 'pointer' : '');
+  const mapRef = useRef<MapRef>(null);
+
+  const onMapLoad = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (map && !map.hasImage('parking-marker')) {
+      map.addImage('parking-marker', PARKING_MARKER_IMG, { sdf: false });
+    }
+  }, []);
 
   return (
     <div className={styles.container}>
       {label && <div className={styles.label}>{label}</div>}
       <Map
+        ref={mapRef}
         {...viewState}
         onMove={onMove}
         mapboxAccessToken={MAPBOX_TOKEN}
@@ -186,6 +204,7 @@ export function MapPanel({
         onMouseMove={handleMouseMove}
         cursor={cursor}
         interactiveLayerIds={showSlots ? ['slots-fill'] : []}
+        onLoad={onMapLoad}
       >
         <NavigationControl position="bottom-right" />
 
@@ -236,31 +255,26 @@ export function MapPanel({
           />
         </Source>
 
-        {/* ── Slot OBBs (oriented bboxes) — colored by source ── */}
+        {/* ── Slot fill (invisible, kept for click interaction) ── */}
         <Source id="slots" type="geojson" data={slotsGeoJSON}>
           <Layer
             id="slots-fill"
             type="fill"
-            paint={{ 'fill-color': SOURCE_COLOR, 'fill-opacity': 0.35 }}
-          />
-          <Layer
-            id="slots-outline"
-            type="line"
-            paint={{ 'line-color': SOURCE_COLOR, 'line-width': 1.5 }}
+            paint={{ 'fill-color': '#000000', 'fill-opacity': 0 }}
           />
         </Source>
 
-        {/* ── Centroid dots ── */}
+        {/* ── Parking markers ── */}
         <Source id="centroids" type="geojson" data={centroidsGeoJSON}>
           <Layer
-            id="centroids-circle"
-            type="circle"
-            paint={{
-              'circle-radius': 4,
-              'circle-color': '#ffffff',
-              'circle-stroke-color': SOURCE_COLOR,
-              'circle-stroke-width': 2,
-              'circle-opacity': 0.95,
+            id="centroids-symbol"
+            type="symbol"
+            layout={{
+              'icon-image': 'parking-marker',
+              'icon-size': 0.85,
+              'icon-anchor': 'bottom',
+              'icon-allow-overlap': true,
+              'icon-ignore-placement': true,
             }}
           />
         </Source>

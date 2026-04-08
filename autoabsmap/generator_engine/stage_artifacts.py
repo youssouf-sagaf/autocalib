@@ -37,14 +37,15 @@ _COLORS = {
 
 
 def _obb_corners(cx: float, cy: float, w: float, h: float, angle: float) -> np.ndarray:
-    """Return 4 OBB corners as int32 array for cv2.polylines."""
-    hw, hh = w / 2.0, h / 2.0
-    ct, st = math.cos(angle), math.sin(angle)
-    pts = [
-        (cx + dx * ct - dy * st, cy + dx * st + dy * ct)
-        for dx, dy in [(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)]
-    ]
-    return np.array(pts, dtype=np.int32)
+    """Return 4 OBB corners as int32 array for cv2.polylines.
+
+    Uses R&D convention: height along (cos a, sin a), width perpendicular.
+    """
+    h_vec = np.array([math.cos(angle), math.sin(angle)]) * (h / 2.0)
+    w_vec = np.array([-math.sin(angle), math.cos(angle)]) * (w / 2.0)
+    c = np.array([cx, cy])
+    return np.int32([c + h_vec + w_vec, c - h_vec + w_vec,
+                     c - h_vec - w_vec, c + h_vec - w_vec])
 
 
 def _draw_obbs(

@@ -35,22 +35,25 @@ __all__ = ["GeometricEngine"]
 
 
 def _corners_int(cx: float, cy: float, w: float, h: float, angle: float) -> np.ndarray:
-    """Four integer corners of an OBB (same convention as PixelSlot.corners)."""
-    hw, hh = w / 2.0, h / 2.0
-    ct, st = math.cos(angle), math.sin(angle)
-    return np.int32([
-        [cx + dx * ct - dy * st, cy + dx * st + dy * ct]
-        for dx, dy in [(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)]
-    ])
+    """Four integer corners of an OBB — R&D convention.
+
+    *angle* is the depth (long) axis direction.  Height is placed along
+    (cos a, sin a), width perpendicular (-sin a, cos a).
+    """
+    h_vec = np.array([math.cos(angle), math.sin(angle)]) * (h / 2.0)
+    w_vec = np.array([-math.sin(angle), math.cos(angle)]) * (w / 2.0)
+    c = np.array([cx, cy])
+    return np.int32([c + h_vec + w_vec, c - h_vec + w_vec,
+                     c - h_vec - w_vec, c + h_vec - w_vec])
 
 
 def _corners_float(cx: float, cy: float, w: float, h: float, angle: float) -> np.ndarray:
-    hw, hh = w / 2.0, h / 2.0
-    ct, st = math.cos(angle), math.sin(angle)
-    return np.float32([
-        [cx + dx * ct - dy * st, cy + dx * st + dy * ct]
-        for dx, dy in [(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)]
-    ])
+    """Float version of _corners_int for cv2.intersectConvexConvex."""
+    h_vec = np.array([math.cos(angle), math.sin(angle)]) * (h / 2.0)
+    w_vec = np.array([-math.sin(angle), math.cos(angle)]) * (w / 2.0)
+    c = np.array([cx, cy])
+    return np.float32([c + h_vec + w_vec, c - h_vec + w_vec,
+                       c - h_vec - w_vec, c + h_vec - w_vec])
 
 
 def _angle_diff(a: float, b: float) -> float:
@@ -347,7 +350,7 @@ def _dedup_and_validate(
         iy, ix = int(slot.center_y), int(slot.center_x)
         if not (0 <= iy < h_max and 0 <= ix < w_max):
             continue
-        if slot.source != SlotSource.yolo and binary_mask[iy, ix] == 0:
+        if binary_mask[iy, ix] == 0:
             continue
 
         slot_box = _corners_float(
