@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { addCrop } from './store/autoabsmap-slice';
-import { useRectangleDraw } from './hooks/useRectangleDraw';
+import { usePolygonDraw } from './hooks/usePolygonDraw';
 import { useJobStream } from './hooks/useJobStream';
 import { AppShell } from './features/layout/AppShell';
 import { MapPanel, type MapViewState } from './map/MapPanel';
@@ -28,7 +28,7 @@ export default function App() {
     [],
   );
 
-  /* ── Rectangle drawing ── */
+  /* ── Polygon drawing ── */
   const onCropComplete = useCallback(
     (polygon: GeoJSON.Polygon) => dispatch(addCrop({ polygon })),
     [dispatch],
@@ -39,11 +39,13 @@ export default function App() {
     startDrawing,
     stopDrawing,
     previewFeature,
+    edgeFeature,
+    vertexFeatures,
     handleClick,
     handleMouseMove,
     handleKeyDown,
     cursor,
-  } = useRectangleDraw({ onComplete: onCropComplete });
+  } = usePolygonDraw({ onComplete: onCropComplete });
 
   /* ── SSE progress stream ── */
   useJobStream();
@@ -83,6 +85,8 @@ export default function App() {
             onMouseMove={handleMouseMove}
             cursor={cursor}
             previewFeature={previewFeature}
+            edgeFeature={edgeFeature}
+            vertexFeatures={vertexFeatures}
             showCrops
             showSlots
             showCentroids
@@ -97,6 +101,8 @@ export default function App() {
           onMouseMove={handleMouseMove}
           cursor={cursor}
           previewFeature={previewFeature}
+          edgeFeature={edgeFeature}
+          vertexFeatures={vertexFeatures}
           showCrops
           showSlots
           showCentroids

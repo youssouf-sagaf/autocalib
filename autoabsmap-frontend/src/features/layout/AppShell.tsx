@@ -42,7 +42,7 @@ export function AppShell({ children, sidebar, isDrawing, onFlyTo }: AppShellProp
 
       {isDrawing && (
         <div className={styles.drawBanner}>
-          Click two corners to draw a rectangle · <kbd>Esc</kbd> to cancel
+          Click to place vertices · Double-click or click first point to close · <kbd>Esc</kbd> to undo
         </div>
       )}
 

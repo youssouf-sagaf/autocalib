@@ -103,35 +103,70 @@ class ArtifactDumper:
 
     # ── 00 Imagery ────────────────────────────────────────────────────
 
-    def dump_imagery(self, raster: Any) -> None:
-        """Save the fetched RGB crop and its metadata."""
+    def dump_imagery(self, raster: Any, roi: Any | None = None) -> None:
+        """Save the fetched RGB crop, ROI overlay, and metadata."""
         if not self.active:
             return
         d = self._stage_dir("00_imagery")
         self._save_png(d, "crop_rgb.png", raster.pixels)
-        self._save_json(d, "meta.json", {
+
+        if roi is not None:
+            from rasterio.transform import Affine
+            overlay = raster.pixels.copy()
+            aff = Affine(*raster.affine)
+            inv = ~aff
+            coords = roi.coordinates[0]
+            pts = np.array(
+                [[int(round(px)), int(round(py))]
+                 for lon, lat in coords
+                 for px, py in [inv * (lon, lat)]],
+                dtype=np.int32,
+            )
+            cv2.polylines(overlay, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
+            for i, (px, py) in enumerate(pts):
+                cv2.circle(overlay, (int(px), int(py)), 5, (255, 0, 0), -1)
+                cv2.putText(overlay, str(i), (int(px) + 8, int(py) - 4),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            self._save_png(d, "crop_with_roi.png", overlay)
+
+            roi_coords = [{"lon": c[0], "lat": c[1]} for c in coords]
+        else:
+            roi_coords = None
+
+        meta: dict[str, Any] = {
             "crs_epsg": raster.crs_epsg,
             "width": raster.width,
             "height": raster.height,
             "gsd_m": raster.gsd_m,
             "affine": list(raster.affine),
             "bounds_wgs84": raster.bounds_wgs84.model_dump(),
-        })
+        }
+        if roi_coords is not None:
+            meta["roi_polygon"] = roi_coords
+        self._save_json(d, "meta.json", meta)
 
     # ── 01 Segmentation ──────────────────────────────────────────────
 
-    def dump_segmentation(self, raster: Any, seg_output: Any) -> None:
-        """Save raw mask, refined mask, and the overlay on the RGB image."""
+    def dump_segmentation(
+        self,
+        raster: Any,
+        seg_output: Any,
+        clipped_mask: Any | None = None,
+    ) -> None:
+        """Save raw mask, refined mask, ROI-clipped mask, and overlay."""
         if not self.active:
             return
         d = self._stage_dir("01_segmentation")
         self._save_png(d, "mask_raw.png", seg_output.mask_raw)
         self._save_png(d, "mask_refined.png", seg_output.mask_refined)
+        if clipped_mask is not None:
+            self._save_png(d, "mask_clipped_roi.png", clipped_mask)
 
+        use_mask = clipped_mask if clipped_mask is not None else seg_output.mask_refined
         overlay = raster.pixels.copy().astype(np.float32)
         green = np.zeros_like(overlay)
         green[:, :, 1] = 255.0
-        mask_bool = seg_output.mask_refined > 0
+        mask_bool = use_mask > 0
         mask_3c = np.stack([mask_bool] * 3, axis=-1)
         blended = np.where(mask_3c, overlay * 0.6 + green * 0.4, overlay)
         self._save_png(d, "overlay_segmentation.png", blended.astype(np.uint8))

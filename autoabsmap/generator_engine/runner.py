@@ -19,6 +19,8 @@ from autoabsmap.generator_engine.geometric_engine import GeometricEngine
 from autoabsmap.generator_engine.stage_artifacts import ArtifactDumper
 from autoabsmap.generator_engine.stages import (
     ProgressCallback,
+    clip_seg_mask_to_roi,
+    crop_to_roi_bounds,
     detect,
     detections_to_pixel_slots,
     export_to_geoslots,
@@ -35,8 +37,8 @@ __all__ = ["ParkingSlotPipeline"]
 class ParkingSlotPipeline:
     """Stateless pipeline for one crop — injectable imagery + ML backends.
 
-    The pipeline has no concept of "Mapbox" or "IGN": the concrete
-    ImageryProvider is injected at construction.
+    The concrete ImageryProvider is injected at construction; today the only
+    implementation is MapboxImageryProvider.
     """
 
     def __init__(
@@ -66,12 +68,41 @@ class ParkingSlotPipeline:
         dumper = ArtifactDumper(artifacts_dir)
         target_gsd = self._settings.imagery.target_gsd_m
 
-        raster_raw = fetch_imagery(self._imagery, request.roi, target_gsd, on_progress)
-        raster = mask_outside_roi(raster_raw, request.roi)
-        dumper.dump_imagery(raster)
+        fetch_window = request.fetch_window or request.roi
+
+        coords = request.roi.coordinates[0]
+        lons = [c[0] for c in coords]
+        lats = [c[1] for c in coords]
+        logger.info(
+            "ROI polygon: %d vertices, bbox=[%.6f,%.6f,%.6f,%.6f]",
+            len(coords) - 1, min(lons), min(lats), max(lons), max(lats),
+        )
+        for i, (lon, lat) in enumerate(coords[:-1]):
+            logger.debug("  vertex %d: (%.7f, %.7f)", i, lon, lat)
+
+        if request.fetch_window is not None:
+            f_coords = fetch_window.coordinates[0]
+            f_lons = [c[0] for c in f_coords]
+            f_lats = [c[1] for c in f_coords]
+            logger.info(
+                "Fetch window: %d vertices, bbox=[%.6f,%.6f,%.6f,%.6f]",
+                len(f_coords) - 1, min(f_lons), min(f_lats), max(f_lons), max(f_lats),
+            )
+
+        raster_raw = fetch_imagery(self._imagery, fetch_window, target_gsd, on_progress)
+        raster_masked = mask_outside_roi(raster_raw, request.roi)
+        raster = crop_to_roi_bounds(raster_masked, request.roi)
+        logger.info(
+            "ROI crop: %dx%d → %dx%d (trimmed %d%% gray margin)",
+            raster_masked.width, raster_masked.height,
+            raster.width, raster.height,
+            int((1 - (raster.width * raster.height) / max(1, raster_masked.width * raster_masked.height)) * 100),
+        )
+        dumper.dump_imagery(raster, request.roi)
 
         seg_output = segment(self._segmenter, raster, on_progress)
-        dumper.dump_segmentation(raster, seg_output)
+        clipped_mask = clip_seg_mask_to_roi(seg_output.mask_refined, raster, request.roi)
+        dumper.dump_segmentation(raster, seg_output, clipped_mask)
 
         det_result = detect(self._detector, raster, seg_output, on_progress)
         pixel_slots = detections_to_pixel_slots(det_result)
@@ -80,7 +111,7 @@ class ParkingSlotPipeline:
         baseline_geo = export_to_geoslots(pixel_slots, raster, on_progress)
 
         geo_engine = GeometricEngine(self._settings.geometry)
-        enriched_slots = geo_engine.process(pixel_slots, seg_output.mask_refined)
+        enriched_slots = geo_engine.process(pixel_slots, clipped_mask)
         dumper.dump_postprocess(raster, enriched_slots, len(pixel_slots))
 
         final_geo = export_to_geoslots(enriched_slots, raster, on_progress)
@@ -89,7 +120,7 @@ class ParkingSlotPipeline:
         run_meta = RunMeta(
             segformer_checkpoint=self._settings.segmentation.segformer_checkpoint_dir,
             yolo_weights=self._settings.detection.yolo_weights_path,
-            imagery_provider=self._settings.imagery.source.value,
+            imagery_provider="mapbox",
             crs_epsg=raster.crs_epsg,
             gsd_m=raster.gsd_m,
             roi_geojson=request.roi.model_dump(),

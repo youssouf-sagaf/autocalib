@@ -1,9 +1,14 @@
-"""MapboxImageryProvider — Mapbox Static Images API with retry/backoff.
+"""MapboxImageryProvider — Mapbox Static Images API (center+zoom mode).
 
-Uses Web Mercator math to compute the *actual* geographic bounds of the
-returned image, which differ from the requested bbox because the Static
-API picks a center + zoom that *contains* the bbox, then renders at fixed
-pixel dimensions — aspect-ratio padding shifts the true extent.
+Uses the deterministic ``/{lon},{lat},{zoom}/{width}x{height}`` URL form
+so the zoom level is explicit and the geographic bounds can be computed
+exactly from the Web Mercator math — no guessing what the API auto-fit
+chose.
+
+The bbox auto-fit mode (``/[bbox]/{w}x{h}``) floors the zoom to an
+integer, which causes a ~2× scale error when the ideal zoom is just
+below an integer boundary (e.g. 19.99 → 19).  Center+zoom avoids this
+entirely.
 """
 
 from __future__ import annotations
@@ -30,10 +35,15 @@ logger = logging.getLogger(__name__)
 __all__ = ["MapboxImageryProvider"]
 
 _TILE_SIZE = 512.0
+_EARTH_CIRCUMFERENCE_M = 40_075_016.686
+_MAX_DIM = 1280
+_MIN_DIM = 256
 
+
+# ── Web Mercator helpers ──────────────────────────────────────────────────
 
 def _world_px(zoom: float) -> float:
-    """Full Web Mercator world width in pixels at *zoom* (Mapbox 512-px tiles)."""
+    """Full Web Mercator world width in pixels at *zoom* (512-px tiles)."""
     return _TILE_SIZE * (2.0 ** zoom)
 
 
@@ -58,48 +68,33 @@ def _mercator_px_to_lonlat(
     return lon, math.degrees(lat_rad)
 
 
-def _actual_bounds_for_bbox_request(
-    west: float, south: float, east: float, north: float,
+def _zoom_for_gsd(lat: float, target_gsd_m: float) -> float:
+    """Zoom level at which one Mercator pixel ≈ *target_gsd_m* metres."""
+    return math.log2(
+        _EARTH_CIRCUMFERENCE_M * math.cos(math.radians(lat))
+        / (_TILE_SIZE * target_gsd_m)
+    )
+
+
+def _bounds_for_center_zoom(
+    center_lon: float, center_lat: float,
+    zoom: float,
     img_w: int, img_h: int,
 ) -> tuple[float, float, float, float]:
-    """Replicate the Mapbox Static API auto-fit logic.
-
-    The API converts the requested bbox to Web Mercator, picks the
-    fractional zoom that fits the bbox into the image dimensions, then
-    renders at the bbox center + that zoom.  The *actual* image extent
-    depends on the chosen zoom and the projection, so it rarely matches
-    the requested bbox exactly.
-    """
-    tl_x0, tl_y0 = _lonlat_to_mercator_px(west, north, 0)
-    br_x0, br_y0 = _lonlat_to_mercator_px(east, south, 0)
-    bbox_w0 = abs(br_x0 - tl_x0)
-    bbox_h0 = abs(br_y0 - tl_y0)
-
-    if bbox_w0 <= 0 or bbox_h0 <= 0:
-        return west, south, east, north
-
-    zoom_x = math.log2(img_w / bbox_w0) if bbox_w0 > 0 else 22
-    zoom_y = math.log2(img_h / bbox_h0) if bbox_h0 > 0 else 22
-    zoom = min(zoom_x, zoom_y)
-
-    center_lon = (west + east) / 2.0
-    center_lat = (south + north) / 2.0
+    """Deterministic WGS-84 bounds for a center+zoom static image."""
     cx, cy = _lonlat_to_mercator_px(center_lon, center_lat, zoom)
+    west, north = _mercator_px_to_lonlat(cx - img_w / 2.0, cy - img_h / 2.0, zoom)
+    east, south = _mercator_px_to_lonlat(cx + img_w / 2.0, cy + img_h / 2.0, zoom)
+    return west, south, east, north
 
-    actual_west, actual_north = _mercator_px_to_lonlat(
-        cx - img_w / 2.0, cy - img_h / 2.0, zoom,
-    )
-    actual_east, actual_south = _mercator_px_to_lonlat(
-        cx + img_w / 2.0, cy + img_h / 2.0, zoom,
-    )
-    return actual_west, actual_south, actual_east, actual_north
 
+# ── Provider ──────────────────────────────────────────────────────────────
 
 class MapboxImageryProvider:
     """Fetch satellite imagery from the Mapbox Static Images API.
 
-    Implements the ``ImageryProvider`` protocol.  Adds retry with exponential
-    backoff (the R&D code had none) and keeps the access token out of logs.
+    Uses center+zoom URL mode for deterministic georeferencing.
+    Adds retry with exponential backoff and keeps the access token out of logs.
     """
 
     def __init__(self, settings: ImagerySettings) -> None:
@@ -121,96 +116,103 @@ class MapboxImageryProvider:
         west, east = min(lons), max(lons)
         south, north = min(lats), max(lats)
 
-        s = self._settings
-        img_w, img_h = self._image_size_for_gsd(
-            west, south, east, north, target_gsd_m,
-            s.default_image_width, s.default_image_height,
+        center_lon = (west + east) / 2.0
+        center_lat = (south + north) / 2.0
+
+        zoom = _zoom_for_gsd(center_lat, target_gsd_m)
+        zoom = math.floor(zoom * 100) / 100.0
+
+        img_w, img_h = self._image_size_for_bbox(
+            west, south, east, north, zoom,
         )
 
-        url = self._build_url(west, south, east, north, img_w, img_h)
+        url = self._build_url(center_lon, center_lat, zoom, img_w, img_h)
         raw = self._download_with_retry(url)
 
         img = Image.open(BytesIO(raw)).convert("RGB")
         rgb_hwc = np.asarray(img, dtype=np.uint8)
         h, w = rgb_hwc.shape[:2]
 
-        actual_w, actual_s, actual_e, actual_n = _actual_bounds_for_bbox_request(
-            west, south, east, north, w, h,
+        actual_w, actual_s, actual_e, actual_n = _bounds_for_center_zoom(
+            center_lon, center_lat, zoom, w, h,
         )
 
         transform = affine_from_bounds(actual_w, actual_s, actual_e, actual_n, w, h)
         crs = CRS.from_epsg(4326)
-        gsd = compute_gsd_m(transform, crs, lat_hint=(actual_s + actual_n) / 2.0)
+        gsd = compute_gsd_m(transform, crs, lat_hint=center_lat)
 
         logger.info(
-            "Mapbox fetch: %dx%d px, GSD=%.4f m/px, "
-            "requested bbox=[%.6f,%.6f,%.6f,%.6f] → actual=[%.6f,%.6f,%.6f,%.6f]",
-            w, h, gsd,
-            west, south, east, north,
+            "Mapbox fetch: %dx%d px, zoom=%.2f, GSD=%.4f m/px, "
+            "bounds=[%.6f,%.6f,%.6f,%.6f]",
+            w, h, zoom, gsd,
             actual_w, actual_s, actual_e, actual_n,
         )
 
+        bounds = BBox(west=actual_w, south=actual_s, east=actual_e, north=actual_n)
         return GeoRasterSlice(
             pixels=rgb_hwc,
             crs_epsg=4326,
             affine=tuple(transform)[:6],
-            bounds_native=BBox(west=actual_w, south=actual_s, east=actual_e, north=actual_n),
-            bounds_wgs84=BBox(west=actual_w, south=actual_s, east=actual_e, north=actual_n),
+            bounds_native=bounds,
+            bounds_wgs84=bounds,
             gsd_m=gsd,
         )
 
     @staticmethod
-    def _image_size_for_gsd(
+    def _image_size_for_bbox(
         west: float, south: float, east: float, north: float,
-        target_gsd_m: float,
-        default_w: int, default_h: int,
+        zoom: float,
     ) -> tuple[int, int]:
-        """Compute a **square** image size covering the bbox at *target_gsd_m*.
+        """Pixel dimensions needed to cover *bbox* at *zoom*, clamped to API limits."""
+        wpx = _world_px(zoom)
+        merc_w = (east - west) / 360.0 * wpx
 
-        A square request avoids aspect-ratio mismatch with the Mapbox Static
-        API bbox auto-fit (which picks a single zoom for both axes).  The
-        longest ground side determines the image dimension — the shorter
-        axis gets a bit of padding, which ``_actual_bounds_for_bbox_request``
-        already accounts for.
-        """
-        max_dim = 1280
+        y_n = (
+            0.5 - math.log(math.tan(math.pi / 4 + math.radians(north) / 2))
+            / (2 * math.pi)
+        ) * wpx
+        y_s = (
+            0.5 - math.log(math.tan(math.pi / 4 + math.radians(south) / 2))
+            / (2 * math.pi)
+        ) * wpx
+        merc_h = abs(y_s - y_n)
+
+        needed_w = max(_MIN_DIM, int(math.ceil(merc_w)))
+        needed_h = max(_MIN_DIM, int(math.ceil(merc_h)))
+
+        if needed_w <= _MAX_DIM and needed_h <= _MAX_DIM:
+            return needed_w, needed_h
+
+        scale = min(_MAX_DIM / needed_w, _MAX_DIM / needed_h)
+        img_w = max(_MIN_DIM, int(needed_w * scale))
+        img_h = max(_MIN_DIM, int(needed_h * scale))
 
         mid_lat = (south + north) / 2.0
         m_per_deg_lon = 111_320.0 * math.cos(math.radians(mid_lat))
-        m_per_deg_lat = 111_320.0
-
         ground_w = (east - west) * m_per_deg_lon
-        ground_h = (north - south) * m_per_deg_lat
-        ground_max = max(ground_w, ground_h)
-
-        needed = max(256, int(math.ceil(ground_max / target_gsd_m)))
-        img_size = min(needed, max_dim)
-
-        if needed > max_dim:
-            effective_gsd = ground_max / img_size
-            logger.warning(
-                "ROI too large for target GSD %.3f m/px: need %dpx, "
-                "clamped to %d (effective GSD ≈ %.3f m/px). "
-                "Draw a smaller ROI (~%.0fm × %.0fm) for best results.",
-                target_gsd_m, needed, img_size,
-                effective_gsd,
-                max_dim * target_gsd_m, max_dim * target_gsd_m,
-            )
-
-        return img_size, img_size
+        ground_h = (north - south) * 111_320.0
+        effective_gsd = max(ground_w / img_w, ground_h / img_h)
+        logger.warning(
+            "ROI too large for zoom %.2f: need %dx%d px, "
+            "clamped to %dx%d (effective GSD ≈ %.3f m/px). "
+            "The auto-tiler should have split this ROI.",
+            zoom, needed_w, needed_h, img_w, img_h, effective_gsd,
+        )
+        return img_w, img_h
 
     def _build_url(
         self,
-        west: float,
-        south: float,
-        east: float,
-        north: float,
-        width: int,
-        height: int,
+        lon: float, lat: float,
+        zoom: float,
+        width: int, height: int,
     ) -> str:
         s = self._settings
-        bbox = f"[{west},{south},{east},{north}]"
-        path = f"/styles/v1/{s.mapbox_style_owner}/{s.mapbox_style_id}/static/{bbox}/{width}x{height}"
+        z = round(zoom, 2)
+        center = f"{lon},{lat},{z}"
+        path = (
+            f"/styles/v1/{s.mapbox_style_owner}/{s.mapbox_style_id}"
+            f"/static/{center}/{width}x{height}"
+        )
         query = urllib.parse.urlencode({
             "attribution": "false",
             "logo": "false",

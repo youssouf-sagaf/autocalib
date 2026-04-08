@@ -52,7 +52,7 @@ def build_pipeline(settings: PipelineSettings | None = None) -> ParkingSlotPipel
         detector=detector,
         settings=settings,
     )
-    logger.info("Built ParkingSlotPipeline (imagery=%s)", settings.imagery.source.value)
+    logger.info("Built ParkingSlotPipeline (imagery=mapbox)")
     return _pipeline_singleton
 
 

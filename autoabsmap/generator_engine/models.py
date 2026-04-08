@@ -78,6 +78,15 @@ class PipelineRequest(BaseModel):
     """Input for a single crop pipeline run."""
 
     roi: GeoJSONPolygon
+    fetch_window: GeoJSONPolygon | None = None
+    """Optional imagery fetch window (WGS84).
+
+    When set, the imagery provider fetches a raster for this window, but the
+    pipeline still treats ``roi`` as the true area of interest for masking
+    and ROI clipping. This is used by the API auto-tiling logic: tiles are
+    fetched as rectangles, while the original (possibly non-rectangular) ROI
+    remains the semantic crop boundary.
+    """
     hints: HintMasks | None = None
 
 

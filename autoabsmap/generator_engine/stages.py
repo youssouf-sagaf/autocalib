@@ -49,6 +49,27 @@ def fetch_imagery(
     return raster
 
 
+def roi_pixel_mask(
+    raster: GeoRasterSlice,
+    roi: GeoJSONPolygon,
+) -> np.ndarray:
+    """Build a binary uint8 mask (255 inside ROI, 0 outside) in pixel space."""
+    affine = Affine(*raster.affine)
+    inv = ~affine
+
+    coords = roi.coordinates[0]
+    pixel_pts = np.array(
+        [[int(round(px)), int(round(py))]
+         for lon, lat in coords
+         for px, py in [inv * (lon, lat)]],
+        dtype=np.int32,
+    )
+
+    mask = np.zeros((raster.height, raster.width), dtype=np.uint8)
+    cv2.fillPoly(mask, [pixel_pts], 255)
+    return mask
+
+
 def mask_outside_roi(
     raster: GeoRasterSlice,
     roi: GeoJSONPolygon,
@@ -56,22 +77,10 @@ def mask_outside_roi(
 ) -> GeoRasterSlice:
     """Gray out pixels outside the original ROI polygon.
 
-    The fetched image is often larger than the ROI (square padding).
-    This neutralises the padding so ML models don't hallucinate
-    detections outside the area of interest.
+    Prevents ML models from hallucinating detections outside the
+    area of interest when the fetched image is larger than the ROI.
     """
-    affine = Affine(*raster.affine)
-    inv = ~affine
-
-    coords = roi.coordinates[0]
-    pixel_pts = []
-    for lon, lat in coords:
-        px, py = inv * (lon, lat)
-        pixel_pts.append([int(round(px)), int(round(py))])
-    pixel_pts = np.array(pixel_pts, dtype=np.int32)
-
-    mask = np.zeros((raster.height, raster.width), dtype=np.uint8)
-    cv2.fillPoly(mask, [pixel_pts], 255)
+    mask = roi_pixel_mask(raster, roi)
 
     masked = raster.pixels.copy()
     bg = np.full_like(masked, neutral_rgb, dtype=np.uint8)
@@ -86,6 +95,81 @@ def mask_outside_roi(
         bounds_wgs84=raster.bounds_wgs84,
         gsd_m=raster.gsd_m,
     )
+
+
+def crop_to_roi_bounds(
+    raster: GeoRasterSlice,
+    roi: GeoJSONPolygon,
+    margin_px: int = 4,
+) -> GeoRasterSlice:
+    """Crop the raster to the pixel-space bounding box of the ROI polygon.
+
+    Eliminates the large gray margins that appear when the ROI is rotated
+    relative to the axis-aligned Mapbox bbox.  The affine transform is
+    shifted so world↔pixel mapping remains correct.
+    """
+    affine = Affine(*raster.affine)
+    inv = ~affine
+
+    coords = roi.coordinates[0]
+    xs, ys = [], []
+    for lon, lat in coords:
+        px, py = inv * (lon, lat)
+        xs.append(px)
+        ys.append(py)
+
+    x0 = max(0, int(math.floor(min(xs))) - margin_px)
+    y0 = max(0, int(math.floor(min(ys))) - margin_px)
+    x1 = min(raster.width, int(math.ceil(max(xs))) + margin_px)
+    y1 = min(raster.height, int(math.ceil(max(ys))) + margin_px)
+
+    if x0 == 0 and y0 == 0 and x1 == raster.width and y1 == raster.height:
+        return raster
+
+    cropped_pixels = raster.pixels[y0:y1, x0:x1].copy()
+
+    a, b, c, d, e, f = raster.affine
+    new_c = c + x0 * a + y0 * b
+    new_f = f + x0 * d + y0 * e
+    new_affine = (a, b, new_c, d, e, new_f)
+
+    new_aff = Affine(*new_affine)
+    h, w = cropped_pixels.shape[:2]
+    tl = new_aff * (0, 0)
+    br = new_aff * (w, h)
+
+    from autoabsmap.io.geotiff import BBox, compute_gsd_m
+    from rasterio.crs import CRS
+
+    new_bounds = BBox(
+        west=min(tl[0], br[0]),
+        south=min(tl[1], br[1]),
+        east=max(tl[0], br[0]),
+        north=max(tl[1], br[1]),
+    )
+
+    return GeoRasterSlice(
+        pixels=cropped_pixels,
+        crs_epsg=raster.crs_epsg,
+        affine=new_affine,
+        bounds_native=new_bounds,
+        bounds_wgs84=new_bounds,
+        gsd_m=compute_gsd_m(new_aff, CRS.from_epsg(raster.crs_epsg)),
+    )
+
+
+def clip_seg_mask_to_roi(
+    seg_mask: np.ndarray,
+    raster: GeoRasterSlice,
+    roi: GeoJSONPolygon,
+) -> np.ndarray:
+    """AND the segmentation mask with the ROI boundary.
+
+    Ensures the geometric engine cannot create synthetic slots
+    (gap-fill, extension, recovery) outside the original ROI.
+    """
+    roi_mask = roi_pixel_mask(raster, roi)
+    return cv2.bitwise_and(seg_mask, roi_mask)
 
 
 def segment(

@@ -57,7 +57,7 @@ The full system design — including the `autoabsmap` Python package layered str
 
 The production-ready rewrite of the R&D pipeline. Key design decisions:
 
-- **Imagery-agnostic**: the `ImageryProvider` protocol accepts any source (Mapbox Static API, IGN WMTS, local GeoTIFF, …). The pipeline never knows which provider is used.
+- **Imagery-agnostic**: the `ImageryProvider` protocol decouples the pipeline from the image source. The current implementation is `MapboxImageryProvider`; the pipeline never knows which provider is used.
 - **ML-agnostic**: `Segmenter` and `Detector` are Protocols — SegFormer and YOLO-OBB are concrete implementations, swappable without touching the pipeline.
 - **Multi-crop**: the pipeline operates on one crop at a time (`ParkingSlotPipeline.run(request)`). The `MultiCropOrchestrator` in `autoabsmap-api` coordinates N crops drawn by the operator.
 - **Learning loop**: every pipeline run produces separate layers (raw segmentation mask, raw detections, post-processed output) stored per-crop for CV model improvement.
@@ -133,8 +133,7 @@ Required environment variables (set in `.env`, never commit):
 
 | Variable | Used by | Description |
 |---|---|---|
-| `MAPBOX_TOKEN` | `autoabsmap-api` | Mapbox Static API token (if using Mapbox imagery provider) |
-| `IGN_API_KEY` | `autoabsmap-api` | IGN WMTS key (if using IGN imagery provider) |
+| `IMAGERY_MAPBOX_ACCESS_TOKEN` | `autoabsmap-api` | Mapbox Static API token |
 | `FIREBASE_CREDENTIALS` | `autoabsmap-api` | Path to Firebase service account JSON |
 
 ---

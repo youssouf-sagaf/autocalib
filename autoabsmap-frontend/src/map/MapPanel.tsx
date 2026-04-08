@@ -9,7 +9,7 @@ import type { MapMouseEvent, MapRef } from 'react-map-gl/mapbox';
 import { useAppSelector } from '../store/hooks';
 import { tokens } from '../theme/tokens';
 import type { Slot } from '../types';
-import type { Feature, Polygon } from 'geojson';
+import type { Feature, Polygon, LineString, Point, FeatureCollection } from 'geojson';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './MapPanel.module.css';
 
@@ -39,6 +39,8 @@ interface MapPanelProps {
   onMouseMove?: (e: MapMouseEvent) => void;
   cursor?: string;
   previewFeature?: Feature<Polygon> | null;
+  edgeFeature?: Feature<LineString> | null;
+  vertexFeatures?: FeatureCollection<Point>;
   showCrops?: boolean;
   showSlots?: boolean;
   showCentroids?: boolean;
@@ -64,6 +66,11 @@ const EMPTY_FC: GeoJSON.FeatureCollection = {
   features: [],
 };
 
+const EMPTY_POINT_FC: GeoJSON.FeatureCollection<Point> = {
+  type: 'FeatureCollection',
+  features: [],
+};
+
 export function MapPanel({
   viewState,
   onMove,
@@ -71,6 +78,8 @@ export function MapPanel({
   onMouseMove,
   cursor: externalCursor,
   previewFeature,
+  edgeFeature,
+  vertexFeatures,
   showCrops = true,
   showSlots = true,
   showCentroids = true,
@@ -148,6 +157,16 @@ export function MapPanel({
     [previewFeature],
   );
 
+  const edgeGeoJSON: GeoJSON.FeatureCollection = useMemo(
+    () =>
+      edgeFeature
+        ? { type: 'FeatureCollection', features: [edgeFeature] }
+        : EMPTY_FC,
+    [edgeFeature],
+  );
+
+  const vertexGeoJSON = vertexFeatures ?? EMPTY_POINT_FC;
+
   /* ── Click handler: slot popup OR external handler ── */
 
   const handleClick = useCallback(
@@ -201,14 +220,16 @@ export function MapPanel({
         style={{ width: '100%', height: '100%' }}
         mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
         onClick={handleClick}
+        onDblClick={(e) => { if (externalCursor) e.preventDefault(); }}
         onMouseMove={handleMouseMove}
         cursor={cursor}
+        doubleClickZoom={!externalCursor}
         interactiveLayerIds={showSlots ? ['slots-fill'] : []}
         onLoad={onMapLoad}
       >
         <NavigationControl position="bottom-right" />
 
-        {/* ── Crop rectangles ── */}
+        {/* ── Crop polygons ── */}
         <Source id="crops" type="geojson" data={cropsGeoJSON}>
           <Layer
             id="crops-fill"
@@ -237,7 +258,7 @@ export function MapPanel({
           />
         </Source>
 
-        {/* ── Preview rectangle (drawing) ── */}
+        {/* ── Preview polygon (drawing) ── */}
         <Source id="preview" type="geojson" data={previewGeoJSON}>
           <Layer
             id="preview-fill"
@@ -251,6 +272,32 @@ export function MapPanel({
               'line-color': tokens.primary,
               'line-width': 2,
               'line-dasharray': [4, 3],
+            }}
+          />
+        </Source>
+
+        {/* ── Drawing edges (solid line following clicks) ── */}
+        <Source id="draw-edges" type="geojson" data={edgeGeoJSON}>
+          <Layer
+            id="draw-edges-line"
+            type="line"
+            paint={{
+              'line-color': tokens.primary,
+              'line-width': 2.5,
+            }}
+          />
+        </Source>
+
+        {/* ── Drawing vertices ── */}
+        <Source id="draw-vertices" type="geojson" data={vertexGeoJSON}>
+          <Layer
+            id="draw-vertices-circle"
+            type="circle"
+            paint={{
+              'circle-radius': ['case', ['get', 'isFirst'], 7, 5],
+              'circle-color': ['case', ['get', 'isFirst'], tokens.primary, '#ffffff'],
+              'circle-stroke-color': tokens.primary,
+              'circle-stroke-width': 2,
             }}
           />
         </Source>

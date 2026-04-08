@@ -8,10 +8,6 @@ a named, documented field.
 
 from __future__ import annotations
 
-from enum import Enum
-from pathlib import Path
-from typing import Literal
-
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
@@ -20,17 +16,9 @@ from pydantic_settings import BaseSettings
 # Imagery
 # ---------------------------------------------------------------------------
 
-class ImagerySource(str, Enum):
-    mapbox = "mapbox"
-    ign = "ign"
-
-
 class ImagerySettings(BaseSettings):
-    """Imagery provider selection and provider-specific knobs."""
+    """Mapbox Static Images API knobs."""
 
-    source: ImagerySource = ImagerySource.mapbox
-
-    # Mapbox
     mapbox_access_token: str = ""
     mapbox_style_owner: str = "mapbox"
     mapbox_style_id: str = "satellite-v9"
@@ -38,17 +26,6 @@ class ImagerySettings(BaseSettings):
     mapbox_max_retries: int = 3
     mapbox_retry_backoff_s: float = 1.0
 
-    # IGN Géoplateforme (free, no key)
-    ign_layer: str = "ORTHOIMAGERY.ORTHOPHOTOS"
-    ign_image_format: str = "image/jpeg"
-    ign_default_radius_m: float = 32.0
-    ign_timeout_s: float = 90.0
-    ign_max_retries: int = 3
-    ign_retry_backoff_s: float = 2.0
-
-    # Common
-    default_image_width: int = 1280
-    default_image_height: int = 1280
     target_gsd_m: float = 0.05
     """Desired ground sampling distance (metres/pixel). Actual GSD comes from
     the returned GeoRasterSlice — this is a hint for zoom / radius selection."""

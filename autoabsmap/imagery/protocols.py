@@ -21,8 +21,8 @@ class ImageryProvider(Protocol):
 
     - *roi* is always WGS84 (EPSG:4326).
     - The provider reprojects to its native metric CRS internally.
-    - *target_gsd_m* is a hint (e.g. 0.15 for Mapbox, 0.20 for IGN);
-      the actual GSD is in the returned ``GeoRasterSlice.gsd_m``.
+    - *target_gsd_m* is a hint (e.g. 0.05 for Mapbox); the actual GSD is in
+      the returned ``GeoRasterSlice.gsd_m``.
     - Concrete implementations may subdivide the ROI into tiles and stitch —
       the pipeline always receives a single ``GeoRasterSlice``.
     """

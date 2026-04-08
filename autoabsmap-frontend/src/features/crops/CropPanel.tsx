@@ -39,7 +39,7 @@ export function CropPanel({
             </>
           ) : (
             <>
-              <span className={styles.icon}>▭</span> Draw ROI
+              <span className={styles.icon}>⬠</span> Draw ROI
             </>
           )}
         </button>
@@ -73,8 +73,8 @@ export function CropPanel({
         ) : (
           !isDrawing && (
             <p className={styles.hint}>
-              Draw rectangles on the map to define areas for parking slot
-              detection.
+              Click on the map to place polygon vertices around the parking
+              area. Double-click or click the first point to close.
             </p>
           )
         )}
@@ -87,8 +87,8 @@ export function CropPanel({
           onClick={() => void dispatch(launchJob())}
         >
           {isRunning
-            ? 'Processing…'
-            : `Launch Pipeline${crops.length > 0 ? ` (${crops.length})` : ''}`}
+            ? 'Generating…'
+            : `Generate Slots${crops.length > 0 ? ` (${crops.length})` : ''}`}
         </button>
 
         <JobProgress />

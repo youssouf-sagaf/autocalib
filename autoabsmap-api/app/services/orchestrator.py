@@ -12,11 +12,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import math
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
 from geojson_pydantic import Polygon as GeoJSONPolygon
 from shapely.geometry import Polygon as ShapelyPolygon
+from shapely.geometry import box as shapely_box
 
 from autoabsmap.export.models import GeoSlot
 from autoabsmap.generator_engine.models import PipelineRequest, PipelineResult, StageProgress
@@ -73,9 +75,69 @@ def _merge_slots(
     return existing
 
 
+# ── ROI tiling helpers ─────────────────────────────────────────────────────
+
+def _geojson_polygon_to_shapely(poly: GeoJSONPolygon) -> ShapelyPolygon:
+    coords = poly.coordinates[0]
+    return ShapelyPolygon([(c[0], c[1]) for c in coords])
+
+
+def _clip_roi_to_tile(
+    roi: GeoJSONPolygon,
+    west: float,
+    south: float,
+    east: float,
+    north: float,
+) -> GeoJSONPolygon | None:
+    """Clip a ROI polygon to a tile rectangle.
+
+    This keeps the true semantic ROI boundary when we fetch imagery using a
+    rectangular window.
+    """
+    roi_shape = _geojson_polygon_to_shapely(roi)
+    tile_shape = shapely_box(west, south, east, north)
+    inter = roi_shape.intersection(tile_shape)
+    if inter.is_empty:
+        return None
+
+    if inter.geom_type == "Polygon":
+        poly = inter
+    elif inter.geom_type == "MultiPolygon":
+        poly = max(inter.geoms, key=lambda g: g.area, default=None)
+        if poly is None:
+            return None
+    else:
+        # LineString/Point intersections are not useful for the pipeline.
+        return None
+
+    ring = [(float(x), float(y)) for x, y in poly.exterior.coords]
+    if len(ring) < 4:
+        return None
+    if ring[0] != ring[-1]:
+        ring.append(ring[0])
+
+    return GeoJSONPolygon(
+        type="Polygon",
+        coordinates=[[list(p) for p in ring]],
+    )
+
+
+@dataclass(frozen=True)
+class _TiledCrop:
+    """Internal per-tile request.
+
+    - fetch_window: rectangle window used to fetch imagery
+    - roi: true ROI polygon used for masking/clipping
+    """
+
+    fetch_window: GeoJSONPolygon | None
+    roi: GeoJSONPolygon
+    hints: object | None
+
+
 # ── Auto-tiling ───────────────────────────────────────────────────────────
 
-def _tile_crop(crop: CropRequest, target_gsd_m: float) -> list[CropRequest]:
+def _tile_crop(crop: CropRequest, target_gsd_m: float) -> list[_TiledCrop]:
     """Split a crop ROI into overlapping tiles if it exceeds the ML sweet spot.
 
     Each tile covers at most ``MAX_TILE_PX * target_gsd_m`` metres per side
@@ -99,7 +161,7 @@ def _tile_crop(crop: CropRequest, target_gsd_m: float) -> list[CropRequest]:
 
     tile_ground = MAX_TILE_PX * target_gsd_m
     if ground_w <= tile_ground and ground_h <= tile_ground:
-        return [crop]
+        return [_TiledCrop(fetch_window=None, roi=crop.polygon, hints=crop.hints)]
 
     step_m = tile_ground - TILE_OVERLAP_M
     step_lon = step_m / m_per_deg_lon
@@ -110,7 +172,7 @@ def _tile_crop(crop: CropRequest, target_gsd_m: float) -> list[CropRequest]:
     n_x = max(1, math.ceil((east - west - TILE_OVERLAP_M / m_per_deg_lon) / step_lon))
     n_y = max(1, math.ceil((north - south - TILE_OVERLAP_M / m_per_deg_lat) / step_lat))
 
-    tiles: list[CropRequest] = []
+    tiles: list[_TiledCrop] = []
     for iy in range(n_y):
         for ix in range(n_x):
             t_west = west + ix * step_lon
@@ -118,7 +180,7 @@ def _tile_crop(crop: CropRequest, target_gsd_m: float) -> list[CropRequest]:
             t_east = min(t_west + tile_lon, east + tile_lon * 0.01)
             t_north = min(t_south + tile_lat, north + tile_lat * 0.01)
 
-            poly = GeoJSONPolygon(
+            fetch_window = GeoJSONPolygon(
                 type="Polygon",
                 coordinates=[[
                     [t_west, t_south],
@@ -128,7 +190,11 @@ def _tile_crop(crop: CropRequest, target_gsd_m: float) -> list[CropRequest]:
                     [t_west, t_south],
                 ]],
             )
-            tiles.append(CropRequest(polygon=poly, hints=crop.hints))
+
+            roi_clipped = _clip_roi_to_tile(crop.polygon, t_west, t_south, t_east, t_north)
+            if roi_clipped is None:
+                continue
+            tiles.append(_TiledCrop(fetch_window=fetch_window, roi=roi_clipped, hints=crop.hints))
 
     logger.info(
         "Auto-tiled ROI (%.0f×%.0fm) into %d tiles of ~%.0f×%.0fm with %.0fm overlap",
@@ -165,7 +231,7 @@ class MultiCropOrchestrator:
             pkg_root = Path(autoabsmap.__file__).resolve().parent
             artifacts_base = pkg_root / "artifacts" / job_id
 
-        all_tiles: list[CropRequest] = []
+        all_tiles: list[_TiledCrop] = []
         for crop in crops:
             all_tiles.extend(_tile_crop(crop, target_gsd))
 
@@ -196,7 +262,11 @@ class MultiCropOrchestrator:
                         percent=sp.percent,
                     ))
 
-            request = PipelineRequest(roi=tile.polygon, hints=tile.hints)
+            request = PipelineRequest(
+                roi=tile.roi,
+                fetch_window=tile.fetch_window,
+                hints=tile.hints,  # type: ignore[arg-type]
+            )
             result = await asyncio.to_thread(
                 self._pipeline.run, request, _wrap_progress, tile_artifacts,
             )
