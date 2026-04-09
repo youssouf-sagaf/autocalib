@@ -78,7 +78,16 @@ export interface EditEvent {
   after: Slot[];
 }
 
-export type EditMode = 'none' | 'add' | 'delete' | 'copy' | 'modify';
+export type EditMode = 'none' | 'add' | 'delete' | 'copy' | 'modify' | 'straighten';
+
+export interface StraightenAnchors {
+  slot_id_a: string;
+  slot_id_b: string;
+}
+
+export interface StraightenResponse {
+  proposed_slots: Slot[];
+}
 
 export interface SaveSessionRequest {
   job_id: string;

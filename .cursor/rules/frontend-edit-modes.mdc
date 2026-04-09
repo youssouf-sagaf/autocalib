@@ -1,0 +1,35 @@
+---
+description: Edit mode hooks, MapPanel layers, and Redux patterns for autoabsmap-frontend
+globs: autoabsmap-frontend/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend Edit Mode Conventions
+
+## Hook pattern (one per edit mode)
+
+Each mode (Add, Delete, Copy, Modify) gets a dedicated `useXxxSlot` hook in `src/hooks/`. Pattern:
+
+- **Local state** for interactive preview (high-frequency updates like mouse tracking)
+- **Redux dispatch** only on commit (confirmed action)
+- Hook returns: `isXxxMode`, `handleMapClick`, `handleMouseMove`, `handleKeyDown`, `toggleXxxMode`
+- Shared geometry lives in `src/utils/slot-geometry.ts` — never duplicate math in hooks
+
+## Mutual exclusion
+
+All mode toggles go through `App.tsx`'s `enterMode(toggle)` which calls `exitCurrentMode()` first. Never activate two modes simultaneously.
+
+## MapPanel layers — no double rendering
+
+- `slots-fill` (opacity 0) exists solely for click/hover hit detection via `interactiveLayerIds`
+- `slots-line` shows source-colored outlines **only when no overlay covers them** (set `line-opacity: 0` when postprocess overlay is active)
+- Overlay layers (`overlay-postprocess-*`, `overlay-detection-*`, `overlay-mask-*`) are conditionally mounted — never stack them with `slots-line`
+- One-slot feedback layers (`selected-slot`, `hovered-slot`, `pending-bbox`, `modifying-bbox`) are always safe — they show a single slot
+
+## MapPanel click passthrough
+
+When `isEditMode` is true, `handleClick` must forward to `onMapClick` immediately — never swallow clicks for popups. Popups only show in browse mode (`editMode === 'none'`).
+
+## Redux edit history
+
+All slot mutations (`addSlot`, `deleteSlot`, `modifySlot`) must call `truncateFuture(state)` before pushing to `editHistory`, then increment `editIndex`. This keeps undo/redo consistent.

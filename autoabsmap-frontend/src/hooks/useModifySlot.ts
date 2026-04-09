@@ -4,17 +4,16 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setEditMode, modifySlot } from '../store/autoabsmap-slice';
 import type { Slot } from '../types';
 import {
-  approxDistanceM,
   extractObbMetrics,
   buildObbPolygon,
 } from '../utils/slot-geometry';
 
-const HIT_RADIUS_M = 4;
-
-type Phase = 'select' | 'position' | 'rotation';
+type Phase = 'position' | 'rotation';
 
 interface ModifyState {
   phase: Phase;
+  /** True when entered via mousedown-on-marker (drag flow); false when seeded by Copy. */
+  viaDrag: boolean;
   originalSlot: Slot;
   currentLng: number;
   currentLat: number;
@@ -26,10 +25,15 @@ interface ModifyState {
 /**
  * Hook for the "Modify slot" editing mode.
  *
- * Two-phase interaction:
- *   1. Click a slot → "picked up" (position phase, center follows cursor)
- *   2. Click to lock position → rotation phase (angle follows cursor)
- *   3. Click to confirm → dispatches modifySlot, returns to select phase
+ * Drag-to-move flow (entry via mousedown on a marker):
+ *   1. Mousedown on a marker → "picked up" (position phase, center follows cursor)
+ *   2. Mouseup → lock position, enter rotation phase (angle follows cursor)
+ *   3. Click → dispatches modifySlot, returns to idle
+ *
+ * Click-to-place flow (entry via Copy mode auto-switch):
+ *   1. selectSlotById() seeds a slot in position phase (viaDrag=false)
+ *   2. Click → lock position, enter rotation phase
+ *   3. Click → confirm
  */
 export function useModifySlot() {
   const dispatch = useAppDispatch();
@@ -75,6 +79,7 @@ export function useModifySlot() {
       const metrics = extractObbMetrics(slot.polygon);
       setState({
         phase: 'position',
+        viaDrag: false,
         originalSlot: slot,
         currentLng: slot.center.lng,
         currentLat: slot.center.lat,
@@ -86,36 +91,57 @@ export function useModifySlot() {
     [slots],
   );
 
+  const pickUpSlot = useCallback(
+    (slotId: string, viaDrag: boolean) => {
+      const slot = slots.find((s) => s.slot_id === slotId);
+      if (!slot) return false;
+      const metrics = extractObbMetrics(slot.polygon);
+      setState({
+        phase: 'position',
+        viaDrag,
+        originalSlot: slot,
+        currentLng: slot.center.lng,
+        currentLat: slot.center.lat,
+        width: metrics.width,
+        height: metrics.height,
+        angle: metrics.angle,
+      });
+      return true;
+    },
+    [slots],
+  );
+
+  const handleMouseDown = useCallback(
+    (e: MapMouseEvent) => {
+      if (!isModifyMode || state) return;
+      const slotId = e.features?.[0]?.properties?.slot_id as string | undefined;
+      if (!slotId) return;
+      pickUpSlot(slotId, true);
+    },
+    [isModifyMode, state, pickUpSlot],
+  );
+
+  const handleMouseUp = useCallback(
+    () => {
+      if (!isModifyMode || !state || !state.viaDrag || state.phase !== 'position') return;
+      setState((prev) => (prev ? { ...prev, phase: 'rotation' } : null));
+    },
+    [isModifyMode, state],
+  );
+
   const handleMapClick = useCallback(
     (e: MapMouseEvent) => {
-      if (!isModifyMode) return;
+      if (!isModifyMode || !state) return;
       const { lng, lat } = e.lngLat;
 
-      if (!state) {
-        let closest: { slot: Slot; dist: number } | null = null;
-        for (const slot of slots) {
-          const d = approxDistanceM(lng, lat, slot.center.lng, slot.center.lat);
-          if (d < HIT_RADIUS_M && (!closest || d < closest.dist)) {
-            closest = { slot, dist: d };
-          }
-        }
-        if (!closest) return;
-
-        const metrics = extractObbMetrics(closest.slot.polygon);
-        setState({
-          phase: 'position',
-          originalSlot: closest.slot,
-          currentLng: closest.slot.center.lng,
-          currentLat: closest.slot.center.lat,
-          width: metrics.width,
-          height: metrics.height,
-          angle: metrics.angle,
-        });
-        return;
-      }
+      // Drag flow: position phase ends on mouseup, not click. Skip clicks here.
+      if (state.phase === 'position' && state.viaDrag) return;
 
       if (state.phase === 'position') {
-        setState((prev) => (prev ? { ...prev, phase: 'rotation', currentLng: lng, currentLat: lat } : null));
+        // Click-to-place flow (Copy → Modify auto-switch)
+        setState((prev) =>
+          prev ? { ...prev, phase: 'rotation', currentLng: lng, currentLat: lat } : null,
+        );
         return;
       }
 
@@ -125,7 +151,7 @@ export function useModifySlot() {
         setState(null);
       }
     },
-    [isModifyMode, state, slots, modifyingSlot, dispatch],
+    [isModifyMode, state, modifyingSlot, dispatch],
   );
 
   const handleMouseMove = useCallback(
@@ -166,7 +192,11 @@ export function useModifySlot() {
     isModifyMode,
     modifyingSlot,
     modifyPhase: state?.phase ?? null,
+    /** True while a slot is actively being dragged or rotated (map pan must be off). */
+    isModifyDragLocked: state !== null,
     handleMapClick,
+    handleMouseDown,
+    handleMouseUp,
     handleMouseMove,
     handleKeyDown,
     toggleModifyMode,

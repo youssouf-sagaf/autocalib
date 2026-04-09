@@ -32,6 +32,10 @@ interface AbsmapState {
   maskPolygons: GeoJSON.FeatureCollection | null;
   detectionOverlay: GeoJSON.FeatureCollection | null;
   postprocessOverlay: GeoJSON.FeatureCollection | null;
+  straightenProposal: Slot[] | null;
+  straightenAnchorSlotId: string | null;
+  straightenLoading: boolean;
+  straightenError: string | null;
 }
 
 const initialState: AbsmapState = {
@@ -52,6 +56,10 @@ const initialState: AbsmapState = {
   maskPolygons: null,
   detectionOverlay: null,
   postprocessOverlay: null,
+  straightenProposal: null,
+  straightenAnchorSlotId: null,
+  straightenLoading: false,
+  straightenError: null,
 };
 
 function truncateFuture(state: AbsmapState) {
@@ -119,6 +127,24 @@ export const saveSession = createAsyncThunk(
   },
 );
 
+export const straightenRow = createAsyncThunk(
+  'absmap/straightenRow',
+  async (
+    anchors: { slot_id_a: string; slot_id_b: string },
+    { getState },
+  ) => {
+    const { absmap } = getState() as { absmap: AbsmapState };
+    const jobId = absmap.job?.id;
+    if (!jobId) throw new Error('No active job');
+    log.info(
+      `Straighten request: ${anchors.slot_id_a.slice(0, 8)}… / ${anchors.slot_id_b.slice(0, 8)}… on job ${jobId}`,
+    );
+    const result = await api.straightenRow(jobId, anchors);
+    log.info(`Straighten response: ${result.proposed_slots.length} corrected slots`);
+    return result.proposed_slots;
+  },
+);
+
 const absmapSlice = createSlice({
   name: 'absmap',
   initialState,
@@ -160,6 +186,11 @@ const absmapSlice = createSlice({
     },
     setEditMode(state, action: PayloadAction<EditMode>) {
       state.editMode = action.payload;
+    },
+
+    straightenSetAnchor(state, action: PayloadAction<string | null>) {
+      state.straightenAnchorSlotId = action.payload;
+      state.straightenError = null;
     },
 
     addSlot(state, action: PayloadAction<Slot>) {
@@ -236,6 +267,36 @@ const absmapSlice = createSlice({
       log.info(`Redo: ${evt.type}`);
     },
 
+    acceptStraighten(state) {
+      const proposed = state.straightenProposal;
+      if (!proposed || proposed.length === 0) return;
+      truncateFuture(state);
+      const beforeSlots: Slot[] = [];
+      for (const p of proposed) {
+        const existing = state.slots.find((s) => s.slot_id === p.slot_id);
+        if (existing) beforeSlots.push({ ...existing });
+      }
+      const evt: EditEvent = {
+        type: 'align',
+        timestamp: Date.now(),
+        slot_ids: proposed.map((s) => s.slot_id),
+        before: beforeSlots,
+        after: proposed,
+      };
+      state.editHistory.push(evt);
+      state.editIndex++;
+      applyEvent(state, evt);
+      state.straightenProposal = null;
+      state.isDirty = true;
+      log.info(`Straighten accepted: ${proposed.length} slots aligned`);
+    },
+
+    rejectStraighten(state) {
+      state.straightenProposal = null;
+      state.straightenAnchorSlotId = null;
+      log.info('Straighten proposal rejected');
+    },
+
     resetSession(state) {
       state.slots = [];
       state.baselineSlots = [];
@@ -252,12 +313,17 @@ const absmapSlice = createSlice({
       state.maskPolygons = null;
       state.detectionOverlay = null;
       state.postprocessOverlay = null;
+      state.straightenProposal = null;
+      state.straightenAnchorSlotId = null;
+      state.straightenLoading = false;
+      state.straightenError = null;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(launchJob.fulfilled, (state, action) => {
         state.job = action.payload;
+        state.overlayVisibility = { detection: false, mask: false, postprocess: false };
       })
       .addCase(launchJob.rejected, (state, action) => {
         state.job = {
@@ -292,8 +358,31 @@ const absmapSlice = createSlice({
         const totalSlots = action.payload.slots.length + action.payload.baseline_slots.length;
         if (totalSlots > 0) {
           state.dualMapActive = true;
-          state.overlayVisibility.postprocess = true;
         }
+      })
+      .addCase(straightenRow.pending, (state) => {
+        state.straightenLoading = true;
+        state.straightenError = null;
+        state.straightenProposal = null;
+      })
+      .addCase(straightenRow.fulfilled, (state, action) => {
+        state.straightenLoading = false;
+        if (action.payload.length === 0) {
+          state.straightenProposal = null;
+          state.straightenError =
+            'No slots aligned for this pair. Pick two markers on the same row, or different anchors.';
+          /* Keep straightenAnchorSlotId so the user can click another second slot. */
+          return;
+        }
+        state.straightenAnchorSlotId = null;
+        state.straightenError = null;
+        state.straightenProposal = action.payload;
+      })
+      .addCase(straightenRow.rejected, (state, action) => {
+        state.straightenLoading = false;
+        /* Keep first anchor so user can retry the second pick without starting over. */
+        state.straightenError = action.error.message ?? 'Straighten failed';
+        log.error(`Straighten failed: ${action.error.message}`);
       });
   },
 });
@@ -307,9 +396,12 @@ export const {
   toggleDualMap,
   toggleOverlay,
   setEditMode,
+  straightenSetAnchor,
   addSlot,
   deleteSlot,
   modifySlot,
+  acceptStraighten,
+  rejectStraighten,
   undo,
   redo,
   resetSession,

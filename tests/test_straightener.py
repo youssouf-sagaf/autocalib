@@ -2,8 +2,8 @@
 
 Scenario:
     8 parking slots forming a horizontal row with positional/angular wobble,
-    plus 3 perpendicular distractor slots.  The straightener is called on the
-    middle slot of the main row.
+    plus 3 perpendicular distractor slots.  Anchors are the first and last
+    row slots (any two endpoints along the row).
 
 Verifies:
     1. Row discovery — all 8 row members found, perpendicular excluded.
@@ -109,7 +109,7 @@ def test_straighten_row_e2e():
     assert np.std(before_angles) > math.radians(0.5), "Sanity: wobble should be visible"
 
     # ── Run straightener ────────────────────────────────────────────────
-    corrected = RowStraightener().straighten("row-4", all_slots)
+    corrected = RowStraightener().straighten("row-0", "row-7", all_slots)
 
     # ── 1. Row discovery ────────────────────────────────────────────────
     corrected_ids = {s.slot_id for s in corrected}
@@ -152,3 +152,41 @@ def test_straighten_row_e2e():
         assert abs(aft.height - bef.height) < 0.05, (
             f"{sid} height changed: {bef.height:.3f} → {aft.height:.3f}"
         )
+
+
+def test_straighten_row_segment_only_slots_between_anchors():
+    """Interior anchors should only align slots on the segment, not the full row."""
+    rng = np.random.RandomState(43)
+    slot_w, slot_h, pitch = 2.5, 5.0, 2.8
+    row_slots = [
+        _make_slot(
+            f"row-{i}",
+            cx=i * pitch + rng.uniform(-0.2, 0.2),
+            cy=rng.uniform(-0.2, 0.2),
+            w=slot_w,
+            h=slot_h,
+            angle=rng.uniform(-math.radians(2), math.radians(2)),
+        )
+        for i in range(8)
+    ]
+    all_slots = row_slots
+
+    corrected = RowStraightener().straighten("row-2", "row-5", all_slots)
+    ids = {s.slot_id for s in corrected}
+    assert ids == {"row-2", "row-3", "row-4", "row-5"}
+
+
+def test_straighten_accepts_obb_ninety_degree_ambiguity():
+    """Width/length labeling may leave angle_rad perpendicular to the row axis."""
+    pitch, slot_w, slot_h = 2.8, 2.5, 5.0
+    # Angle = 20° along row in local space; force OBB *edge* angle = 110° (perp case).
+    obb_edge = math.radians(20.0 + 90.0)
+    row_slots = [
+        _make_slot(f"row-{i}", cx=i * pitch, cy=0.0, w=slot_w, h=slot_h, angle=obb_edge)
+        for i in range(5)
+    ]
+    corrected = RowStraightener().straighten("row-0", "row-4", row_slots)
+    assert len(corrected) == 5
+    after = {s.slot_id: _extract_local_slot(s, REF_LNG, REF_LAT) for s in corrected}
+    angles = [after[sid].angle_rad for sid in sorted(after.keys())]
+    assert max(abs(a - angles[0]) for a in angles) < math.radians(0.2)

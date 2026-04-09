@@ -22,14 +22,12 @@ from app.models import (
     OrchestratorProgress,
     PipelineJob,
 )
-from app.services.job_store import JobStore
+from app.services.job_store import job_store
 from app.services.pipeline_service import build_orchestrator
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
-
-job_store = JobStore()
 
 _sse_queues: dict[str, list[asyncio.Queue]] = {}
 

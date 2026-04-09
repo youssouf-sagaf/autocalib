@@ -6,6 +6,7 @@ import { useAddSlot } from './hooks/useAddSlot';
 import { useDeleteSlot } from './hooks/useDeleteSlot';
 import { useCopySlot } from './hooks/useCopySlot';
 import { useModifySlot } from './hooks/useModifySlot';
+import { useStraightenSlot } from './hooks/useStraightenSlot';
 import { useJobStream } from './hooks/useJobStream';
 import { AppShell } from './features/layout/AppShell';
 import { MapPanel, type MapViewState } from './map/MapPanel';
@@ -88,7 +89,10 @@ export default function App() {
   const {
     isModifyMode,
     modifyingSlot,
+    isModifyDragLocked,
     handleMapClick: handleModifyClick,
+    handleMouseDown: handleModifyMouseDown,
+    handleMouseUp: handleModifyMouseUp,
     handleMouseMove: handleModifyMouseMove,
     handleKeyDown: handleModifyKeyDown,
     toggleModifyMode: rawToggleModifyMode,
@@ -104,6 +108,17 @@ export default function App() {
     toggleCopyMode: rawToggleCopyMode,
   } = useCopySlot(modifySelectSlotById);
 
+  /* ── Straighten mode ── */
+  const {
+    isStraightenMode,
+    proposal: straightenProposal,
+    handleMapClick: handleStraightenClick,
+    handleKeyDown: handleStraightenKeyDown,
+    toggleStraightenMode: rawToggleStraightenMode,
+    confirmStraighten,
+    cancelStraighten,
+  } = useStraightenSlot();
+
   /* ── Mutual exclusion: exit whichever mode is active ── */
   const exitCurrentMode = useCallback(() => {
     if (isDrawing) stopDrawing();
@@ -111,7 +126,8 @@ export default function App() {
     if (isDeleteMode) cancelDelete();
     if (isCopyMode) rawToggleCopyMode();
     if (isModifyMode) cancelModify();
-  }, [isDrawing, stopDrawing, isAddMode, cancelSlot, isDeleteMode, cancelDelete, isCopyMode, rawToggleCopyMode, isModifyMode, cancelModify]);
+    if (isStraightenMode) cancelStraighten();
+  }, [isDrawing, stopDrawing, isAddMode, cancelSlot, isDeleteMode, cancelDelete, isCopyMode, rawToggleCopyMode, isModifyMode, cancelModify, isStraightenMode, cancelStraighten]);
 
   const enterMode = useCallback(
     (toggle: () => void) => {
@@ -126,12 +142,19 @@ export default function App() {
   const toggleDeleteMode = useCallback(() => enterMode(rawToggleDeleteMode), [enterMode, rawToggleDeleteMode]);
   const toggleCopyMode = useCallback(() => enterMode(rawToggleCopyMode), [enterMode, rawToggleCopyMode]);
   const toggleModifyMode = useCallback(() => enterMode(rawToggleModifyMode), [enterMode, rawToggleModifyMode]);
+  const toggleStraightenMode = useCallback(() => enterMode(rawToggleStraightenMode), [enterMode, rawToggleStraightenMode]);
   const startDrawingExclusive = useCallback(() => { exitCurrentMode(); startDrawing(); }, [exitCurrentMode, startDrawing]);
 
-  const isAnyEditMode = isAddMode || isDeleteMode || isCopyMode || isModifyMode;
+  const isAnyEditMode = isAddMode || isDeleteMode || isCopyMode || isModifyMode || isStraightenMode;
 
   /* ── Unified selectedSlotId (browse or delete mode) ── */
-  const activeSelectedSlotId = isDeleteMode ? deleteSelectedId : browseSelectedId;
+  const straightenAnchorSlotId = useAppSelector((s) => s.absmap.straightenAnchorSlotId);
+  const activeSelectedSlotId =
+    isDeleteMode
+      ? deleteSelectedId
+      : isStraightenMode && straightenAnchorSlotId
+        ? straightenAnchorSlotId
+        : browseSelectedId;
 
   /* ── Composed map click ── */
   const composedMapClick = useCallback(
@@ -140,6 +163,7 @@ export default function App() {
       if (isDeleteMode) { handleDeleteClick(e); return; }
       if (isCopyMode) { handleCopyClick(e); return; }
       if (isModifyMode) { handleModifyClick(e); return; }
+      if (isStraightenMode) { handleStraightenClick(e); return; }
 
       const features = e.features;
       if (features && features.length > 0) {
@@ -153,7 +177,7 @@ export default function App() {
 
       handleClick(e);
     },
-    [isAddMode, isDeleteMode, isCopyMode, isModifyMode, handleClick, handleAddClick, handleDeleteClick, handleCopyClick, handleModifyClick],
+    [isAddMode, isDeleteMode, isCopyMode, isModifyMode, isStraightenMode, handleClick, handleAddClick, handleDeleteClick, handleCopyClick, handleModifyClick, handleStraightenClick],
   );
 
   /* ── Composed mouse move (hover tracking + mode handlers) ── */
@@ -175,12 +199,28 @@ export default function App() {
     [isAddMode, isModifyMode, handleAddMouseMove, handleModifyMouseMove, handleMouseMove],
   );
 
+  /* ── Composed mousedown / mouseup (modify drag-and-drop) ── */
+  const composedMouseDown = useCallback(
+    (e: Parameters<typeof handleClick>[0]) => {
+      if (isModifyMode) handleModifyMouseDown(e);
+    },
+    [isModifyMode, handleModifyMouseDown],
+  );
+
+  const composedMouseUp = useCallback(
+    () => {
+      if (isModifyMode) handleModifyMouseUp();
+    },
+    [isModifyMode, handleModifyMouseUp],
+  );
+
   /* ── Composed cursor ── */
   const composedCursor = (() => {
     if (isAddMode) return 'crosshair';
     if (isDeleteMode) return 'crosshair';
     if (isCopyMode) return 'copy';
     if (isModifyMode) return 'move';
+    if (isStraightenMode) return 'crosshair';
     return cursor;
   })();
 
@@ -213,6 +253,7 @@ export default function App() {
     d: toggleDeleteMode,
     c: toggleCopyMode,
     m: toggleModifyMode,
+    s: toggleStraightenMode,
   };
 
   const composedKeyDown = useCallback(
@@ -243,11 +284,12 @@ export default function App() {
       handleDeleteKeyDown(e);
       handleCopyKeyDown(e);
       handleModifyKeyDown(e);
+      handleStraightenKeyDown(e);
       handleKeyDown(e);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, toggleAddMode, toggleDeleteMode, toggleCopyMode, toggleModifyMode,
-     handleAddKeyDown, handleDeleteKeyDown, handleCopyKeyDown, handleModifyKeyDown, handleKeyDown],
+    [dispatch, toggleAddMode, toggleDeleteMode, toggleCopyMode, toggleModifyMode, toggleStraightenMode,
+     handleAddKeyDown, handleDeleteKeyDown, handleCopyKeyDown, handleModifyKeyDown, handleStraightenKeyDown, handleKeyDown],
   );
 
   useEffect(() => {
@@ -274,6 +316,9 @@ export default function App() {
       onToggleCopyMode={toggleCopyMode}
       onToggleModifyMode={toggleModifyMode}
       onCancelModify={cancelModify}
+      onToggleStraightenMode={toggleStraightenMode}
+      onConfirmStraighten={confirmStraighten}
+      onCancelStraighten={cancelStraighten}
       onUndo={handleUndo}
       onRedo={handleRedo}
       canUndo={canUndo}
@@ -301,6 +346,8 @@ export default function App() {
             onMove={handleMove}
             onMapClick={composedMapClick}
             onMouseMove={composedMouseMove}
+            onMouseDown={composedMouseDown}
+            onMouseUp={composedMouseUp}
             cursor={composedCursor}
             previewFeature={previewFeature}
             edgeFeature={edgeFeature}
@@ -314,7 +361,11 @@ export default function App() {
             selectedSlotId={activeSelectedSlotId}
             hoveredSlotId={hoveredSlotId}
             modifyingSlot={modifyingSlot}
+            straightenProposal={straightenProposal}
+            onConfirmStraighten={isStraightenMode ? confirmStraighten : undefined}
+            onCancelStraighten={isStraightenMode ? cancelStraighten : undefined}
             isEditMode={isAnyEditMode}
+            dragPanEnabled={!isModifyDragLocked}
           />
         </div>
       ) : (
@@ -323,6 +374,8 @@ export default function App() {
           onMove={handleMove}
           onMapClick={composedMapClick}
           onMouseMove={composedMouseMove}
+          onMouseDown={composedMouseDown}
+          onMouseUp={composedMouseUp}
           cursor={composedCursor}
           previewFeature={previewFeature}
           edgeFeature={edgeFeature}
@@ -334,7 +387,11 @@ export default function App() {
           selectedSlotId={activeSelectedSlotId}
           hoveredSlotId={hoveredSlotId}
           modifyingSlot={modifyingSlot}
+          straightenProposal={straightenProposal}
+          onConfirmStraighten={isStraightenMode ? confirmStraighten : undefined}
+          onCancelStraighten={isStraightenMode ? cancelStraighten : undefined}
           isEditMode={isAnyEditMode}
+          dragPanEnabled={!isModifyDragLocked}
         />
       )}
     </AppShell>

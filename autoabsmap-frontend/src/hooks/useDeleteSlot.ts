@@ -2,14 +2,18 @@ import { useCallback, useState } from 'react';
 import type { MapMouseEvent } from 'react-map-gl/mapbox';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setEditMode, deleteSlot } from '../store/autoabsmap-slice';
-import { approxDistanceM } from '../utils/slot-geometry';
 
-const HIT_RADIUS_M = 4;
-
+/**
+ * Hook for the "Delete slot" editing mode.
+ *
+ * Two-click flow:
+ *   1. Click a marker → it is selected (the marker grows as visual feedback).
+ *   2. Click the same marker (or any marker) → deletes the selected slot.
+ * Enter also confirms; Esc / click off-marker dismisses the selection.
+ */
 export function useDeleteSlot() {
   const dispatch = useAppDispatch();
   const editMode = useAppSelector((s) => s.absmap.editMode);
-  const slots = useAppSelector((s) => s.absmap.slots);
   const hasResults = useAppSelector(
     (s) => s.absmap.slots.length > 0 || s.absmap.baselineSlots.length > 0,
   );
@@ -45,25 +49,19 @@ export function useDeleteSlot() {
     (e: MapMouseEvent) => {
       if (!isDeleteMode) return;
 
+      // 2nd click — anywhere — commits the pending deletion.
       if (selectedSlotId) {
         confirmDelete();
         return;
       }
 
-      const { lng, lat } = e.lngLat;
-      let closest: { id: string; dist: number } | null = null;
-      for (const slot of slots) {
-        const d = approxDistanceM(lng, lat, slot.center.lng, slot.center.lat);
-        if (d < HIT_RADIUS_M && (!closest || d < closest.dist)) {
-          closest = { id: slot.slot_id, dist: d };
-        }
-      }
-
-      if (closest) {
-        setSelectedSlotId(closest.id);
+      // 1st click — must be on a marker to select.
+      const slotId = e.features?.[0]?.properties?.slot_id as string | undefined;
+      if (slotId) {
+        setSelectedSlotId(slotId);
       }
     },
-    [isDeleteMode, selectedSlotId, confirmDelete, slots],
+    [isDeleteMode, selectedSlotId, confirmDelete],
   );
 
   const handleKeyDown = useCallback(

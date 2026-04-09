@@ -1,19 +1,16 @@
-"""RowStraightener — directed corridor walk with rolling direction update.
+"""RowStraightener — align slots on one row from two anchor slots.
 
-Algorithm (V1 — straight rows only, curved rows deferred to V2):
+The operator picks any two slots on the same row (not necessarily the
+outermost detections). The row axis is the line through their centroids in
+local metric space (any map orientation / inclination). Slots are collected if
+their OBB is parallel to that axis modulo 90° (short vs long edge ambiguity
+from detection), their centroid lies in a perpendicular corridor, and their
+projection falls between the anchors (with padding). Both anchors are always
+included. Then:
 
-1. Estimate local direction from K nearest neighbors (median angle)
-2. Open a narrow corridor (1–1.5× slot width) centered on the reference slot
-3. Walk the corridor in both directions, accepting slots by:
-   - centroid inside corridor
-   - angle compatible with current direction
-   - spacing consistent with estimated pitch
-   Rolling direction update after each accepted slot (handles gentle curves)
-4. Stop when: no valid slot found / angle breaks sharply
-5. Apply correction:
-   - Orientation: rotate each OBB to median angle of all row members
-   - Alignment: snap centroids onto fitted row axis
-   - Footprints: width and length unchanged (only center + angle move)
+- shared angle = row axis
+- centroids projected onto the axis (line through mean centroid)
+- footprint width/height unchanged
 """
 
 from __future__ import annotations
@@ -22,7 +19,6 @@ import logging
 import math
 from dataclasses import dataclass
 
-import numpy as np
 from geojson_pydantic import Polygon as GeoJSONPolygon
 
 from autoabsmap.config.settings import AlignmentSettings
@@ -36,20 +32,14 @@ _EARTH_R = 6_378_137.0  # WGS84 semi-major axis (metres)
 _DEG2M_LAT = math.pi * _EARTH_R / 180.0
 
 
-# ── Internal slot representation in local metric coords ───────────────────
-
-
 @dataclass
 class _LocalSlot:
     geo_slot: GeoSlot
     cx: float
     cy: float
-    angle_rad: float  # rotation angle of the OBB (width-axis direction)
-    width: float  # shorter dimension (along row)
-    height: float  # longer dimension (slot depth)
-
-
-# ── Coordinate conversion (equirectangular, accurate at parking-lot scale) ─
+    angle_rad: float
+    width: float
+    height: float
 
 
 def _deg2m_lng(lat_rad: float) -> float:
@@ -59,7 +49,6 @@ def _deg2m_lng(lat_rad: float) -> float:
 def _to_local(
     lng: float, lat: float, ref_lng: float, ref_lat: float,
 ) -> tuple[float, float]:
-    """WGS84 degrees → local metres centred on (ref_lng, ref_lat)."""
     lat_rad = math.radians(ref_lat)
     return (lng - ref_lng) * _deg2m_lng(lat_rad), (lat - ref_lat) * _DEG2M_LAT
 
@@ -67,16 +56,11 @@ def _to_local(
 def _to_wgs84(
     x: float, y: float, ref_lng: float, ref_lat: float,
 ) -> tuple[float, float]:
-    """Local metres → WGS84 degrees."""
     lat_rad = math.radians(ref_lat)
     return ref_lng + x / _deg2m_lng(lat_rad), ref_lat + y / _DEG2M_LAT
 
 
-# ── Angle helpers (OBB has 180° symmetry) ─────────────────────────────────
-
-
 def _wrap_pi(a: float) -> float:
-    """Normalise angle to [-π/2, π/2] respecting OBB 180° symmetry."""
     a = a % math.pi
     if a > math.pi / 2:
         a -= math.pi
@@ -84,30 +68,24 @@ def _wrap_pi(a: float) -> float:
 
 
 def _angle_diff(a: float, b: float) -> float:
-    """Smallest absolute angle difference with 180° symmetry."""
     return abs(_wrap_pi(a - b))
 
 
-def _circular_median(angles: list[float]) -> float:
-    """Circular median of angles with 180° symmetry."""
-    if not angles:
-        return 0.0
-    ref = angles[0]
-    diffs = [_wrap_pi(a - ref) for a in angles]
-    return _wrap_pi(ref + float(np.median(diffs)))
+def _slot_axis_aligns_with_row(slot_angle: float, row_angle: float, tol: float) -> bool:
+    """True if the row direction matches either OBB principal direction (±90°).
 
-
-# ── Geometry extraction / reconstruction ──────────────────────────────────
+    Spots on an inclined row share the same axis as the anchor segment; the
+    detector may attach ``angle_rad`` to the short or long edge depending on the
+    quad ordering, so we accept parallelism modulo 90°.
+    """
+    d0 = _angle_diff(slot_angle, row_angle)
+    d1 = _angle_diff(slot_angle + math.pi / 2, row_angle)
+    return min(d0, d1) <= tol
 
 
 def _extract_local_slot(
     slot: GeoSlot, ref_lng: float, ref_lat: float,
 ) -> _LocalSlot:
-    """Convert a GeoSlot polygon into local metric geometry.
-
-    Determines width/height from the two edge lengths of the OBB
-    and extracts the rotation angle from the shorter (width) edge direction.
-    """
     ring = slot.polygon.coordinates[0]
     corners = [_to_local(c[0], c[1], ref_lng, ref_lat) for c in ring[:4]]
     cx, cy = _to_local(slot.center.lng, slot.center.lat, ref_lng, ref_lat)
@@ -135,7 +113,6 @@ def _build_obb_polygon(
     cx: float, cy: float, w: float, h: float, angle: float,
     ref_lng: float, ref_lat: float,
 ) -> GeoJSONPolygon:
-    """Reconstruct a GeoJSON OBB polygon from local metric parameters."""
     hw, hh = w / 2, h / 2
     ca, sa = math.cos(angle), math.sin(angle)
     ring = []
@@ -148,7 +125,6 @@ def _build_obb_polygon(
 
 
 def _rebuild_geoslot(local: _LocalSlot, ref_lng: float, ref_lat: float) -> GeoSlot:
-    """Create a corrected GeoSlot from local-metric geometry."""
     clng, clat = _to_wgs84(local.cx, local.cy, ref_lng, ref_lat)
     poly = _build_obb_polygon(
         local.cx, local.cy, local.width, local.height,
@@ -164,214 +140,145 @@ def _rebuild_geoslot(local: _LocalSlot, ref_lng: float, ref_lat: float) -> GeoSl
     )
 
 
-# ── Row discovery helpers ─────────────────────────────────────────────────
-
-
-def _find_k_nearest(
-    ref: _LocalSlot, all_locals: list[_LocalSlot], k: int,
-) -> list[_LocalSlot]:
-    others = [s for s in all_locals if s.geo_slot.slot_id != ref.geo_slot.slot_id]
-    others.sort(key=lambda s: math.hypot(s.cx - ref.cx, s.cy - ref.cy))
-    return others[:k]
-
-
-def _estimate_pitch(
-    ref: _LocalSlot,
-    neighbors: list[_LocalSlot],
-    row_angle: float,
-    angle_tol: float,
-) -> float:
-    """Estimate row pitch (centre-to-centre spacing along the row axis).
-
-    Uses the median along-axis distance of angle-compatible neighbours.
-    Falls back to 1.2× slot width if no compatible neighbour is found.
-    """
-    ca, sa = math.cos(row_angle), math.sin(row_angle)
-    along: list[float] = []
-    for n in neighbors:
-        if _angle_diff(n.angle_rad, row_angle) > angle_tol:
-            continue
-        d = abs((n.cx - ref.cx) * ca + (n.cy - ref.cy) * sa)
-        if d > 0.1:
-            along.append(d)
-    return float(np.median(along)) if along else ref.width * 1.2
-
-
-def _walk_direction(
-    start: _LocalSlot,
-    candidates: list[_LocalSlot],
-    direction: int,
+def _collect_row_between_anchors(
+    local_a: _LocalSlot,
+    local_b: _LocalSlot,
+    all_locals: list[_LocalSlot],
     row_angle: float,
     corridor_hw: float,
-    pitch: float,
     angle_tol: float,
-    pitch_tol: float,
-    max_gaps: int,
-    rolling_alpha: float,
-    visited: set[str],
+    pad_along: float,
 ) -> list[_LocalSlot]:
-    """Walk along the row in one direction, collecting compatible slots.
+    """Slots on the row segment between anchor A and B (with padding along axis)."""
+    ca, sa = math.cos(row_angle), math.sin(row_angle)
+    mx = (local_a.cx + local_b.cx) / 2
+    my = (local_a.cy + local_b.cy) / 2
 
-    At each step the nearest unvisited slot that satisfies corridor, angle,
-    and distance constraints is accepted. The search direction is updated via
-    exponential moving average (``rolling_alpha``).
-    """
-    current = start
-    cur_angle = row_angle
-    result: list[_LocalSlot] = []
-    misses = 0
+    def along_from_mid(s: _LocalSlot) -> float:
+        return (s.cx - mx) * ca + (s.cy - my) * sa
 
-    for _ in range(50):  # hard safety limit
-        if misses >= max_gaps:
-            break
+    t_a = along_from_mid(local_a)
+    t_b = along_from_mid(local_b)
+    t_lo = min(t_a, t_b) - pad_along
+    t_hi = max(t_a, t_b) + pad_along
 
-        d_ca = math.cos(cur_angle) * direction
-        d_sa = math.sin(cur_angle) * direction
+    def in_corridor_band(s: _LocalSlot) -> bool:
+        dx = s.cx - mx
+        dy = s.cy - my
+        perp = abs(-dx * sa + dy * ca)
+        if perp > corridor_hw:
+            return False
+        along = dx * ca + dy * sa
+        return t_lo <= along <= t_hi
 
-        best: _LocalSlot | None = None
-        best_along = float("inf")
+    # Always keep both anchors — their OBB angles can disagree slightly with AB.
+    by_id: dict[str, _LocalSlot] = {
+        local_a.geo_slot.slot_id: local_a,
+        local_b.geo_slot.slot_id: local_b,
+    }
+    for s in all_locals:
+        if s.geo_slot.slot_id in by_id:
+            continue
+        if not _slot_axis_aligns_with_row(s.angle_rad, row_angle, angle_tol):
+            continue
+        if not in_corridor_band(s):
+            continue
+        by_id[s.geo_slot.slot_id] = s
 
-        for s in candidates:
-            if s.geo_slot.slot_id in visited:
-                continue
-            rx = s.cx - current.cx
-            ry = s.cy - current.cy
-            along = rx * d_ca + ry * d_sa
-            if along <= 0:
-                continue
-            perp = abs(-rx * d_sa + ry * d_ca)
-            if perp > corridor_hw:
-                continue
-            if _angle_diff(s.angle_rad, cur_angle) > angle_tol:
-                continue
-            max_reach = pitch * (1.0 + pitch_tol) * (misses + 1.5)
-            if along > max_reach:
-                continue
-            if along < best_along:
-                best_along = along
-                best = s
-
-        if best is not None:
-            result.append(best)
-            visited.add(best.geo_slot.slot_id)
-            cur_angle = _wrap_pi(
-                cur_angle + rolling_alpha * _wrap_pi(best.angle_rad - cur_angle),
-            )
-            current = best
-            misses = 0
-        else:
-            misses += 1
-            # Advance the virtual position so the next iteration searches further
-            current = _LocalSlot(
-                geo_slot=current.geo_slot,
-                cx=current.cx + d_ca * pitch,
-                cy=current.cy + d_sa * pitch,
-                angle_rad=cur_angle,
-                width=current.width,
-                height=current.height,
-            )
-
-    return result
+    members = sorted(by_id.values(), key=along_from_mid)
+    return members
 
 
-# ── Correction ────────────────────────────────────────────────────────────
-
-
-def _apply_correction(row: list[_LocalSlot]) -> list[_LocalSlot]:
-    """Snap all row members to a shared angle and a fitted row axis.
-
-    - Orientation: each OBB rotated to the circular median angle.
-    - Alignment: each centroid projected onto the row axis (line through
-      the row's mean centre in the median-angle direction).
-    - Width/height: unchanged.
-    """
-    target = _circular_median([s.angle_rad for s in row])
+def _apply_correction(row: list[_LocalSlot], row_angle: float) -> list[_LocalSlot]:
+    target = _wrap_pi(row_angle)
     ca, sa = math.cos(target), math.sin(target)
     mx = sum(s.cx for s in row) / len(row)
     my = sum(s.cy for s in row) / len(row)
 
     corrected: list[_LocalSlot] = []
     for s in row:
+        # After alignment, ``width`` must lie along ``target``. If the stored
+        # angle matched the row via the orthogonal direction, swap dimensions.
+        d_par = _angle_diff(s.angle_rad, target)
+        d_orth = _angle_diff(s.angle_rad + math.pi / 2, target)
+        if d_orth + 1e-9 < d_par:
+            w, h = s.height, s.width
+        else:
+            w, h = s.width, s.height
         proj = (s.cx - mx) * ca + (s.cy - my) * sa
         corrected.append(_LocalSlot(
             geo_slot=s.geo_slot,
             cx=mx + proj * ca,
             cy=my + proj * sa,
             angle_rad=target,
-            width=s.width,
-            height=s.height,
+            width=w,
+            height=h,
         ))
     return corrected
 
 
-# ── Public API ────────────────────────────────────────────────────────────
-
-
 class RowStraightener:
-    """Discover and straighten a parking row from a single reference slot.
-
-    Returns corrected GeoSlots with uniform angle and collinear centroids.
-    Width and height of each slot are preserved.
-    Returns an empty list if the reference is isolated (no compatible row found).
-    """
+    """Straighten all slots on one row given two anchor slot ids."""
 
     def __init__(self, settings: AlignmentSettings | None = None) -> None:
         self._s = settings or AlignmentSettings()
 
     def straighten(
         self,
-        reference_slot_id: str,
+        anchor_slot_id_a: str,
+        anchor_slot_id_b: str,
         all_slots: list[GeoSlot],
     ) -> list[GeoSlot]:
-        ref_geo = next(
-            (s for s in all_slots if s.slot_id == reference_slot_id), None,
-        )
-        if ref_geo is None:
-            logger.warning("Reference slot %s not found", reference_slot_id)
-            return []
-        if len(all_slots) < 2:
+        """Collect slots between the two anchors on the row and align them."""
+        if anchor_slot_id_a == anchor_slot_id_b:
+            logger.warning("Straighten: identical anchor ids")
             return []
 
-        ref_lng, ref_lat = ref_geo.center.lng, ref_geo.center.lat
+        geo_a = next((s for s in all_slots if s.slot_id == anchor_slot_id_a), None)
+        geo_b = next((s for s in all_slots if s.slot_id == anchor_slot_id_b), None)
+        if geo_a is None or geo_b is None:
+            logger.warning(
+                "Straighten: anchor not found (a=%s, b=%s)",
+                anchor_slot_id_a[:8], anchor_slot_id_b[:8],
+            )
+            return []
+
+        ref_lng = (geo_a.center.lng + geo_b.center.lng) / 2
+        ref_lat = (geo_a.center.lat + geo_b.center.lat) / 2
 
         all_local = [_extract_local_slot(s, ref_lng, ref_lat) for s in all_slots]
-        ref_local = next(
-            s for s in all_local if s.geo_slot.slot_id == reference_slot_id
-        )
+        local_a = next(s for s in all_local if s.geo_slot.slot_id == anchor_slot_id_a)
+        local_b = next(s for s in all_local if s.geo_slot.slot_id == anchor_slot_id_b)
 
-        neighbors = _find_k_nearest(ref_local, all_local, self._s.neighbor_count)
-        if not neighbors:
+        dx = local_b.cx - local_a.cx
+        dy = local_b.cy - local_a.cy
+        dist = math.hypot(dx, dy)
+        if dist < 0.05:
+            logger.info("Straighten: anchors too close (%.2fm)", dist)
             return []
 
-        row_angle = _circular_median(
-            [ref_local.angle_rad] + [n.angle_rad for n in neighbors],
-        )
+        row_angle = _wrap_pi(math.atan2(dy, dx))
+
         angle_tol = math.radians(self._s.angle_tolerance_deg)
-        pitch = _estimate_pitch(ref_local, neighbors, row_angle, angle_tol)
-        corridor_hw = self._s.corridor_width_factor * ref_local.width / 2.0
+        avg_w = (local_a.width + local_b.width) / 2
+        corridor_hw = self._s.corridor_width_factor * max(local_a.width, local_b.width)
+        # Slack along axis: centroid jitter + fraction of anchor span (pitch varies).
+        pad_along = max(0.5 * avg_w, 0.12 * dist)
 
-        visited: set[str] = {reference_slot_id}
-
-        fwd = _walk_direction(
-            ref_local, all_local, +1, row_angle, corridor_hw, pitch,
-            angle_tol, self._s.pitch_tolerance_factor, self._s.max_gap_steps,
-            self._s.rolling_alpha, visited,
-        )
-        bwd = _walk_direction(
-            ref_local, all_local, -1, row_angle, corridor_hw, pitch,
-            angle_tol, self._s.pitch_tolerance_factor, self._s.max_gap_steps,
-            self._s.rolling_alpha, visited,
+        row = _collect_row_between_anchors(
+            local_a, local_b, all_local, row_angle,
+            corridor_hw, angle_tol, pad_along,
         )
 
-        row = list(reversed(bwd)) + [ref_local] + fwd
+        logger.info(
+            "Straighten anchors %s… / %s…: axis=%.1f° corridor=%.2fm pad=%.2fm | %d slots",
+            anchor_slot_id_a[:8], anchor_slot_id_b[:8],
+            math.degrees(row_angle), corridor_hw, pad_along, len(row),
+        )
 
         if len(row) < 2:
-            logger.info("Row too short (%d slot) — no correction proposed", len(row))
+            logger.info("Straighten: fewer than 2 slots in row strip — no proposal")
             return []
 
-        corrected = _apply_correction(row)
-        logger.info(
-            "Straightened row: %d slots, target angle=%.1f°",
-            len(corrected), math.degrees(corrected[0].angle_rad),
-        )
+        corrected = _apply_correction(row, row_angle)
         return [_rebuild_geoslot(s, ref_lng, ref_lat) for s in corrected]

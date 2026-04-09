@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import Enum
 
 from geojson_pydantic import Polygon as GeoJSONPolygon
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from autoabsmap.export.models import GeoSlot
 from autoabsmap.generator_engine.models import HintMasks, PipelineResult
@@ -82,9 +82,16 @@ class JobResult(BaseModel):
 
 
 class StraightenRequest(BaseModel):
-    """Row straightening — click one slot, get the corrected row back."""
+    """Row straightening — two anchor slots on the same row define the segment to align."""
 
-    slot_id: str
+    slot_id_a: str
+    slot_id_b: str
+
+    @model_validator(mode="after")
+    def _anchors_must_differ(self) -> StraightenRequest:
+        if self.slot_id_a == self.slot_id_b:
+            raise ValueError("slot_id_a and slot_id_b must be different slots")
+        return self
 
 
 class ReprocessRequest(BaseModel):

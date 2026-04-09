@@ -18,6 +18,9 @@ interface CropPanelProps {
   onToggleCopyMode?: () => void;
   onToggleModifyMode?: () => void;
   onCancelModify?: () => void;
+  onToggleStraightenMode?: () => void;
+  onConfirmStraighten?: () => void;
+  onCancelStraighten?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
@@ -38,6 +41,9 @@ export function CropPanel({
   onToggleCopyMode,
   onToggleModifyMode,
   onCancelModify,
+  onToggleStraightenMode,
+  onConfirmStraighten,
+  onCancelStraighten,
   onUndo,
   onRedo,
   canUndo = false,
@@ -56,6 +62,11 @@ export function CropPanel({
   const isDeleteMode = editMode === 'delete';
   const isCopyMode = editMode === 'copy';
   const isModifyMode = editMode === 'modify';
+  const isStraightenMode = editMode === 'straighten';
+  const straightenLoading = useAppSelector((s) => s.absmap.straightenLoading);
+  const straightenError = useAppSelector((s) => s.absmap.straightenError);
+  const straightenAnchorId = useAppSelector((s) => s.absmap.straightenAnchorSlotId);
+  const hasStraightenProposal = useAppSelector((s) => s.absmap.straightenProposal !== null && s.absmap.straightenProposal.length > 0);
   const isDirty = useAppSelector((s) => s.absmap.isDirty);
   const isSaving = useAppSelector((s) => s.absmap.isSaving);
   const lastSavedAt = useAppSelector((s) => s.absmap.lastSavedAt);
@@ -289,11 +300,43 @@ export function CropPanel({
             <span className={styles.actionIcon}>&#x21BB;</span>
             <span>Reprocess <kbd className={styles.kbd}>R</kbd></span>
           </button>
-          <button className={styles.actionBtn} disabled title="Click one slot → align entire row (mise au carré)">
+          <button
+            className={`${styles.actionBtn} ${isStraightenMode ? styles.actionBtnActive : ''}`}
+            onClick={onToggleStraightenMode}
+            disabled={!hasResults}
+            title="Press S — click two row anchors, then accept/reject proposal"
+          >
             <span className={styles.actionIcon}>&#x2261;</span>
-            <span>Straighten</span>
+            <span>Straighten <kbd className={styles.kbd}>S</kbd></span>
           </button>
         </div>
+
+        {isStraightenMode && (
+          <div className={styles.modeBar}>
+            <span className={styles.modeBarLabel}>
+              {straightenLoading
+                ? 'Aligning row…'
+                : hasStraightenProposal
+                  ? 'Review the proposed alignment'
+                  : straightenAnchorId
+                    ? 'Click second anchor on the same row'
+                    : 'Click first anchor on the row'}
+            </span>
+            {straightenError && (
+              <span className={styles.saveError}>{straightenError}</span>
+            )}
+            {hasStraightenProposal && (
+              <div className={styles.modeBarActions}>
+                <button className={styles.confirmBtn} onClick={onConfirmStraighten}>
+                  Accept <kbd className={styles.kbd}>Enter</kbd>
+                </button>
+                <button className={styles.cancelBtn} onClick={onCancelStraighten}>
+                  Reject <kbd className={styles.kbd}>Esc</kbd>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className={styles.section}>

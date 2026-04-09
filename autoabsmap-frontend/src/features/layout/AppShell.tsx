@@ -7,9 +7,10 @@ import styles from './AppShell.module.css';
 
 const MODE_BANNERS: Partial<Record<EditMode, string>> = {
   add: '<strong>Add mode</strong> — Click to place · Move to rotate · Click again to confirm · <kbd>Esc</kbd> to cancel · <kbd>A</kbd> to exit',
-  delete: '<strong>Delete mode</strong> — Click a slot to select · <kbd>Enter</kbd> to confirm · <kbd>Esc</kbd> to cancel · <kbd>D</kbd> to exit',
-  copy: '<strong>Copy mode</strong> — Click a slot to duplicate · <kbd>Esc</kbd> to exit · <kbd>C</kbd> to exit',
-  modify: '<strong>Modify mode</strong> — Click a slot to pick up · Click to place · Click to confirm rotation · <kbd>Esc</kbd> to cancel · <kbd>M</kbd> to exit',
+  delete: '<strong>Delete mode</strong> — Click a marker to select · Click again to confirm · <kbd>Enter</kbd> to confirm · <kbd>Esc</kbd> to cancel · <kbd>D</kbd> to exit',
+  copy: '<strong>Copy mode</strong> — Click a marker to duplicate · <kbd>Esc</kbd> to exit · <kbd>C</kbd> to exit',
+  modify: '<strong>Modify mode</strong> — Press &amp; hold a marker · Drag to move · Release to lock · Move to rotate · Click to confirm · <kbd>Esc</kbd> to cancel · <kbd>M</kbd> to exit',
+  straighten: '<strong>Straighten mode</strong> — Click two slots on the same row (your segment) · <kbd>Enter</kbd> to accept · <kbd>Esc</kbd> to cancel · <kbd>S</kbd> to exit',
 };
 
 interface AppShellProps {

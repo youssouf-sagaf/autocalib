@@ -16,7 +16,7 @@ export function SearchBar({ onFlyTo }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const geocode = useCallback(async (text: string) => {
@@ -62,7 +62,8 @@ export function SearchBar({ onFlyTo }: SearchBarProps) {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && suggestions.length > 0) {
-        handleSelect(suggestions[0]);
+        const first = suggestions[0];
+        if (first) handleSelect(first);
       }
       if (e.key === 'Escape') {
         setOpen(false);

@@ -10,15 +10,13 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from app.models import JobStatus, ReprocessRequest as APIReprocessRequest
-from app.services.job_store import JobStore
+from app.services.job_store import job_store
 from autoabsmap.reprocessing_helper.models import ReprocessRequest as DomainReprocessRequest
 from autoabsmap.reprocessing_helper.reprocessor import ReprocessingHelper
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["reprocess"])
-
-job_store = JobStore()
 
 _helper = ReprocessingHelper()
 

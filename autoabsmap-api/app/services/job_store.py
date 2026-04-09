@@ -66,3 +66,6 @@ class JobStore:
     async def get_result(self, job_id: str) -> JobResult | None:
         async with self._lock:
             return self._results.get(job_id)
+
+
+job_store = JobStore()

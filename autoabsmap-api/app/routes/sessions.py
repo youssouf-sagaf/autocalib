@@ -14,7 +14,6 @@ from autoabsmap.generator_engine.models import RunMeta
 from autoabsmap.learning_loop.models import DeltaSummary, EditEventType, SessionTrace
 from autoabsmap.learning_loop.capture import SessionStore
 from app.models import SaveRequest
-from app.services.job_store import JobStore
 
 logger = logging.getLogger(__name__)
 

@@ -3,12 +3,9 @@ import type { MapMouseEvent } from 'react-map-gl/mapbox';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setEditMode, addSlot } from '../store/autoabsmap-slice';
 import {
-  approxDistanceM,
   extractObbMetrics,
   buildObbPolygon,
 } from '../utils/slot-geometry';
-
-const HIT_RADIUS_M = 4;
 
 /**
  * Hook for the "Copy slot" editing mode.
@@ -39,17 +36,11 @@ export function useCopySlot(onEnterModify?: (slotId: string) => void) {
     (e: MapMouseEvent) => {
       if (!isCopyMode) return;
 
-      const { lng, lat } = e.lngLat;
-      let closest: { slot: typeof slots[number]; dist: number } | null = null;
-      for (const slot of slots) {
-        const d = approxDistanceM(lng, lat, slot.center.lng, slot.center.lat);
-        if (d < HIT_RADIUS_M && (!closest || d < closest.dist)) {
-          closest = { slot, dist: d };
-        }
-      }
-      if (!closest) return;
+      const slotId = e.features?.[0]?.properties?.slot_id as string | undefined;
+      if (!slotId) return;
+      const src = slots.find((s) => s.slot_id === slotId);
+      if (!src) return;
 
-      const src = closest.slot;
       const metrics = extractObbMetrics(src.polygon);
 
       const R = 6_371_000;

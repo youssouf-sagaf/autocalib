@@ -52,6 +52,8 @@ interface MapPanelProps {
   onMove: (evt: { viewState: MapViewState }) => void;
   onMapClick?: (e: MapMouseEvent) => void;
   onMouseMove?: (e: MapMouseEvent) => void;
+  onMouseDown?: (e: MapMouseEvent) => void;
+  onMouseUp?: (e: MapMouseEvent) => void;
   cursor?: string;
   previewFeature?: Feature<Polygon> | null;
   edgeFeature?: Feature<LineString> | null;
@@ -65,7 +67,12 @@ interface MapPanelProps {
   selectedSlotId?: string | null;
   hoveredSlotId?: string | null;
   modifyingSlot?: Slot | null;
+  straightenProposal?: Slot[] | null;
+  onConfirmStraighten?: () => void;
+  onCancelStraighten?: () => void;
   isEditMode?: boolean;
+  /** When false, map dragging is disabled (used during modify drag-and-drop). */
+  dragPanEnabled?: boolean;
 }
 
 // Data-driven color expression: slot source → color
@@ -97,6 +104,8 @@ export function MapPanel({
   onMove,
   onMapClick,
   onMouseMove,
+  onMouseDown,
+  onMouseUp,
   cursor: externalCursor,
   previewFeature,
   edgeFeature,
@@ -110,7 +119,11 @@ export function MapPanel({
   selectedSlotId,
   hoveredSlotId,
   modifyingSlot,
+  straightenProposal,
+  onConfirmStraighten,
+  onCancelStraighten,
   isEditMode = false,
+  dragPanEnabled = true,
 }: MapPanelProps) {
   const crops = useAppSelector((s) => s.absmap.crops);
   const finalSlots = useAppSelector((s) => s.absmap.slots);
@@ -144,25 +157,6 @@ export function MapPanel({
     [crops, showCrops],
   );
 
-  const slotsGeoJSON: GeoJSON.FeatureCollection = useMemo(
-    () =>
-      showSlots && slots.length > 0
-        ? {
-            type: 'FeatureCollection',
-            features: slots.map((slot) => ({
-              type: 'Feature' as const,
-              properties: {
-                slot_id: slot.slot_id,
-                source: slot.source,
-                confidence: slot.confidence,
-              },
-              geometry: slot.polygon,
-            })),
-          }
-        : EMPTY_FC,
-    [slots, showSlots],
-  );
-
   const centroidsGeoJSON: GeoJSON.FeatureCollection = useMemo(
     () =>
       showCentroids && slots.length > 0
@@ -173,6 +167,8 @@ export function MapPanel({
               properties: {
                 slot_id: slot.slot_id,
                 source: slot.source,
+                selected: slot.slot_id === selectedSlotId,
+                hovered: slot.slot_id === hoveredSlotId,
               },
               geometry: {
                 type: 'Point' as const,
@@ -181,7 +177,7 @@ export function MapPanel({
             })),
           }
         : EMPTY_FC,
-    [slots, showCentroids],
+    [slots, showCentroids, selectedSlotId, hoveredSlotId],
   );
 
   const previewGeoJSON: GeoJSON.FeatureCollection = useMemo(
@@ -239,34 +235,6 @@ export function MapPanel({
     [pendingSlot],
   );
 
-  const selectedSlotGeoJSON: GeoJSON.FeatureCollection = useMemo(() => {
-    if (!selectedSlotId) return EMPTY_FC;
-    const slot = slots.find((s) => s.slot_id === selectedSlotId);
-    if (!slot) return EMPTY_FC;
-    return {
-      type: 'FeatureCollection',
-      features: [{
-        type: 'Feature' as const,
-        properties: {},
-        geometry: slot.polygon,
-      }],
-    };
-  }, [selectedSlotId, slots]);
-
-  const hoveredSlotGeoJSON: GeoJSON.FeatureCollection = useMemo(() => {
-    if (!hoveredSlotId) return EMPTY_FC;
-    const slot = slots.find((s) => s.slot_id === hoveredSlotId);
-    if (!slot) return EMPTY_FC;
-    return {
-      type: 'FeatureCollection',
-      features: [{
-        type: 'Feature' as const,
-        properties: {},
-        geometry: slot.polygon,
-      }],
-    };
-  }, [hoveredSlotId, slots]);
-
   const modifyingBboxGeoJSON: GeoJSON.FeatureCollection = useMemo(
     () =>
       modifyingSlot
@@ -282,12 +250,49 @@ export function MapPanel({
     [modifyingSlot],
   );
 
+  const straightenGeoJSON: GeoJSON.FeatureCollection = useMemo(
+    () =>
+      straightenProposal && straightenProposal.length > 0
+        ? {
+            type: 'FeatureCollection',
+            features: straightenProposal.map((slot) => ({
+              type: 'Feature' as const,
+              properties: { slot_id: slot.slot_id },
+              geometry: slot.polygon,
+            })),
+          }
+        : EMPTY_FC,
+    [straightenProposal],
+  );
+
+  const straightenCenter = useMemo(() => {
+    if (!straightenProposal || straightenProposal.length === 0) return null;
+    const lng = straightenProposal.reduce((a, s) => a + s.center.lng, 0) / straightenProposal.length;
+    const lat = straightenProposal.reduce((a, s) => a + s.center.lat, 0) / straightenProposal.length;
+    return { lng, lat };
+  }, [straightenProposal]);
+
+  const mapRef = useRef<MapRef>(null);
+
+  /** Mapbox often omits `features` on click; query the centroid layer explicitly in edit modes. */
+  const attachPickedSlotFeature = useCallback((e: MapMouseEvent) => {
+    if (!showSlots || (e.features && e.features.length > 0)) return;
+    const map = mapRef.current?.getMap();
+    const pt = e.point;
+    if (!map || pt == null) return;
+    const hits = map.queryRenderedFeatures([pt.x, pt.y], { layers: ['centroids-symbol'] });
+    if (hits.length > 0) {
+      (e as MapMouseEvent & { features?: typeof hits }).features = hits;
+    }
+  }, [showSlots]);
+
   /* ── Click handler: edit modes forward everything; browse mode shows popup ── */
 
   const handleClick = useCallback(
     (e: MapMouseEvent) => {
       if (isEditMode) {
         setPopupSlot(null);
+        attachPickedSlotFeature(e);
         onMapClick?.(e);
         return;
       }
@@ -306,7 +311,7 @@ export function MapPanel({
       setPopupSlot(null);
       onMapClick?.(e);
     },
-    [isEditMode, showSlots, slots, onMapClick],
+    [isEditMode, showSlots, slots, onMapClick, attachPickedSlotFeature],
   );
 
   const handleMouseMove = useCallback(
@@ -322,7 +327,6 @@ export function MapPanel({
   );
 
   const cursor = externalCursor || (hovering ? 'pointer' : '');
-  const mapRef = useRef<MapRef>(null);
 
   const onMapLoad = useCallback(() => {
     const map = mapRef.current?.getMap();
@@ -348,9 +352,12 @@ export function MapPanel({
         onClick={handleClick}
         onDblClick={(e) => { if (externalCursor) e.preventDefault(); }}
         onMouseMove={handleMouseMove}
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
         cursor={cursor}
         doubleClickZoom={!externalCursor}
-        interactiveLayerIds={showSlots ? ['slots-fill'] : []}
+        dragPan={dragPanEnabled}
+        interactiveLayerIds={showSlots ? ['centroids-symbol'] : []}
         onLoad={onMapLoad}
       >
         <NavigationControl position="bottom-right" />
@@ -366,21 +373,6 @@ export function MapPanel({
             id="crops-line"
             type="line"
             paint={{ 'line-color': tokens.primary, 'line-width': 2 }}
-          />
-          <Layer
-            id="crops-label"
-            type="symbol"
-            layout={{
-              'text-field': ['concat', 'Crop ', ['+', ['get', 'index'], 1]],
-              'text-size': 13,
-              'text-font': ['Open Sans Semibold'],
-              'text-anchor': 'center',
-            }}
-            paint={{
-              'text-color': '#fff',
-              'text-halo-color': tokens.primaryDark,
-              'text-halo-width': 1.5,
-            }}
           />
         </Source>
 
@@ -428,45 +420,19 @@ export function MapPanel({
           />
         </Source>
 
-        {/* ── Slot polygons (invisible fill for click + colored outline) ── */}
-        <Source id="slots" type="geojson" data={slotsGeoJSON}>
-          <Layer
-            id="slots-fill"
-            type="fill"
-            paint={{ 'fill-color': '#000000', 'fill-opacity': 0 }}
-          />
-          <Layer
-            id="slots-line"
-            type="line"
-            paint={{
-              'line-color': SOURCE_COLOR,
-              'line-width': 1.5,
-              'line-opacity': 0.85,
-            }}
-          />
-        </Source>
-
-        {/* ── Hovered slot highlight (white glow) ── */}
-        <Source id="hovered-slot" type="geojson" data={hoveredSlotGeoJSON}>
-          <Layer
-            id="hovered-slot-line"
-            type="line"
-            paint={{
-              'line-color': '#ffffff',
-              'line-width': 3,
-              'line-opacity': 0.7,
-            }}
-          />
-        </Source>
-
-        {/* ── Parking markers ── */}
+        {/* ── Parking markers (click target + hover/select highlight) ── */}
         <Source id="centroids" type="geojson" data={centroidsGeoJSON}>
           <Layer
             id="centroids-symbol"
             type="symbol"
             layout={{
               'icon-image': 'parking-marker',
-              'icon-size': 0.85,
+              'icon-size': [
+                'case',
+                ['get', 'selected'], 1.2,
+                ['get', 'hovered'], 1.05,
+                0.85,
+              ],
               'icon-anchor': 'bottom',
               'icon-allow-overlap': true,
               'icon-ignore-placement': true,
@@ -559,18 +525,6 @@ export function MapPanel({
           />
         </Source>
 
-        {/* ── Selected slot highlight (red ring) ── */}
-        <Source id="selected-slot" type="geojson" data={selectedSlotGeoJSON}>
-          <Layer
-            id="selected-slot-line"
-            type="line"
-            paint={{
-              'line-color': tokens.danger,
-              'line-width': 3,
-            }}
-          />
-        </Source>
-
         {/* ── Modifying slot preview (cyan dashed) ── */}
         <Source id="modifying-bbox" type="geojson" data={modifyingBboxGeoJSON}>
           <Layer
@@ -588,6 +542,50 @@ export function MapPanel({
             }}
           />
         </Source>
+
+        {/* ── Straighten proposal preview (green dashed outlines) ── */}
+        <Source id="straighten-proposal" type="geojson" data={straightenGeoJSON}>
+          <Layer
+            id="straighten-proposal-fill"
+            type="fill"
+            paint={{ 'fill-color': tokens.success, 'fill-opacity': 0.35 }}
+          />
+          <Layer
+            id="straighten-proposal-line"
+            type="line"
+            paint={{
+              'line-color': tokens.success,
+              'line-width': 2.5,
+              'line-dasharray': [4, 3],
+            }}
+          />
+        </Source>
+
+        {/* ── Straighten confirmation popup ── */}
+        {straightenCenter && onConfirmStraighten && (
+          <Popup
+            longitude={straightenCenter.lng}
+            latitude={straightenCenter.lat}
+            onClose={() => onCancelStraighten?.()}
+            closeOnClick={false}
+            anchor="bottom"
+            offset={24}
+          >
+            <div className={styles.straightenPopup}>
+              <div className={styles.popupTitle}>
+                Align {straightenProposal!.length} slot{straightenProposal!.length !== 1 ? 's' : ''}?
+              </div>
+              <div className={styles.straightenActions}>
+                <button className={styles.acceptBtn} onClick={onConfirmStraighten}>
+                  Accept
+                </button>
+                <button className={styles.rejectBtn} onClick={onCancelStraighten}>
+                  Reject
+                </button>
+              </div>
+            </div>
+          </Popup>
+        )}
 
         {/* ── Slot info popup ── */}
         {popupSlot && (

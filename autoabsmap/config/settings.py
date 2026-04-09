@@ -173,20 +173,25 @@ class AlignmentSettings(BaseSettings):
     neighbor_count: int = 6
     """Number of nearest neighbors for initial direction estimation."""
 
-    corridor_width_factor: float = 1.5
-    """Corridor width (perpendicular) = factor × slot width."""
+    corridor_width_factor: float = 1.2
+    """Corridor half-width (perpendicular) = factor × slot width.
+    At 1.2 × ~2.5 m ≈ 3 m — tight enough to stay within one row."""
 
-    angle_tolerance_deg: float = 15.0
+    angle_tolerance_deg: float = 25.0
     """Max angle difference (degrees) for accepting a slot into the row."""
 
+    max_gap_factor: float = 3.0
+    """Gap detection: stop walking when along-axis gap > factor × slot width.
+    At 3.0 × ~2.5 m ≈ 7.5 m — bridges one missing slot, stops before next row."""
+
     pitch_tolerance_factor: float = 0.5
-    """Accepted spacing deviation: ±factor × estimated pitch."""
+    """Accepted spacing deviation: ±factor × estimated pitch (reserved for V2)."""
 
     max_gap_steps: int = 2
-    """Stop the walk after this many consecutive misses in one direction."""
+    """Stop the walk after this many consecutive misses in one direction (reserved for V2)."""
 
     rolling_alpha: float = 0.3
-    """EMA weight for rolling direction update (0 = ignore new, 1 = fully adopt)."""
+    """EMA weight for rolling direction update (reserved for V2 curved rows)."""
 
     model_config = {"env_prefix": "ALIGN_"}
 

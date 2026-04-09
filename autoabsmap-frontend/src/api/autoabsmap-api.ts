@@ -6,6 +6,8 @@ import type {
   PipelineJob,
   SaveSessionRequest,
   SaveSessionResponse,
+  StraightenAnchors,
+  StraightenResponse,
 } from '../types';
 
 const client = axios.create({
@@ -33,6 +35,27 @@ export async function saveSession(request: SaveSessionRequest): Promise<SaveSess
     request,
   );
   return data;
+}
+
+export async function straightenRow(jobId: string, anchors: StraightenAnchors): Promise<StraightenResponse> {
+  try {
+    const { data } = await client.post<StraightenResponse>(
+      `/api/v1/jobs/${jobId}/straighten`,
+      anchors,
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const detail = error.response?.data?.detail;
+      if (typeof detail === 'string' && detail.trim().length > 0) {
+        throw new Error(detail);
+      }
+      if (error.response?.status === 404) {
+        throw new Error('Session not found on backend (job expired/restarted). Run mapping again.');
+      }
+    }
+    throw error;
+  }
 }
 
 export function streamJobProgress(
