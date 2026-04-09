@@ -253,7 +253,7 @@ class RowStraightener:
         dx = local_b.cx - local_a.cx
         dy = local_b.cy - local_a.cy
         dist = math.hypot(dx, dy)
-        if dist < 0.05:
+        if dist < 0.02:
             logger.info("Straighten: anchors too close (%.2fm)", dist)
             return []
 
@@ -263,7 +263,7 @@ class RowStraightener:
         avg_w = (local_a.width + local_b.width) / 2
         corridor_hw = self._s.corridor_width_factor * max(local_a.width, local_b.width)
         # Slack along axis: centroid jitter + fraction of anchor span (pitch varies).
-        pad_along = max(0.5 * avg_w, 0.12 * dist)
+        pad_along = max(0.55 * avg_w, 0.22 * dist)
 
         row = _collect_row_between_anchors(
             local_a, local_b, all_local, row_angle,

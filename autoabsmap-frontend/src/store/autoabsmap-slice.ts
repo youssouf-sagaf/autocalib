@@ -32,7 +32,6 @@ interface AbsmapState {
   maskPolygons: GeoJSON.FeatureCollection | null;
   detectionOverlay: GeoJSON.FeatureCollection | null;
   postprocessOverlay: GeoJSON.FeatureCollection | null;
-  straightenProposal: Slot[] | null;
   straightenAnchorSlotId: string | null;
   straightenLoading: boolean;
   straightenError: string | null;
@@ -56,7 +55,6 @@ const initialState: AbsmapState = {
   maskPolygons: null,
   detectionOverlay: null,
   postprocessOverlay: null,
-  straightenProposal: null,
   straightenAnchorSlotId: null,
   straightenLoading: false,
   straightenError: null,
@@ -88,6 +86,47 @@ function reverseEvent(state: AbsmapState, evt: EditEvent) {
   }
 }
 
+/** Apply aligned slot geometries as a single undoable align event (no preview step). */
+/** Same slot list as MapPanel uses for markers (dual-map detection-only view → baseline ids). */
+function slotsSnapshotForStraighten(s: AbsmapState): Slot[] {
+  const hasOverlayData =
+    (s.overlayVisibility.detection && s.detectionOverlay != null) ||
+    (s.overlayVisibility.mask && s.maskPolygons != null) ||
+    (s.overlayVisibility.postprocess && s.postprocessOverlay != null);
+
+  if (
+    s.dualMapActive &&
+    hasOverlayData &&
+    s.overlayVisibility.detection &&
+    !s.overlayVisibility.postprocess &&
+    s.baselineSlots.length > 0
+  ) {
+    return s.baselineSlots;
+  }
+  return s.slots.length > 0 ? s.slots : s.baselineSlots;
+}
+
+function commitStraightenAligned(state: AbsmapState, proposed: Slot[]) {
+  truncateFuture(state);
+  const beforeSlots: Slot[] = [];
+  for (const p of proposed) {
+    const existing = state.slots.find((s) => s.slot_id === p.slot_id);
+    if (existing) beforeSlots.push({ ...existing });
+  }
+  const evt: EditEvent = {
+    type: 'align',
+    timestamp: Date.now(),
+    slot_ids: proposed.map((s) => s.slot_id),
+    before: beforeSlots,
+    after: proposed,
+  };
+  state.editHistory.push(evt);
+  state.editIndex++;
+  applyEvent(state, evt);
+  state.isDirty = true;
+  log.info(`Straighten applied: ${proposed.length} slots aligned`);
+}
+
 export const launchJob = createAsyncThunk(
   'absmap/launchJob',
   async (_, { getState }) => {
@@ -116,11 +155,12 @@ export const saveSession = createAsyncThunk(
     const jobId = absmap.job?.id;
     if (!jobId) throw new Error('No active job to save');
     log.info(`Saving session for job ${jobId} (${absmap.slots.length} slots, ${absmap.editHistory.length} edits)`);
-    const result = await api.saveSession({
-      job_id: jobId,
-      slots: absmap.slots,
-      edit_history: absmap.editHistory.slice(0, absmap.editIndex),
-      saved_at: new Date().toISOString(),
+    const result = await api.saveSession(jobId, {
+      final_slots: absmap.slots,
+      baseline_slots: absmap.baselineSlots,
+      edit_events: absmap.editHistory.slice(0, absmap.editIndex),
+      reprocessed_steps: [],
+      difficulty_tags: [],
     });
     log.info(`Session saved at ${result.saved_at}`);
     return result;
@@ -136,12 +176,23 @@ export const straightenRow = createAsyncThunk(
     const { absmap } = getState() as { absmap: AbsmapState };
     const jobId = absmap.job?.id;
     if (!jobId) throw new Error('No active job');
+    const slotsSnapshot = slotsSnapshotForStraighten(absmap);
+    if (slotsSnapshot.length === 0) {
+      throw new Error('No slots to align');
+    }
     log.info(
-      `Straighten request: ${anchors.slot_id_a.slice(0, 8)}… / ${anchors.slot_id_b.slice(0, 8)}… on job ${jobId}`,
+      `Straighten request: ${anchors.slot_id_a.slice(0, 8)}… / ${anchors.slot_id_b.slice(0, 8)}… on job ${jobId} (${slotsSnapshot.length} slots in snapshot)`,
     );
-    const result = await api.straightenRow(jobId, anchors);
-    log.info(`Straighten response: ${result.proposed_slots.length} corrected slots`);
-    return result.proposed_slots;
+    const result = await api.straightenRow(jobId, {
+      ...anchors,
+      slots: slotsSnapshot,
+    });
+    const proposed = result.proposed_slots as Slot[];
+    log.info(`Straighten response: ${proposed.length} corrected slots`);
+    const touchesEditable = proposed.some((p) =>
+      absmap.slots.some((s) => s.slot_id === p.slot_id),
+    );
+    return { proposed, touchesEditable };
   },
 );
 
@@ -229,6 +280,28 @@ const absmapSlice = createSlice({
       log.info(`Slot deleted: ${slotId.slice(0, 8)}…`);
     },
 
+    bulkDeleteSlots(state, action: PayloadAction<string[]>) {
+      const idSet = new Set(action.payload);
+      const before: Slot[] = [];
+      for (const slot of state.slots) {
+        if (idSet.has(slot.slot_id)) before.push({ ...slot });
+      }
+      if (before.length === 0) return;
+      truncateFuture(state);
+      const evt: EditEvent = {
+        type: 'bulk_delete',
+        timestamp: Date.now(),
+        slot_ids: before.map((s) => s.slot_id),
+        before,
+        after: [],
+      };
+      state.editHistory.push(evt);
+      state.editIndex++;
+      applyEvent(state, evt);
+      state.isDirty = true;
+      log.info(`Bulk delete: ${before.length} slot(s)`);
+    },
+
     modifySlot(state, action: PayloadAction<Slot>) {
       const updated = action.payload;
       const original = state.slots.find((s) => s.slot_id === updated.slot_id);
@@ -267,34 +340,9 @@ const absmapSlice = createSlice({
       log.info(`Redo: ${evt.type}`);
     },
 
-    acceptStraighten(state) {
-      const proposed = state.straightenProposal;
-      if (!proposed || proposed.length === 0) return;
-      truncateFuture(state);
-      const beforeSlots: Slot[] = [];
-      for (const p of proposed) {
-        const existing = state.slots.find((s) => s.slot_id === p.slot_id);
-        if (existing) beforeSlots.push({ ...existing });
-      }
-      const evt: EditEvent = {
-        type: 'align',
-        timestamp: Date.now(),
-        slot_ids: proposed.map((s) => s.slot_id),
-        before: beforeSlots,
-        after: proposed,
-      };
-      state.editHistory.push(evt);
-      state.editIndex++;
-      applyEvent(state, evt);
-      state.straightenProposal = null;
-      state.isDirty = true;
-      log.info(`Straighten accepted: ${proposed.length} slots aligned`);
-    },
-
     rejectStraighten(state) {
-      state.straightenProposal = null;
       state.straightenAnchorSlotId = null;
-      log.info('Straighten proposal rejected');
+      log.info('Straighten mode cleared');
     },
 
     resetSession(state) {
@@ -313,7 +361,6 @@ const absmapSlice = createSlice({
       state.maskPolygons = null;
       state.detectionOverlay = null;
       state.postprocessOverlay = null;
-      state.straightenProposal = null;
       state.straightenAnchorSlotId = null;
       state.straightenLoading = false;
       state.straightenError = null;
@@ -363,12 +410,11 @@ const absmapSlice = createSlice({
       .addCase(straightenRow.pending, (state) => {
         state.straightenLoading = true;
         state.straightenError = null;
-        state.straightenProposal = null;
       })
       .addCase(straightenRow.fulfilled, (state, action) => {
         state.straightenLoading = false;
-        if (action.payload.length === 0) {
-          state.straightenProposal = null;
+        const { proposed, touchesEditable } = action.payload;
+        if (proposed.length === 0) {
           state.straightenError =
             'No slots aligned for this pair. Pick two markers on the same row, or different anchors.';
           /* Keep straightenAnchorSlotId so the user can click another second slot. */
@@ -376,7 +422,27 @@ const absmapSlice = createSlice({
         }
         state.straightenAnchorSlotId = null;
         state.straightenError = null;
-        state.straightenProposal = action.payload;
+        if (touchesEditable) {
+          commitStraightenAligned(state, proposed);
+          return;
+        }
+        /* Baseline-ID proposal vs post-process layer: replace auto slots, keep manual. */
+        truncateFuture(state);
+        const manual = state.slots.filter((s) => s.source === 'manual');
+        const beforeAll = [...state.slots];
+        const after = [...proposed, ...manual];
+        const evt: EditEvent = {
+          type: 'align',
+          timestamp: Date.now(),
+          slot_ids: proposed.map((s) => s.slot_id),
+          before: beforeAll,
+          after,
+        };
+        state.editHistory.push(evt);
+        state.editIndex++;
+        applyEvent(state, evt);
+        state.isDirty = true;
+        log.info(`Straighten applied (baseline snapshot): ${proposed.length} slots`);
       })
       .addCase(straightenRow.rejected, (state, action) => {
         state.straightenLoading = false;
@@ -399,8 +465,8 @@ export const {
   straightenSetAnchor,
   addSlot,
   deleteSlot,
+  bulkDeleteSlots,
   modifySlot,
-  acceptStraighten,
   rejectStraighten,
   undo,
   redo,

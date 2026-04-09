@@ -4,14 +4,12 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   setEditMode,
   straightenRow,
-  acceptStraighten,
   rejectStraighten,
   straightenSetAnchor,
 } from '../store/autoabsmap-slice';
 
 /**
- * Straighten mode: pick two slots on the same row (any positions along the row).
- * First click sets the first anchor; second click runs alignment for that segment.
+ * Straighten mode: first click = anchor A, second click = anchor B → API applies alignment immediately (undo with Z).
  */
 export function useStraightenSlot() {
   const dispatch = useAppDispatch();
@@ -21,10 +19,8 @@ export function useStraightenSlot() {
     (s) => s.absmap.slots.length > 0 || s.absmap.baselineSlots.length > 0,
   );
   const isStraightenMode = editMode === 'straighten';
-  const proposal = useAppSelector((s) => s.absmap.straightenProposal);
   const loading = useAppSelector((s) => s.absmap.straightenLoading);
   const error = useAppSelector((s) => s.absmap.straightenError);
-  const hasProposal = proposal !== null && proposal.length > 0;
 
   const toggleStraightenMode = useCallback(() => {
     if (!hasResults) return;
@@ -40,7 +36,6 @@ export function useStraightenSlot() {
   const handleMapClick = useCallback(
     (e: MapMouseEvent) => {
       if (!isStraightenMode || loading) return;
-      if (hasProposal) return;
 
       const slotId = e.features?.[0]?.properties?.slot_id as string | undefined;
       if (!slotId) return;
@@ -59,48 +54,34 @@ export function useStraightenSlot() {
         straightenRow({ slot_id_a: anchorId, slot_id_b: slotId }),
       );
     },
-    [dispatch, isStraightenMode, loading, hasProposal, anchorId],
+    [dispatch, isStraightenMode, loading, anchorId],
   );
 
-  const confirmStraighten = useCallback(() => {
-    if (!hasProposal) return;
-    dispatch(acceptStraighten());
-  }, [dispatch, hasProposal]);
-
   const cancelStraighten = useCallback(() => {
-    if (hasProposal) {
-      dispatch(rejectStraighten());
-    } else {
-      dispatch(straightenSetAnchor(null));
-      dispatch(setEditMode('none'));
-    }
-  }, [dispatch, hasProposal]);
+    dispatch(straightenSetAnchor(null));
+    dispatch(setEditMode('none'));
+  }, [dispatch]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!isStraightenMode) return;
-      if (e.key === 'Enter' && hasProposal) {
+      if (e.key === 'Escape') {
         e.preventDefault();
-        confirmStraighten();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        cancelStraighten();
+        dispatch(rejectStraighten());
+        dispatch(setEditMode('none'));
       }
     },
-    [isStraightenMode, hasProposal, confirmStraighten, cancelStraighten],
+    [isStraightenMode, dispatch],
   );
 
   return {
     isStraightenMode,
-    hasProposal,
     straightenAnchorSlotId: anchorId,
     loading,
     error,
-    proposal,
     handleMapClick,
     handleKeyDown,
     toggleStraightenMode,
-    confirmStraighten,
     cancelStraighten,
   } as const;
 }

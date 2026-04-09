@@ -29,15 +29,21 @@ export async function getJobResult(jobId: string): Promise<JobResult> {
   return data;
 }
 
-export async function saveSession(request: SaveSessionRequest): Promise<SaveSessionResponse> {
+export async function saveSession(
+  sessionId: string,
+  body: SaveSessionRequest,
+): Promise<SaveSessionResponse> {
   const { data } = await client.post<SaveSessionResponse>(
-    `/api/v1/jobs/${request.job_id}/save`,
-    request,
+    `/api/v1/sessions/${sessionId}/save`,
+    body,
   );
   return data;
 }
 
-export async function straightenRow(jobId: string, anchors: StraightenAnchors): Promise<StraightenResponse> {
+export async function straightenRow(
+  jobId: string,
+  anchors: StraightenAnchors,
+): Promise<StraightenResponse> {
   try {
     const { data } = await client.post<StraightenResponse>(
       `/api/v1/jobs/${jobId}/straighten`,

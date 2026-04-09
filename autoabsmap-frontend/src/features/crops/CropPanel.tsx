@@ -15,11 +15,15 @@ interface CropPanelProps {
   onToggleDeleteMode?: () => void;
   onConfirmDelete?: () => void;
   onCancelDelete?: () => void;
+  onToggleBulkDeleteMode?: () => void;
+  onConfirmBulkDelete?: () => void;
+  onCancelBulkDelete?: () => void;
+  bulkPreviewCount?: number;
+  bulkHasPreview?: boolean;
   onToggleCopyMode?: () => void;
   onToggleModifyMode?: () => void;
   onCancelModify?: () => void;
   onToggleStraightenMode?: () => void;
-  onConfirmStraighten?: () => void;
   onCancelStraighten?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
@@ -38,11 +42,15 @@ export function CropPanel({
   onToggleDeleteMode,
   onConfirmDelete,
   onCancelDelete,
+  onToggleBulkDeleteMode,
+  onConfirmBulkDelete,
+  onCancelBulkDelete,
+  bulkPreviewCount = 0,
+  bulkHasPreview = false,
   onToggleCopyMode,
   onToggleModifyMode,
   onCancelModify,
   onToggleStraightenMode,
-  onConfirmStraighten,
   onCancelStraighten,
   onUndo,
   onRedo,
@@ -60,13 +68,13 @@ export function CropPanel({
   const editMode: EditMode = useAppSelector((s) => s.absmap.editMode);
   const isAddMode = editMode === 'add';
   const isDeleteMode = editMode === 'delete';
+  const isBulkDeleteMode = editMode === 'bulk_delete';
   const isCopyMode = editMode === 'copy';
   const isModifyMode = editMode === 'modify';
   const isStraightenMode = editMode === 'straighten';
   const straightenLoading = useAppSelector((s) => s.absmap.straightenLoading);
   const straightenError = useAppSelector((s) => s.absmap.straightenError);
   const straightenAnchorId = useAppSelector((s) => s.absmap.straightenAnchorSlotId);
-  const hasStraightenProposal = useAppSelector((s) => s.absmap.straightenProposal !== null && s.absmap.straightenProposal.length > 0);
   const isDirty = useAppSelector((s) => s.absmap.isDirty);
   const isSaving = useAppSelector((s) => s.absmap.isSaving);
   const lastSavedAt = useAppSelector((s) => s.absmap.lastSavedAt);
@@ -202,6 +210,15 @@ export function CropPanel({
             <span>Delete <kbd className={styles.kbd}>D</kbd></span>
           </button>
           <button
+            className={`${styles.actionBtn} ${isBulkDeleteMode ? styles.actionBtnActive : ''}`}
+            onClick={onToggleBulkDeleteMode}
+            disabled={!hasResults}
+            title="Press B — draw a lasso; Enter confirms removal of all slots inside"
+          >
+            <span className={styles.actionIcon}>&#x29C9;</span>
+            <span>Bulk <kbd className={styles.kbd}>B</kbd></span>
+          </button>
+          <button
             className={`${styles.actionBtn} ${isCopyMode ? styles.actionBtnActive : ''}`}
             onClick={onToggleCopyMode}
             disabled={!hasResults}
@@ -275,6 +292,30 @@ export function CropPanel({
           </div>
         )}
 
+        {isBulkDeleteMode && (
+          <div className={styles.modeBar}>
+            <span className={styles.modeBarLabel}>
+              {bulkHasPreview && bulkPreviewCount > 0
+                ? `${bulkPreviewCount} slot${bulkPreviewCount !== 1 ? 's' : ''} selected — confirm to remove`
+                : bulkHasPreview && bulkPreviewCount === 0
+                  ? 'No slots in region — draw again'
+                  : 'Draw a lasso on the map (double-click or close on first point)'}
+            </span>
+            <div className={styles.modeBarActions}>
+              <button
+                className={styles.confirmBtn}
+                onClick={onConfirmBulkDelete}
+                disabled={!bulkPreviewCount}
+              >
+                Remove <kbd className={styles.kbd}>Enter</kbd>
+              </button>
+              <button className={styles.cancelBtn} onClick={onCancelBulkDelete}>
+                Exit <kbd className={styles.kbd}>Esc</kbd>
+              </button>
+            </div>
+          </div>
+        )}
+
         {isCopyMode && (
           <div className={styles.modeBar}>
             <span className={styles.modeBarLabel}>Click a slot to duplicate it</span>
@@ -304,7 +345,7 @@ export function CropPanel({
             className={`${styles.actionBtn} ${isStraightenMode ? styles.actionBtnActive : ''}`}
             onClick={onToggleStraightenMode}
             disabled={!hasResults}
-            title="Press S — click two row anchors, then accept/reject proposal"
+            title="Press S — click two anchors on the same row; alignment applies immediately (Undo with Z)"
           >
             <span className={styles.actionIcon}>&#x2261;</span>
             <span>Straighten <kbd className={styles.kbd}>S</kbd></span>
@@ -316,25 +357,18 @@ export function CropPanel({
             <span className={styles.modeBarLabel}>
               {straightenLoading
                 ? 'Aligning row…'
-                : hasStraightenProposal
-                  ? 'Review the proposed alignment'
-                  : straightenAnchorId
-                    ? 'Click second anchor on the same row'
-                    : 'Click first anchor on the row'}
+                : straightenAnchorId
+                  ? 'Click second anchor on the same row'
+                  : 'Click first anchor on the row'}
             </span>
             {straightenError && (
               <span className={styles.saveError}>{straightenError}</span>
             )}
-            {hasStraightenProposal && (
-              <div className={styles.modeBarActions}>
-                <button className={styles.confirmBtn} onClick={onConfirmStraighten}>
-                  Accept <kbd className={styles.kbd}>Enter</kbd>
-                </button>
-                <button className={styles.cancelBtn} onClick={onCancelStraighten}>
-                  Reject <kbd className={styles.kbd}>Esc</kbd>
-                </button>
-              </div>
-            )}
+            <div className={styles.modeBarActions}>
+              <button className={styles.cancelBtn} onClick={onCancelStraighten}>
+                Done <kbd className={styles.kbd}>Esc</kbd>
+              </button>
+            </div>
           </div>
         )}
       </div>

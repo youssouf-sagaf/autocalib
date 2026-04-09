@@ -4,6 +4,7 @@ import { addCrop, undo, redo } from './store/autoabsmap-slice';
 import { usePolygonDraw } from './hooks/usePolygonDraw';
 import { useAddSlot } from './hooks/useAddSlot';
 import { useDeleteSlot } from './hooks/useDeleteSlot';
+import { useBulkDelete } from './hooks/useBulkDelete';
 import { useCopySlot } from './hooks/useCopySlot';
 import { useModifySlot } from './hooks/useModifySlot';
 import { useStraightenSlot } from './hooks/useStraightenSlot';
@@ -85,6 +86,21 @@ export default function App() {
     cancelDelete,
   } = useDeleteSlot();
 
+  /* ── Bulk delete (lasso) ── */
+  const {
+    isBulkDeleteMode,
+    previewIds: bulkPreviewSlotIds,
+    previewFeature: bulkPreviewFeature,
+    edgeFeature: bulkEdgeFeature,
+    vertexFeatures: bulkVertexFeatures,
+    toggleBulkDeleteMode: rawToggleBulkDeleteMode,
+    confirmBulkDelete,
+    cancelBulkDelete,
+    handleMapClick: handleBulkMapClick,
+    handleMouseMove: handleBulkMouseMove,
+    handleKeyDown: handleBulkKeyDown,
+  } = useBulkDelete();
+
   /* ── Modify slot mode ── */
   const {
     isModifyMode,
@@ -111,11 +127,9 @@ export default function App() {
   /* ── Straighten mode ── */
   const {
     isStraightenMode,
-    proposal: straightenProposal,
     handleMapClick: handleStraightenClick,
     handleKeyDown: handleStraightenKeyDown,
     toggleStraightenMode: rawToggleStraightenMode,
-    confirmStraighten,
     cancelStraighten,
   } = useStraightenSlot();
 
@@ -127,7 +141,23 @@ export default function App() {
     if (isCopyMode) rawToggleCopyMode();
     if (isModifyMode) cancelModify();
     if (isStraightenMode) cancelStraighten();
-  }, [isDrawing, stopDrawing, isAddMode, cancelSlot, isDeleteMode, cancelDelete, isCopyMode, rawToggleCopyMode, isModifyMode, cancelModify, isStraightenMode, cancelStraighten]);
+    if (isBulkDeleteMode) cancelBulkDelete();
+  }, [
+    isDrawing,
+    stopDrawing,
+    isAddMode,
+    cancelSlot,
+    isDeleteMode,
+    cancelDelete,
+    isCopyMode,
+    rawToggleCopyMode,
+    isModifyMode,
+    cancelModify,
+    isStraightenMode,
+    cancelStraighten,
+    isBulkDeleteMode,
+    cancelBulkDelete,
+  ]);
 
   const enterMode = useCallback(
     (toggle: () => void) => {
@@ -143,9 +173,14 @@ export default function App() {
   const toggleCopyMode = useCallback(() => enterMode(rawToggleCopyMode), [enterMode, rawToggleCopyMode]);
   const toggleModifyMode = useCallback(() => enterMode(rawToggleModifyMode), [enterMode, rawToggleModifyMode]);
   const toggleStraightenMode = useCallback(() => enterMode(rawToggleStraightenMode), [enterMode, rawToggleStraightenMode]);
+  const toggleBulkDeleteMode = useCallback(
+    () => enterMode(rawToggleBulkDeleteMode),
+    [enterMode, rawToggleBulkDeleteMode],
+  );
   const startDrawingExclusive = useCallback(() => { exitCurrentMode(); startDrawing(); }, [exitCurrentMode, startDrawing]);
 
-  const isAnyEditMode = isAddMode || isDeleteMode || isCopyMode || isModifyMode || isStraightenMode;
+  const isAnyEditMode =
+    isAddMode || isDeleteMode || isBulkDeleteMode || isCopyMode || isModifyMode || isStraightenMode;
 
   /* ── Unified selectedSlotId (browse or delete mode) ── */
   const straightenAnchorSlotId = useAppSelector((s) => s.absmap.straightenAnchorSlotId);
@@ -161,6 +196,7 @@ export default function App() {
     (e: Parameters<typeof handleClick>[0]) => {
       if (isAddMode) { handleAddClick(e); return; }
       if (isDeleteMode) { handleDeleteClick(e); return; }
+      if (isBulkDeleteMode) { handleBulkMapClick(e); return; }
       if (isCopyMode) { handleCopyClick(e); return; }
       if (isModifyMode) { handleModifyClick(e); return; }
       if (isStraightenMode) { handleStraightenClick(e); return; }
@@ -177,13 +213,28 @@ export default function App() {
 
       handleClick(e);
     },
-    [isAddMode, isDeleteMode, isCopyMode, isModifyMode, isStraightenMode, handleClick, handleAddClick, handleDeleteClick, handleCopyClick, handleModifyClick, handleStraightenClick],
+    [
+      isAddMode,
+      isDeleteMode,
+      isBulkDeleteMode,
+      isCopyMode,
+      isModifyMode,
+      isStraightenMode,
+      handleClick,
+      handleAddClick,
+      handleDeleteClick,
+      handleBulkMapClick,
+      handleCopyClick,
+      handleModifyClick,
+      handleStraightenClick,
+    ],
   );
 
   /* ── Composed mouse move (hover tracking + mode handlers) ── */
   const composedMouseMove = useCallback(
     (e: Parameters<typeof handleMouseMove>[0]) => {
       if (isAddMode) handleAddMouseMove(e);
+      if (isBulkDeleteMode) handleBulkMouseMove(e);
       if (isModifyMode) handleModifyMouseMove(e);
 
       const features = e.features;
@@ -196,7 +247,7 @@ export default function App() {
 
       handleMouseMove(e);
     },
-    [isAddMode, isModifyMode, handleAddMouseMove, handleModifyMouseMove, handleMouseMove],
+    [isAddMode, isBulkDeleteMode, isModifyMode, handleAddMouseMove, handleBulkMouseMove, handleModifyMouseMove, handleMouseMove],
   );
 
   /* ── Composed mousedown / mouseup (modify drag-and-drop) ── */
@@ -214,10 +265,15 @@ export default function App() {
     [isModifyMode, handleModifyMouseUp],
   );
 
+  const drawPreviewFeature = isBulkDeleteMode ? bulkPreviewFeature : previewFeature;
+  const drawEdgeFeature = isBulkDeleteMode ? bulkEdgeFeature : edgeFeature;
+  const drawVertexFeatures = isBulkDeleteMode ? bulkVertexFeatures : vertexFeatures;
+
   /* ── Composed cursor ── */
   const composedCursor = (() => {
     if (isAddMode) return 'crosshair';
     if (isDeleteMode) return 'crosshair';
+    if (isBulkDeleteMode) return 'crosshair';
     if (isCopyMode) return 'copy';
     if (isModifyMode) return 'move';
     if (isStraightenMode) return 'crosshair';
@@ -251,6 +307,7 @@ export default function App() {
   const modeKeyMap: Record<string, () => void> = {
     a: toggleAddMode,
     d: toggleDeleteMode,
+    b: toggleBulkDeleteMode,
     c: toggleCopyMode,
     m: toggleModifyMode,
     s: toggleStraightenMode,
@@ -273,6 +330,11 @@ export default function App() {
         return;
       }
 
+      if (isBulkDeleteMode && (e.key === 'Enter' || e.key === 'Escape')) {
+        handleBulkKeyDown(e);
+        return;
+      }
+
       const modeToggle = modeKeyMap[key];
       if (modeToggle) {
         e.preventDefault();
@@ -288,8 +350,23 @@ export default function App() {
       handleKeyDown(e);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, toggleAddMode, toggleDeleteMode, toggleCopyMode, toggleModifyMode, toggleStraightenMode,
-     handleAddKeyDown, handleDeleteKeyDown, handleCopyKeyDown, handleModifyKeyDown, handleStraightenKeyDown, handleKeyDown],
+    [
+      dispatch,
+      toggleAddMode,
+      toggleDeleteMode,
+      toggleBulkDeleteMode,
+      toggleCopyMode,
+      toggleModifyMode,
+      toggleStraightenMode,
+      isBulkDeleteMode,
+      handleBulkKeyDown,
+      handleAddKeyDown,
+      handleDeleteKeyDown,
+      handleCopyKeyDown,
+      handleModifyKeyDown,
+      handleStraightenKeyDown,
+      handleKeyDown,
+    ],
   );
 
   useEffect(() => {
@@ -313,11 +390,15 @@ export default function App() {
       onToggleDeleteMode={toggleDeleteMode}
       onConfirmDelete={confirmDelete}
       onCancelDelete={cancelDelete}
+      onToggleBulkDeleteMode={toggleBulkDeleteMode}
+      onConfirmBulkDelete={confirmBulkDelete}
+      onCancelBulkDelete={cancelBulkDelete}
+      bulkPreviewCount={bulkPreviewSlotIds?.length ?? 0}
+      bulkHasPreview={bulkPreviewSlotIds !== null}
       onToggleCopyMode={toggleCopyMode}
       onToggleModifyMode={toggleModifyMode}
       onCancelModify={cancelModify}
       onToggleStraightenMode={toggleStraightenMode}
-      onConfirmStraighten={confirmStraighten}
       onCancelStraighten={cancelStraighten}
       onUndo={handleUndo}
       onRedo={handleRedo}
@@ -349,9 +430,10 @@ export default function App() {
             onMouseDown={composedMouseDown}
             onMouseUp={composedMouseUp}
             cursor={composedCursor}
-            previewFeature={previewFeature}
-            edgeFeature={edgeFeature}
-            vertexFeatures={vertexFeatures}
+            previewFeature={drawPreviewFeature}
+            edgeFeature={drawEdgeFeature}
+            vertexFeatures={drawVertexFeatures}
+            bulkPreviewSlotIds={bulkPreviewSlotIds}
             showCrops
             showSlots
             showCentroids
@@ -361,9 +443,6 @@ export default function App() {
             selectedSlotId={activeSelectedSlotId}
             hoveredSlotId={hoveredSlotId}
             modifyingSlot={modifyingSlot}
-            straightenProposal={straightenProposal}
-            onConfirmStraighten={isStraightenMode ? confirmStraighten : undefined}
-            onCancelStraighten={isStraightenMode ? cancelStraighten : undefined}
             isEditMode={isAnyEditMode}
             dragPanEnabled={!isModifyDragLocked}
           />
@@ -377,9 +456,10 @@ export default function App() {
           onMouseDown={composedMouseDown}
           onMouseUp={composedMouseUp}
           cursor={composedCursor}
-          previewFeature={previewFeature}
-          edgeFeature={edgeFeature}
-          vertexFeatures={vertexFeatures}
+          previewFeature={drawPreviewFeature}
+          edgeFeature={drawEdgeFeature}
+          vertexFeatures={drawVertexFeatures}
+          bulkPreviewSlotIds={bulkPreviewSlotIds}
           showCrops
           showSlots
           showCentroids
@@ -387,9 +467,6 @@ export default function App() {
           selectedSlotId={activeSelectedSlotId}
           hoveredSlotId={hoveredSlotId}
           modifyingSlot={modifyingSlot}
-          straightenProposal={straightenProposal}
-          onConfirmStraighten={isStraightenMode ? confirmStraighten : undefined}
-          onCancelStraighten={isStraightenMode ? cancelStraighten : undefined}
           isEditMode={isAnyEditMode}
           dragPanEnabled={!isModifyDragLocked}
         />

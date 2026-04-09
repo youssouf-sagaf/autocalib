@@ -40,8 +40,8 @@ Architecture doc: `autoabsmap_architecture.md` (source of truth for all design d
 - **Multi-crop merge:** first-crop-wins, IoU > 0.5 threshold. No averaging.
 - **Slot ID:** `autoabsmap` generates ephemeral UUIDs. Stable identity is owned by the save path (B2B/Firestore spatial matching).
 - **Session retention:** heavy artifacts (`.npy`, GeoTIFF) on VM disk, purged monthly after retraining. Lightweight outputs kept long-term.
-- **RowStraightener V1:** straight-line only (median angle + axis snap). Curved rows deferred to V2. Always returns proposals — operator confirms or cancels.
-- **Service engine isolation:** each engine (`generator_engine`, `reprocessing_helper`, `alignment_tool`, `learning_loop`) has a single public entry point, its own `models.py`, and clear inputs/outputs. Foundation layers never import from engines.
+- **RowStraightener V1:** two anchors on one row segment; straight-line alignment (axis through anchor centroids). Curved rows deferred to V2. API returns `proposed_slots[]`; POC frontend applies immediately (undo via edit history).
+- **Service engine isolation:** each engine has a single public entry point and clear inputs/outputs. `generator_engine`, `reprocessing_helper`, and `learning_loop` use an engine-local `models.py` for boundary types; `alignment_tool` does not — it takes `GeoSlot` lists only (request DTOs live in `autoabsmap-api`). Foundation layers never import from engines.
 
 ## Do not
 

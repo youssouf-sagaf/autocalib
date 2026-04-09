@@ -67,12 +67,11 @@ interface MapPanelProps {
   selectedSlotId?: string | null;
   hoveredSlotId?: string | null;
   modifyingSlot?: Slot | null;
-  straightenProposal?: Slot[] | null;
-  onConfirmStraighten?: () => void;
-  onCancelStraighten?: () => void;
   isEditMode?: boolean;
   /** When false, map dragging is disabled (used during modify drag-and-drop). */
   dragPanEnabled?: boolean;
+  /** Slot ids highlighted as pending bulk-delete confirmation (lasso preview). */
+  bulkPreviewSlotIds?: string[] | null;
 }
 
 // Data-driven color expression: slot source → color
@@ -119,11 +118,9 @@ export function MapPanel({
   selectedSlotId,
   hoveredSlotId,
   modifyingSlot,
-  straightenProposal,
-  onConfirmStraighten,
-  onCancelStraighten,
   isEditMode = false,
   dragPanEnabled = true,
+  bulkPreviewSlotIds = null,
 }: MapPanelProps) {
   const crops = useAppSelector((s) => s.absmap.crops);
   const finalSlots = useAppSelector((s) => s.absmap.slots);
@@ -139,6 +136,11 @@ export function MapPanel({
   }, [overlays, overlayVis, finalSlots, baselineSlots]);
   const [popupSlot, setPopupSlot] = useState<Slot | null>(null);
   const [hovering, setHovering] = useState(false);
+
+  const bulkPreviewSet = useMemo(() => {
+    if (!bulkPreviewSlotIds?.length) return new Set<string>();
+    return new Set(bulkPreviewSlotIds);
+  }, [bulkPreviewSlotIds]);
 
   /* ── GeoJSON sources ── */
 
@@ -169,6 +171,7 @@ export function MapPanel({
                 source: slot.source,
                 selected: slot.slot_id === selectedSlotId,
                 hovered: slot.slot_id === hoveredSlotId,
+                bulkPreview: bulkPreviewSet.has(slot.slot_id),
               },
               geometry: {
                 type: 'Point' as const,
@@ -177,7 +180,7 @@ export function MapPanel({
             })),
           }
         : EMPTY_FC,
-    [slots, showCentroids, selectedSlotId, hoveredSlotId],
+    [slots, showCentroids, selectedSlotId, hoveredSlotId, bulkPreviewSet],
   );
 
   const previewGeoJSON: GeoJSON.FeatureCollection = useMemo(
@@ -249,28 +252,6 @@ export function MapPanel({
         : EMPTY_FC,
     [modifyingSlot],
   );
-
-  const straightenGeoJSON: GeoJSON.FeatureCollection = useMemo(
-    () =>
-      straightenProposal && straightenProposal.length > 0
-        ? {
-            type: 'FeatureCollection',
-            features: straightenProposal.map((slot) => ({
-              type: 'Feature' as const,
-              properties: { slot_id: slot.slot_id },
-              geometry: slot.polygon,
-            })),
-          }
-        : EMPTY_FC,
-    [straightenProposal],
-  );
-
-  const straightenCenter = useMemo(() => {
-    if (!straightenProposal || straightenProposal.length === 0) return null;
-    const lng = straightenProposal.reduce((a, s) => a + s.center.lng, 0) / straightenProposal.length;
-    const lat = straightenProposal.reduce((a, s) => a + s.center.lat, 0) / straightenProposal.length;
-    return { lng, lat };
-  }, [straightenProposal]);
 
   const mapRef = useRef<MapRef>(null);
 
@@ -420,8 +401,20 @@ export function MapPanel({
           />
         </Source>
 
-        {/* ── Parking markers (click target + hover/select highlight) ── */}
+        {/* ── Parking markers (bulk-delete preview halo + click target) ── */}
         <Source id="centroids" type="geojson" data={centroidsGeoJSON}>
+          <Layer
+            id="centroids-bulk-halo"
+            type="circle"
+            filter={['==', ['get', 'bulkPreview'], true]}
+            paint={{
+              'circle-radius': 16,
+              'circle-color': '#e74c3c',
+              'circle-opacity': 0.28,
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#c0392b',
+            }}
+          />
           <Layer
             id="centroids-symbol"
             type="symbol"
@@ -542,50 +535,6 @@ export function MapPanel({
             }}
           />
         </Source>
-
-        {/* ── Straighten proposal preview (green dashed outlines) ── */}
-        <Source id="straighten-proposal" type="geojson" data={straightenGeoJSON}>
-          <Layer
-            id="straighten-proposal-fill"
-            type="fill"
-            paint={{ 'fill-color': tokens.success, 'fill-opacity': 0.35 }}
-          />
-          <Layer
-            id="straighten-proposal-line"
-            type="line"
-            paint={{
-              'line-color': tokens.success,
-              'line-width': 2.5,
-              'line-dasharray': [4, 3],
-            }}
-          />
-        </Source>
-
-        {/* ── Straighten confirmation popup ── */}
-        {straightenCenter && onConfirmStraighten && (
-          <Popup
-            longitude={straightenCenter.lng}
-            latitude={straightenCenter.lat}
-            onClose={() => onCancelStraighten?.()}
-            closeOnClick={false}
-            anchor="bottom"
-            offset={24}
-          >
-            <div className={styles.straightenPopup}>
-              <div className={styles.popupTitle}>
-                Align {straightenProposal!.length} slot{straightenProposal!.length !== 1 ? 's' : ''}?
-              </div>
-              <div className={styles.straightenActions}>
-                <button className={styles.acceptBtn} onClick={onConfirmStraighten}>
-                  Accept
-                </button>
-                <button className={styles.rejectBtn} onClick={onCancelStraighten}>
-                  Reject
-                </button>
-              </div>
-            </div>
-          </Popup>
-        )}
 
         {/* ── Slot info popup ── */}
         {popupSlot && (

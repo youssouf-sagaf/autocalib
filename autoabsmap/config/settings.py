@@ -168,30 +168,21 @@ class GeometrySettings(BaseSettings):
 # ---------------------------------------------------------------------------
 
 class AlignmentSettings(BaseSettings):
-    """RowStraightener corridor walk and correction parameters."""
+    """RowStraightener (two-anchor segment) — corridor and angle gate.
 
-    neighbor_count: int = 6
-    """Number of nearest neighbors for initial direction estimation."""
+    Only these fields are read by ``alignment_tool/straightener.py``. The
+    pre-refactor straightener used KNN median direction, an axial walk, and
+    env-tunable gap/pitch limits; those knobs (``neighbor_count``,
+    ``max_gap_factor``, ``pitch_tolerance_factor``, ``max_gap_steps``,
+    ``rolling_alpha``) were removed: along-axis extent is computed inline from
+    anchor distance and average width, not from settings.
+    """
 
-    corridor_width_factor: float = 1.2
-    """Corridor half-width (perpendicular) = factor × slot width.
-    At 1.2 × ~2.5 m ≈ 3 m — tight enough to stay within one row."""
+    corridor_width_factor: float = 1.65
+    """Half-width of the perpendicular corridor = factor × max(anchor widths)."""
 
-    angle_tolerance_deg: float = 25.0
-    """Max angle difference (degrees) for accepting a slot into the row."""
-
-    max_gap_factor: float = 3.0
-    """Gap detection: stop walking when along-axis gap > factor × slot width.
-    At 3.0 × ~2.5 m ≈ 7.5 m — bridges one missing slot, stops before next row."""
-
-    pitch_tolerance_factor: float = 0.5
-    """Accepted spacing deviation: ±factor × estimated pitch (reserved for V2)."""
-
-    max_gap_steps: int = 2
-    """Stop the walk after this many consecutive misses in one direction (reserved for V2)."""
-
-    rolling_alpha: float = 0.3
-    """EMA weight for rolling direction update (reserved for V2 curved rows)."""
+    angle_tolerance_deg: float = 42.0
+    """Max deviation (degrees) for OBB axis vs row axis, modulo 90°."""
 
     model_config = {"env_prefix": "ALIGN_"}
 

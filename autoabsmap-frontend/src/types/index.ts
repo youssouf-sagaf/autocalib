@@ -78,25 +78,41 @@ export interface EditEvent {
   after: Slot[];
 }
 
-export type EditMode = 'none' | 'add' | 'delete' | 'copy' | 'modify' | 'straighten';
+export type EditMode =
+  | 'none'
+  | 'add'
+  | 'delete'
+  | 'bulk_delete'
+  | 'copy'
+  | 'modify'
+  | 'straighten';
 
 export interface StraightenAnchors {
   slot_id_a: string;
   slot_id_b: string;
+  /** Current map slots so anchors match baseline view / edits (optional for older clients). */
+  slots?: Slot[];
 }
 
 export interface StraightenResponse {
   proposed_slots: Slot[];
 }
 
+/** Body for POST /api/v1/sessions/{session_id}/save (matches API SaveRequest). */
 export interface SaveSessionRequest {
-  job_id: string;
-  slots: Slot[];
-  edit_history: EditEvent[];
-  saved_at: string;
+  final_slots: Slot[];
+  baseline_slots?: Slot[];
+  edit_events: EditEvent[];
+  reprocessed_steps?: unknown[];
+  difficulty_tags?: string[];
+  other_difficulty_note?: string | null;
 }
 
 export interface SaveSessionResponse {
   ok: boolean;
   saved_at: string;
+  session_id?: string;
+  saved_to?: string;
+  slot_count?: number;
+  delta?: unknown;
 }

@@ -86,6 +86,10 @@ class StraightenRequest(BaseModel):
 
     slot_id_a: str
     slot_id_b: str
+    slots: list[GeoSlot] | None = None
+    """Optional WGS84 snapshot (e.g. current map state). When set, straightening runs on this
+    list so anchors match baseline-only views and edited geometries; otherwise the job's
+    merged ``slots`` from the server store are used."""
 
     @model_validator(mode="after")
     def _anchors_must_differ(self) -> StraightenRequest:

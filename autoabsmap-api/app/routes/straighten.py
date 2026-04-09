@@ -32,11 +32,17 @@ async def straighten_row(job_id: str, request: StraightenRequest) -> dict:
 
     from autoabsmap.alignment_tool.straightener import RowStraightener
 
+    all_slots = (
+        list(request.slots)
+        if request.slots is not None and len(request.slots) > 0
+        else result.slots
+    )
+
     straightener = RowStraightener()
     corrected = straightener.straighten(
         request.slot_id_a,
         request.slot_id_b,
-        result.slots,
+        all_slots,
     )
 
     return {"proposed_slots": [s.model_dump() for s in corrected]}

@@ -69,7 +69,7 @@ flowchart TD
         subgraph engines [Service Engines — project blocks]
             gen["⭐ generator_engine/ Pipeline + GeometricEngine"]
             reproc["⭐ reprocessing_helper/ Auto-fill from ref slot + scope"]
-            align["⭐ alignment_tool/ RowStraightener"]
+            align["⭐ alignment_tool/ RowStraightener (two-anchor row strip)"]
             loop_eng["⭐ learning_loop/ Capture + dataset builder + benchmark"]
         end
 
@@ -202,8 +202,8 @@ autocalib/autoabsmap/
 
   alignment_tool/            # ★ Block 7 — Alignment "mise au carré" Automation Tool
     __init__.py
-    models.py                # AlignmentRequest, AlignmentResult, RowDiscovery
-    straightener.py          # RowStraightener.straighten(ref_slot_id, all_slots) → corrected slots
+    straightener.py          # RowStraightener.straighten(anchor_a, anchor_b, all_slots) → corrected GeoSlot[]
+                             # No engine-local models.py: slots are export.models.GeoSlot; POST body = StraightenRequest in autoabsmap-api
 
   learning_loop/             # ★ Block 4 — Systematic Engine Retraining Loop
     __init__.py
@@ -312,62 +312,56 @@ job_result = await orchestrator.run(job_request, on_progress=emit_sse)
 
 **Location:** `autoabsmap/alignment_tool/straightener.py`
 
-The algorithm is a **directed corridor walk** with a rolling direction update. It handles both straight and gently curved rows without branching logic.
+**V1 model — two anchors on a straight segment:** the operator picks **any two slots on the same row** (not necessarily the row ends). The **row axis** is the directed line through their **centroids** in a local metric frame (WGS84 inputs are converted with a cos(lat) scale so “distance” and corridors are approximate metres near the anchors).
 
-**Trigger (single-slot):** operator clicks one slot → `RowStraightener.straighten(reference_slot_id, all_slots)` → returns corrected `list[GeoSlot]`.
+**Trigger:** second anchor chosen → `RowStraightener.straighten(anchor_slot_id_a, anchor_slot_id_b, all_slots)` → returns a corrected `list[GeoSlot]` for every slot accepted into that row strip (or `[]` if the call is invalid / no row members).
 
-**Step 1 — Estimate local direction.**
-From the reference slot, look at the 4–6 nearest neighbor slots (by centroid distance). Compute the **median angle** of these neighbors. This gives the initial corridor direction.
+**Tuning** (`AlignmentSettings` in `config/settings.py`, env prefix `ALIGN_`):
+- `corridor_width_factor` — half-width of the perpendicular **corridor** = factor × `max(width_anchor_a, width_anchor_b)` in local metres.
+- `angle_tolerance_deg` — max angle mismatch between a candidate slot’s OBB axis and the row axis, accepting **either** principal direction (**modulo 90°**) so short/long edge ambiguity from detection does not drop valid slots.
 
-**Step 2 — Open a narrow corridor.**
-Build an oriented bounding rectangle centered on the reference slot, aligned with the estimated direction. Width ≈ 1–1.5× slot width (one parking space). Extends in both directions from the reference.
+**Step 1 — Local geometry per slot**
+For each slot, project centroid and polygon into local (x, y) metres; derive OBB width, height, and principal angle (wrapped to (−π/2, π/2]).
 
-**Step 3 — Walk the corridor in both directions.**
-At each step, accept the next slot if:
-- its centroid falls inside the corridor,
-- its angle is compatible with the current direction (tolerance: a few degrees),
-- spacing to the previous slot is consistent with the estimated pitch (from first 2–3 slots).
+**Step 2 — Row axis and collection**
+- `row_angle = atan2(B − A)` from the two anchor centroids (after rejecting identical ids, missing anchors, or anchors closer than ~5 cm).
+- **Segment window:** project centroids onto the axis through the **midpoint of A and B**. Keep slots whose along-axis coordinate lies between the anchors **plus padding** `max(0.5× average_anchor_width, 0.12× |AB|)` (handles pitch jitter and slight mis-clicks).
+- **Corridor band:** perpendicular distance from that midpoint axis ≤ corridor half-width.
+- **Angle gate:** `_slot_axis_aligns_with_row` — slot angle matches `row_angle` or `row_angle ± 90°` within `angle_tolerance_deg`.
+- **Anchors always included** even if their own OBB angles disagree slightly with AB (they are forced into the member set before scanning `all_slots`).
 
-After each accepted slot, **update the corridor direction** with that slot's angle — this rolling update is what makes curved rows work without special-casing.
+**Step 3 — Correction (straight line, no spacing smoothing)**
+- Single shared orientation: everyone gets `row_angle`.
+- Each centroid is **projected onto** the row line through the **mean centroid** of row members (removes lateral wobble along that line).
+- **Width/height** are preserved in the sense of footprint size: if the stored OBB matched the row via the **orthogonal** direction (common with quad ordering), **w and h are swapped** before rebuild so the long side stays along the row.
 
-**Step 4 — Stop conditions.**
-- No valid slot found within the corridor (gap too large)
-- Angle breaks sharply (different row orientation)
-- ~~Segmentation mask boundary reached~~ — **V1: not used.** The straightener operates only on the slot list; mask-based stop requires persisted masks per job/crop, which is not yet in the data path. To be revisited when per-crop masks are retained beyond the pipeline run.
+**Not in V1:** global “straighten whole map”; segmentation-mask-boundary stop (only slot list is available); **curved rows as one fit** — a curved row still needs several straighten passes on sub-segments or manual edits (same product stance as before).
 
-**Step 5 — Apply correction.**
-Once the full row is collected:
-- **Orientation**: compute target angle (median of all row members), rotate each OBB to that angle
-- **Alignment**: snap centroids onto the fitted row axis (removes side-to-side wobble); optionally smooth spacing along the row
-- **Footprints**: slot width and length unchanged in V1 (only center + angle move)
+**Edge cases**
 
-**Edge cases (V1 behavior):**
-
-| Case | V1 handling |
+| Case | Behavior |
 |---|---|
-| Very short row (2–3 slots) | Straighten normally — median of 2–3 angles is still meaningful. Minimum row size: 2 slots. |
-| Isolated slot (no neighbor in corridor) | Return empty list — no correction proposed. Operator sees nothing, no harm done. |
-| T-intersection (two rows cross) | The corridor is narrow (1–1.5× slot width) and angle-filtered — it follows one row and ignores the perpendicular one. If the wrong row is picked, the operator cancels and clicks a slot in the other row. |
-| Angled lot (multiple orientations) | Each straighten call discovers one row only. The operator clicks one slot per row orientation. No global "straighten all" in V1. |
-
-**Curved rows — deferred to V2:**
-~~After the walk, fit a smooth curve (polynomial or B-spline) through the collected centroids.~~ The B-spline/curve fitting adds significant complexity for a rare case. V1 applies the straight-line correction only (median angle + axis snap). Curved rows are handled by the operator making multiple straighten calls on subsections, or manual edits. Revisit when real usage data shows how often curved rows appear.
+| Same anchor twice / anchor not in `all_slots` | Empty list; logged. |
+| Anchors extremely close | Empty list. |
+| Fewer than two slots after collection | Empty list (no partial apply). |
+| Inclined / worldwide scene | Local metric uses ref at midpoint of anchors; adequate for parking-lot scale. |
+| T-junction / wrong second anchor | Narrow corridor + segment window usually limit picks; operator picks another second anchor or undoes (frontend: one `align` `EditEvent` per successful call). |
 
 ```python
 class RowStraightener:
     def straighten(
         self,
-        reference_slot_id: str,
+        anchor_slot_id_a: str,
+        anchor_slot_id_b: str,
         all_slots: list[GeoSlot],
     ) -> list[GeoSlot]:
         """
-        Discover row from reference_slot_id via directed corridor walk,
-        then return corrected GeoSlots (angle + centroid adjusted).
-        Width/length of each slot unchanged.
+        Collect slots on the strip between two anchors; align to axis AB.
+        Footprint area preserved; w/h may swap to align long side with row.
         """
 ```
 
-The result is returned as **proposed** slots — the API layer sends them back as `proposed_slots[]`. The frontend shows a preview; the operator confirms or cancels. On confirm, the Redux slice dispatches `applyAlignment`, which appends an `align` `EditEvent` to `editHistory`.
+The HTTP layer still returns **`proposed_slots`** (same JSON field name as other engines). The POC frontend applies them **immediately** on success and records a single **`align`** `EditEvent` in `editHistory` (undo/redo via **Z** / slice redo), with no map preview step.
 
 ---
 
@@ -394,7 +388,7 @@ class ReprocessResult(BaseModel):
 
 1. **Extract geometry from reference slot** — orientation angle, width, length, and spacing (estimated from nearest existing neighbor if available).
 2. **Clip the scope** — intersect the scope polygon with the segmentation mask (if available). This restricts auto-fill to driveable/parkable surface only.
-3. **Row extension** — from the reference slot, walk in both directions along the estimated row axis (same directed corridor logic as `RowStraightener`, but for placement, not correction). Place new slots at regular pitch intervals while inside the clipped scope.
+3. **Row extension** — from the reference slot, walk in both directions along the estimated row axis (`GeometricEngine` — independent of the two-anchor `RowStraightener`). Place new slots at regular pitch intervals while inside the clipped scope.
 4. **Gap fill** — if the scope contains adjacent rows (detected via perpendicular offset from the reference), extend into those rows too.
 5. **Dedup** — discard any proposed slot with IoU > 0.5 against `existing_slots`.
 6. **Return proposals** — the operator reviews (confirm all / cherry-pick / cancel).
@@ -417,7 +411,7 @@ Thin HTTP wrapper over `autoabsmap` service engines. **No ML logic lives here** 
 | `/api/v1/jobs/{job_id}` | GET | `generator_engine` | Poll status: `pending \| running \| done \| failed` |
 | `/api/v1/jobs/{job_id}/result` | GET | `generator_engine` | Merged GeoJSON FeatureCollection + per-crop detail |
 | `/api/v1/jobs/{job_id}/reprocess` | POST | `reprocessing_helper` | Reference slot + scope polygon → proposed slots |
-| `/api/v1/jobs/{job_id}/straighten` | POST | `alignment_tool` | One `slot_id` → row discovery + corrected geometries |
+| `/api/v1/jobs/{job_id}/straighten` | POST | `alignment_tool` | `slot_id_a`, `slot_id_b` (same row segment) → `proposed_slots[]` (corrected geometries for that strip) |
 | `/api/v1/sessions/{session_id}/save` | POST | `learning_loop` | Final slots + edit trace + difficulty tags → capture + forward to B2B |
 
 **Key data contracts (TypeScript — shared across POC and Cocopilot-FE):**
@@ -444,7 +438,7 @@ interface Slot {
 }
 
 interface EditEvent {
-  type: 'add' | 'delete' | 'bulk_delete' | 'modify' | 'reprocess' | 'align';
+  type: 'add' | 'delete' | 'modify' | 'reprocess' | 'align';
   timestamp: number;
   slot_ids: string[];
   before: Slot[];
@@ -702,7 +696,7 @@ interface IMapProvider {
 | `slot-layer/` | Render OBBs + centroids on map | `SlotLayer`, `SlotTooltip` |
 | `editing/` | Add/Delete/BulkDelete/Copy/Modify | `EditingToolbox`, `BulkSelector` (lasso) |
 | `reprocessing/` | Reference slot + scope → auto-fill | `ReprocessPanel`, `ScopeDrawer` |
-| `row-straightener/` | Click one slot → align row | `RowStraightener`, `RowPreview` |
+| `row-straightener/` (hook + map/sidebar wiring) | Straighten mode: first centroid = anchor A, second = anchor B → POST straighten; apply + `align` event immediately | `useStraightenSlot`, `CropPanel`, `MapPanel` |
 | `session/` | Edit history (undo/redo), dirty flag | `useEditHistory` hook |
 | `save/` | Difficulty tags + final save | `SavePanel`, `DifficultyPicker` |
 
@@ -1127,11 +1121,11 @@ sequenceDiagram
     API->>Reproc: ReprocessingHelper.reprocess()
     Reproc-->>API: proposed_slots
     API-->>FE: proposed_slots (operator confirms/cancels)
-    Op->>FE: Straighten a row (click one slot)
-    FE->>API: POST /jobs/{id}/straighten {slot_id}
-    API->>Align: RowStraightener.straighten()
-    Align-->>API: corrected_slots
-    API-->>FE: corrected_slots (operator confirms/cancels)
+    Op->>FE: Straighten (two anchors on row)
+    FE->>API: POST /jobs/{id}/straighten {slot_id_a, slot_id_b}
+    API->>Align: RowStraightener.straighten(a, b, slots)
+    Align-->>API: proposed_slots
+    API-->>FE: proposed_slots (POC: applied immediately, undo Z)
 
     Note over Op,B2B: Phase 3 — Save (learning_loop capture)
     Op->>FE: Save + difficulty tags

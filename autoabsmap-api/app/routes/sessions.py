@@ -6,7 +6,7 @@ POST /api/v1/sessions/{session_id}/save -> persist + forward to B2B
 from __future__ import annotations
 
 import logging
-import time
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 
@@ -90,8 +90,11 @@ async def save_session(session_id: str, request: SaveRequest) -> dict:
         delta.model_dump_json(),
     )
 
+    saved_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     return {
+        "ok": True,
         "session_id": session_id,
+        "saved_at": saved_at,
         "saved_to": str(session_dir),
         "slot_count": len(request.final_slots),
         "delta": delta.model_dump(),
