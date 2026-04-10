@@ -76,7 +76,7 @@ class MatchResult(BaseModel):
 def match_slots(
     model_slots: list[GeoSlot],
     truth_slots: list[GeoSlot],
-    max_distance_deg: float = 3e-5,
+    max_distance_m: float = 3.3,
 ) -> MatchResult:
     """Greedy spatial matching of model output against ground truth.
 
@@ -84,8 +84,9 @@ def match_slots(
     greedily assign closest pairs first (each slot matched at most once).
 
     Args:
-        max_distance_deg: Maximum centroid distance in degrees for a valid
-            match. Default ~3.3 m at the equator (3e-5 * 111_000).
+        max_distance_m: Maximum centroid distance in **metres** for a valid
+            match.  Computed via haversine on WGS84 centroids so the radius
+            stays constant regardless of latitude (#12).  Default 3.3 m.
     """
     if not model_slots or not truth_slots:
         return MatchResult(
@@ -97,9 +98,9 @@ def match_slots(
     pairs: list[tuple[float, int, int]] = []
     for i, ms in enumerate(model_slots):
         for j, ts in enumerate(truth_slots):
-            dist = _centroid_distance_deg(ms, ts)
-            if dist <= max_distance_deg:
-                pairs.append((dist, i, j))
+            dist_m = _centroid_distance_m(ms, ts)
+            if dist_m <= max_distance_m:
+                pairs.append((dist_m, i, j))
 
     pairs.sort(key=lambda p: p[0])
 
@@ -107,7 +108,7 @@ def match_slots(
     matched_truth: set[int] = set()
     matched: list[SlotMatch] = []
 
-    for dist, i, j in pairs:
+    for dist_m, i, j in pairs:
         if i in matched_model or j in matched_truth:
             continue
         matched_model.add(i)
@@ -115,7 +116,7 @@ def match_slots(
         matched.append(SlotMatch(
             model_slot=model_slots[i],
             truth_slot=truth_slots[j],
-            centroid_distance_m=dist * 111_000,
+            centroid_distance_m=dist_m,
         ))
 
     fps = [s for i, s in enumerate(model_slots) if i not in matched_model]
@@ -128,11 +129,23 @@ def match_slots(
     )
 
 
-def _centroid_distance_deg(a: GeoSlot, b: GeoSlot) -> float:
-    """Euclidean distance between two GeoSlot centroids in degrees."""
-    dlng = a.center.lng - b.center.lng
-    dlat = a.center.lat - b.center.lat
-    return math.sqrt(dlng * dlng + dlat * dlat)
+_EARTH_RADIUS_M = 6_371_000.0
+
+
+def _centroid_distance_m(a: GeoSlot, b: GeoSlot) -> float:
+    """Great-circle distance between two GeoSlot centroids in metres.
+
+    Uses the haversine formula so match radius is latitude-independent (#12).
+    """
+    lat1 = math.radians(a.center.lat)
+    lat2 = math.radians(b.center.lat)
+    dlat = lat2 - lat1
+    dlng = math.radians(b.center.lng - a.center.lng)
+    h = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin(dlng / 2) ** 2
+    )
+    return 2 * _EARTH_RADIUS_M * math.asin(math.sqrt(h))
 
 
 # ------------------------------------------------------------------
@@ -187,13 +200,27 @@ class BenchmarkReport(BaseModel):
     candidate_bundle: str
     sessions_tested: int
     primary_kpi_delta: float
-    """Negative = improvement (fewer manual actions with candidate model)."""
+    """**Per-session average** effort delta: ``(Σ new - Σ old) / sessions_tested``.
+
+    Negative = improvement (fewer manual actions with candidate model).  Primary
+    and secondary KPIs both aggregate as averages so they are directly
+    comparable (#3).
+    """
     secondary_kpis: dict[str, float]
-    """KPI name → delta (negative = improvement)."""
+    """KPI name → delta (negative = improvement).  Averaged only over sessions
+    that had a non-empty stored baseline (#10)."""
+    secondary_sessions: int = 0
+    """Number of sessions contributing to the secondary KPI averages."""
     regression_flags: list[str]
     """Any KPI that got worse beyond threshold."""
     promoted: bool
-    """Go/no-go: True only if primary KPI improved and no major regressions."""
+    """Go/no-go: True only if primary KPI improved and no major regressions.
+
+    Always ``False`` in offline mode (see ``notes``) because the candidate
+    pipeline was not run (#11).
+    """
+    notes: list[str] = Field(default_factory=list)
+    """Free-form annotations — e.g. ``"offline_benchmark"``, ``"no_sessions"``."""
     per_session_details: list[dict[str, Any]] = Field(default_factory=list)
     """Per-session breakdown for debugging."""
 
@@ -220,12 +247,12 @@ class BenchmarkRunner:
         self,
         store: SessionStore,
         *,
-        max_match_distance_deg: float = 3e-5,
+        max_match_distance_m: float = 3.3,
         geo_correction_threshold_m: float = 1.0,
         regression_threshold: float = 0.05,
     ) -> None:
         self._store = store
-        self._max_match_dist = max_match_distance_deg
+        self._max_match_dist_m = max_match_distance_m
         self._geo_threshold = geo_correction_threshold_m
         self._regression_threshold = regression_threshold
 
@@ -238,20 +265,33 @@ class BenchmarkRunner:
         """Run the candidate model on historical sessions and compute KPI deltas.
 
         If ``pipeline_fn`` is provided, the runner re-runs the pipeline on each
-        session's crops and compares the *new* output.  If ``pipeline_fn`` is
-        ``None``, the runner performs an **offline benchmark** using only the
-        stored baseline and final slots (useful for KPI recalculation without
-        re-running inference).
+        session's crops and compares the *new* output against operator truth.
+
+        If ``pipeline_fn`` is ``None``, the runner is in **offline** mode: it
+        only recalculates KPIs from stored baseline/final slots — no candidate
+        inference is performed.  Offline runs always return ``promoted=False``
+        with ``"offline_benchmark"`` in ``notes`` so callers cannot mistake a
+        zero-delta result for a genuine tie (#11).
+
+        Aggregation (#3, #10):
+
+        - Primary delta is the **per-session average** of ``new - old`` effort.
+        - Secondary KPI deltas are averaged only over sessions whose stored
+          baseline is non-empty — sessions with an empty baseline would bias
+          rates against the candidate by comparing real values to zeros.
 
         Returns:
             A :class:`BenchmarkReport` with the go/no-go promotion decision.
         """
+        offline = pipeline_fn is None
+
         total_old_effort = 0
         total_new_effort = 0
         per_session: list[dict[str, Any]] = []
         old_kpi_sums: dict[str, float] = {}
         new_kpi_sums: dict[str, float] = {}
         sessions_tested = 0
+        secondary_eligible = 0
 
         for session_dir in session_dirs:
             session_id = session_dir.name
@@ -268,13 +308,16 @@ class BenchmarkRunner:
 
             # --- Old model effort (from stored baseline) ---
             old_baseline = trace.baseline_slots
-            if old_baseline:
+            has_baseline = bool(old_baseline)
+            if has_baseline:
                 old_match = match_slots(
-                    old_baseline, truth_slots, self._max_match_dist,
+                    old_baseline, truth_slots, self._max_match_dist_m,
                 )
                 old_effort = estimate_effort(old_match, self._geo_threshold)
             else:
-                # No baseline saved — fall back to stored delta
+                # No baseline saved — fall back to stored delta (reprocess /
+                # align excluded for parity with estimate_effort, since those
+                # cannot be predicted for a candidate that hasn't been run).
                 old_effort = (
                     trace.delta.additions
                     + trace.delta.deletions
@@ -283,14 +326,15 @@ class BenchmarkRunner:
                 old_match = None
 
             # --- New model (candidate) effort ---
-            if pipeline_fn is not None:
+            new_slots: list[GeoSlot] | None = None
+            if not offline:
                 new_slots = self._run_candidate(trace, pipeline_fn)
                 new_match = match_slots(
-                    new_slots, truth_slots, self._max_match_dist,
+                    new_slots, truth_slots, self._max_match_dist_m,
                 )
                 new_effort = estimate_effort(new_match, self._geo_threshold)
             else:
-                # Offline benchmark: only recalculate from stored data
+                # Offline benchmark: only recalculate from stored data.
                 new_effort = old_effort
                 new_match = old_match
 
@@ -299,20 +343,28 @@ class BenchmarkRunner:
             sessions_tested += 1
 
             # --- Per-session secondary KPIs ---
+            # Only sessions with a non-empty stored baseline contribute to the
+            # secondary KPI sums (#10) — otherwise we'd average candidate rates
+            # against zero-valued fallbacks.
             old_kpis = self._secondary_kpis(
-                old_match, old_baseline, truth_slots, old_effort,
-            )
-            new_kpis = self._secondary_kpis(
-                new_match,
-                new_slots if pipeline_fn else old_baseline,
-                truth_slots,
-                new_effort,
-            ) if pipeline_fn or new_match else old_kpis
+                old_match, old_baseline, truth_slots,
+            ) if has_baseline else None
 
-            for k, v in old_kpis.items():
-                old_kpi_sums[k] = old_kpi_sums.get(k, 0.0) + v
-            for k, v in new_kpis.items():
-                new_kpi_sums[k] = new_kpi_sums.get(k, 0.0) + v
+            if not offline:
+                new_model_slots = new_slots if new_slots is not None else []
+                new_kpis = self._secondary_kpis(
+                    new_match, new_model_slots, truth_slots,
+                )
+            else:
+                # Offline: new == old by construction.
+                new_kpis = old_kpis
+
+            if has_baseline and old_kpis is not None and new_kpis is not None:
+                for k, v in old_kpis.items():
+                    old_kpi_sums[k] = old_kpi_sums.get(k, 0.0) + v
+                for k, v in new_kpis.items():
+                    new_kpi_sums[k] = new_kpi_sums.get(k, 0.0) + v
+                secondary_eligible += 1
 
             per_session.append({
                 "session_id": session_id,
@@ -320,21 +372,24 @@ class BenchmarkRunner:
                 "new_effort": new_effort,
                 "effort_delta": new_effort - old_effort,
                 "truth_slot_count": len(truth_slots),
+                "has_baseline": has_baseline,
                 "old_kpis": old_kpis,
                 "new_kpis": new_kpis,
             })
 
         # --- Aggregate ---
         primary_delta = (
-            (total_new_effort - total_old_effort) if sessions_tested > 0 else 0.0
+            (total_new_effort - total_old_effort) / sessions_tested
+            if sessions_tested > 0
+            else 0.0
         )
 
         secondary_deltas: dict[str, float] = {}
         regression_flags: list[str] = []
-        if sessions_tested > 0:
+        if secondary_eligible > 0:
             for k in old_kpi_sums:
-                avg_old = old_kpi_sums[k] / sessions_tested
-                avg_new = new_kpi_sums.get(k, avg_old) / sessions_tested
+                avg_old = old_kpi_sums[k] / secondary_eligible
+                avg_new = new_kpi_sums.get(k, avg_old) / secondary_eligible
                 delta = avg_new - avg_old
                 secondary_deltas[k] = round(delta, 6)
                 # For "rate" KPIs (fp_rate, fn_rate, geo_correction_rate):
@@ -345,8 +400,17 @@ class BenchmarkRunner:
                 elif k != "useful_detection_rate" and delta > self._regression_threshold:
                     regression_flags.append(k)
 
+        notes: list[str] = []
+        if offline:
+            notes.append("offline_benchmark")
+        if sessions_tested == 0:
+            notes.append("no_sessions")
+        if secondary_eligible == 0 and sessions_tested > 0:
+            notes.append("no_secondary_eligible_sessions")
+
         promoted = (
-            sessions_tested > 0
+            not offline
+            and sessions_tested > 0
             and primary_delta < 0
             and len(regression_flags) == 0
         )
@@ -356,14 +420,17 @@ class BenchmarkRunner:
             sessions_tested=sessions_tested,
             primary_kpi_delta=round(primary_delta, 4),
             secondary_kpis=secondary_deltas,
+            secondary_sessions=secondary_eligible,
             regression_flags=regression_flags,
             promoted=promoted,
+            notes=notes,
             per_session_details=per_session,
         )
 
         logger.info(
-            "Benchmark complete: %d sessions, primary_delta=%.1f, promoted=%s",
-            sessions_tested, primary_delta, promoted,
+            "Benchmark complete: %d sessions (%d secondary-eligible), "
+            "primary_delta=%.2f, promoted=%s, notes=%s",
+            sessions_tested, secondary_eligible, primary_delta, promoted, notes,
         )
         return report
 
@@ -395,9 +462,22 @@ class BenchmarkRunner:
         match_result: MatchResult | None,
         model_slots: list[GeoSlot] | None,
         truth_slots: list[GeoSlot],
-        effort: int,
     ) -> dict[str, float]:
-        """Compute secondary KPIs from a match result."""
+        """Compute secondary KPIs from a match result.
+
+        Denominators mirror :func:`compute_session_kpis` so the benchmark and
+        session-capture KPIs measure the same thing:
+
+        - ``fp_rate`` = ``n_fp / n_model`` (fraction of model output the
+          operator would reject).
+        - ``fn_rate`` = ``n_fn / n_truth``.
+        - ``geometric_correction_rate`` = ``n_geo / max(n_model - n_fp, 1)``
+          (fraction of **kept** model slots that would need a geometric tweak),
+          matching the ``preserved_baseline`` denominator in
+          ``compute_session_kpis`` (#8).
+        - ``useful_detection_rate`` = ``0.0`` when ``n_model == 0`` (no model
+          output to judge), matching the empty-baseline convention (#9).
+        """
         n_model = len(model_slots) if model_slots else 0
         n_truth = len(truth_slots) if truth_slots else 0
 
@@ -416,10 +496,17 @@ class BenchmarkRunner:
             if m.centroid_distance_m > self._geo_threshold
         )
 
-        fp_rate = n_fp / n_model if n_model > 0 else 0.0
+        if n_model > 0:
+            fp_rate = n_fp / n_model
+            useful = 1.0 - fp_rate
+        else:
+            fp_rate = 0.0
+            useful = 0.0  # no model output → undefined, report 0 (#9)
+
         fn_rate = n_fn / n_truth if n_truth > 0 else 0.0
-        geo_rate = n_geo / n_truth if n_truth > 0 else 0.0
-        useful = 1.0 - fp_rate
+
+        preserved_model = n_model - n_fp
+        geo_rate = n_geo / preserved_model if preserved_model > 0 else 0.0
 
         return {
             "fp_rate": round(fp_rate, 6),

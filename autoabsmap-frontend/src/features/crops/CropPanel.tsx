@@ -25,6 +25,15 @@ interface CropPanelProps {
   onCancelModify?: () => void;
   onToggleStraightenMode?: () => void;
   onCancelStraighten?: () => void;
+  onToggleReprocessMode?: () => void;
+  onAcceptReprocess?: () => void;
+  onRejectReprocess?: () => void;
+  onCancelReprocess?: () => void;
+  reprocessStep?: 'idle' | 'drawingScope' | 'placingRefSlot' | 'waitingForReview';
+  hasPendingRef?: boolean;
+  reprocessProposedCount?: number;
+  reprocessLoading?: boolean;
+  reprocessError?: string | null;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
@@ -52,6 +61,15 @@ export function CropPanel({
   onCancelModify,
   onToggleStraightenMode,
   onCancelStraighten,
+  onToggleReprocessMode,
+  onAcceptReprocess,
+  onRejectReprocess,
+  onCancelReprocess,
+  reprocessStep = 'idle',
+  hasPendingRef = false,
+  reprocessProposedCount = 0,
+  reprocessLoading = false,
+  reprocessError = null,
   onUndo,
   onRedo,
   canUndo = false,
@@ -72,6 +90,7 @@ export function CropPanel({
   const isCopyMode = editMode === 'copy';
   const isModifyMode = editMode === 'modify';
   const isStraightenMode = editMode === 'straighten';
+  const isReprocessMode = editMode === 'reprocess';
   const straightenLoading = useAppSelector((s) => s.absmap.straightenLoading);
   const straightenError = useAppSelector((s) => s.absmap.straightenError);
   const straightenAnchorId = useAppSelector((s) => s.absmap.straightenAnchorSlotId);
@@ -81,6 +100,14 @@ export function CropPanel({
   const saveError = useAppSelector((s) => s.absmap.saveError);
   const isRunning = job?.status === 'running' || job?.status === 'pending';
   const hasResults = job?.status === 'done' && displayCount > 0;
+  const aiAssistDisabledTitle =
+    !job?.id
+      ? 'Run slot mapping first'
+      : job.status !== 'done'
+        ? 'Available when the current mapping job has finished'
+        : displayCount === 0
+          ? 'No slots in this session'
+          : '';
 
   return (
     <div className={styles.panel}>
@@ -337,7 +364,16 @@ export function CropPanel({
       <div className={styles.section}>
         <h3 className={styles.heading}>AI Assist</h3>
         <div className={styles.actionGrid2}>
-          <button className={styles.actionBtn} disabled title="Ref slot + scope region → auto-fill missed area">
+          <button
+            className={`${styles.actionBtn} ${isReprocessMode ? styles.actionBtnActive : ''}`}
+            onClick={onToggleReprocessMode}
+            disabled={!hasResults}
+            title={
+              hasResults
+                ? 'Press R — pick reference slot, draw scope polygon, review proposals (use the Detections map if dual view)'
+                : aiAssistDisabledTitle
+            }
+          >
             <span className={styles.actionIcon}>&#x21BB;</span>
             <span>Reprocess <kbd className={styles.kbd}>R</kbd></span>
           </button>
@@ -368,6 +404,44 @@ export function CropPanel({
               <button className={styles.cancelBtn} onClick={onCancelStraighten}>
                 Done <kbd className={styles.kbd}>Esc</kbd>
               </button>
+            </div>
+          </div>
+        )}
+
+        {isReprocessMode && (
+          <div className={styles.modeBar}>
+            <span className={styles.modeBarLabel}>
+              {reprocessLoading
+                ? 'Running reprocess…'
+                : reprocessStep === 'drawingScope'
+                  ? 'Trace the zone to fill (click corners, double-click to close)'
+                  : reprocessStep === 'placingRefSlot'
+                    ? hasPendingRef
+                      ? 'Move to rotate · Click to confirm the reference slot'
+                      : 'Click inside the zone to place a reference slot'
+                    : reprocessStep === 'waitingForReview'
+                      ? `${reprocessProposedCount} proposed slot${reprocessProposedCount !== 1 ? 's' : ''} — accept or reject`
+                      : ''}
+            </span>
+            {reprocessError && (
+              <span className={styles.saveError}>{reprocessError}</span>
+            )}
+            <div className={styles.modeBarActions}>
+              {reprocessStep === 'waitingForReview' && (
+                <>
+                  <button className={styles.confirmBtn} onClick={onAcceptReprocess}>
+                    Accept All
+                  </button>
+                  <button className={styles.cancelBtn} onClick={onRejectReprocess}>
+                    Reject All
+                  </button>
+                </>
+              )}
+              {reprocessStep !== 'waitingForReview' && (
+                <button className={styles.cancelBtn} onClick={onCancelReprocess}>
+                  Cancel <kbd className={styles.kbd}>Esc</kbd>
+                </button>
+              )}
             </div>
           </div>
         )}

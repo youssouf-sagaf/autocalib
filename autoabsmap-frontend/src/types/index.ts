@@ -85,7 +85,8 @@ export type EditMode =
   | 'bulk_delete'
   | 'copy'
   | 'modify'
-  | 'straighten';
+  | 'straighten'
+  | 'reprocess';
 
 export interface StraightenAnchors {
   slot_id_a: string;
@@ -98,12 +99,31 @@ export interface StraightenResponse {
   proposed_slots: Slot[];
 }
 
+/** Body sent to POST /api/v1/jobs/{job_id}/reprocess. */
+export interface ReprocessRequestBody {
+  reference_slot: Slot;
+  scope_polygon: GeoJSON.Polygon;
+}
+
+/** Response from the reprocess endpoint. */
+export interface ReprocessResponse {
+  proposed_slots: Slot[];
+}
+
+/** Mirrors backend ReprocessStep — tracks proposals + what the operator accepted. */
+export interface ReprocessStep {
+  trigger_slot_id: string;
+  scope_polygon: GeoJSON.Polygon;
+  proposed: Slot[];
+  accepted: Slot[];
+}
+
 /** Body for POST /api/v1/sessions/{session_id}/save (matches API SaveRequest). */
 export interface SaveSessionRequest {
   final_slots: Slot[];
   baseline_slots?: Slot[];
   edit_events: EditEvent[];
-  reprocessed_steps?: unknown[];
+  reprocessed_steps?: ReprocessStep[];
   difficulty_tags?: string[];
   other_difficulty_note?: string | null;
 }

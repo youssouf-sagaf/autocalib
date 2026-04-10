@@ -12,15 +12,12 @@ from fastapi import APIRouter, HTTPException
 
 from autoabsmap.generator_engine.models import RunMeta
 from autoabsmap.learning_loop.models import DeltaSummary, EditEventType, SessionTrace
-from autoabsmap.learning_loop.capture import SessionStore
 from app.models import SaveRequest
+from app.services.session_capture import learning_session_store as session_store
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/sessions", tags=["sessions"])
-
-SESSION_STORE_DIR = "sessions"
-session_store = SessionStore(SESSION_STORE_DIR)
 
 
 def _compute_delta(request: SaveRequest) -> DeltaSummary:

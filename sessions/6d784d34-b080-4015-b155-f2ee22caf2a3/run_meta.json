@@ -1,0 +1,8 @@
+{
+  "segformer_checkpoint": null,
+  "yolo_weights": null,
+  "imagery_provider": "",
+  "crs_epsg": 0,
+  "gsd_m": 0.0,
+  "roi_geojson": null
+}

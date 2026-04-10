@@ -4,6 +4,8 @@ import type {
   JobResult,
   OrchestratorProgress,
   PipelineJob,
+  ReprocessRequestBody,
+  ReprocessResponse,
   SaveSessionRequest,
   SaveSessionResponse,
   StraightenAnchors,
@@ -48,6 +50,30 @@ export async function straightenRow(
     const { data } = await client.post<StraightenResponse>(
       `/api/v1/jobs/${jobId}/straighten`,
       anchors,
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const detail = error.response?.data?.detail;
+      if (typeof detail === 'string' && detail.trim().length > 0) {
+        throw new Error(detail);
+      }
+      if (error.response?.status === 404) {
+        throw new Error('Session not found on backend (job expired/restarted). Run mapping again.');
+      }
+    }
+    throw error;
+  }
+}
+
+export async function reprocessArea(
+  jobId: string,
+  body: ReprocessRequestBody,
+): Promise<ReprocessResponse> {
+  try {
+    const { data } = await client.post<ReprocessResponse>(
+      `/api/v1/jobs/${jobId}/reprocess`,
+      body,
     );
     return data;
   } catch (error) {

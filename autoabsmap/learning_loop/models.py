@@ -119,13 +119,17 @@ class SessionKPIs(BaseModel):
     effort: int
     """Total manual actions: adds + deletes + corrections + reprocess + align."""
     useful_detection_rate: float
-    """``1 - deletions / total_baseline_slots`` — higher is better."""
+    """``1 - fp_rate`` — higher is better.  ``0.0`` when baseline is empty (#9)."""
     fp_rate: float
     """``deletions / total_baseline_slots`` — lower is better."""
     fn_rate: float
     """``additions / total_final_slots`` — lower is better."""
     geometric_correction_rate: float
-    """``geometric_corrections / total_final_slots`` — lower is better."""
+    """``geometric_corrections / max(baseline - deletions, 1)`` — lower is better.
+
+    Denominator is the number of baseline slots the operator kept (#8); those
+    are the only slots that could have been geometrically corrected.
+    """
     operator_time_sec: float
 
 
@@ -137,6 +141,17 @@ def compute_session_kpis(
     """Compute all KPIs from a session's DeltaSummary and slot counts.
 
     Formulas follow the architecture spec (section "KPI framework").
+
+    Edge cases:
+
+    - Empty baseline (``total_baseline_slots == 0``) produces
+      ``fp_rate = 0.0`` **and** ``useful_detection_rate = 0.0`` — there was
+      no baseline to judge, so "useful" is undefined and defaults to zero
+      rather than the misleading ``1.0`` (#9).
+    - Geometric correction rate is normalised by ``baseline - deletions``
+      (the preserved baseline slots), not ``total_final_slots`` — additions
+      cannot be "geometrically corrected" because they started from operator
+      evidence (#8).
     """
     effort = (
         delta.additions
@@ -145,16 +160,26 @@ def compute_session_kpis(
         + delta.reprocess_calls
         + delta.align_calls
     )
-    fp_rate = delta.deletions / total_baseline_slots if total_baseline_slots > 0 else 0.0
+
+    if total_baseline_slots > 0:
+        fp_rate = delta.deletions / total_baseline_slots
+        useful_detection_rate = 1.0 - fp_rate
+    else:
+        fp_rate = 0.0
+        useful_detection_rate = 0.0  # no baseline → undefined, report 0 (#9)
+
     fn_rate = delta.additions / total_final_slots if total_final_slots > 0 else 0.0
+
+    preserved_baseline = total_baseline_slots - delta.deletions
     geo_rate = (
-        delta.geometric_corrections / total_final_slots
-        if total_final_slots > 0
+        delta.geometric_corrections / preserved_baseline
+        if preserved_baseline > 0
         else 0.0
     )
+
     return SessionKPIs(
         effort=effort,
-        useful_detection_rate=1.0 - fp_rate,
+        useful_detection_rate=useful_detection_rate,
         fp_rate=fp_rate,
         fn_rate=fn_rate,
         geometric_correction_rate=geo_rate,

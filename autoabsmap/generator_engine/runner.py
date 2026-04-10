@@ -17,6 +17,7 @@ from autoabsmap.ml.protocols import Detector, Segmenter
 from autoabsmap.generator_engine.models import PipelineRequest, PipelineResult, RunMeta, StageProgress
 from autoabsmap.generator_engine.geometric_engine import GeometricEngine
 from autoabsmap.generator_engine.mask_vectorize import pixel_slots_to_overlay_fc, vectorize_mask
+from autoabsmap.generator_engine.learning_artifacts import CropLearningArtifacts
 from autoabsmap.generator_engine.stage_artifacts import ArtifactDumper
 from autoabsmap.generator_engine.stages import (
     ProgressCallback,
@@ -59,6 +60,8 @@ class ParkingSlotPipeline:
         request: PipelineRequest,
         on_progress: ProgressCallback | None = None,
         artifacts_dir: Path | str | None = None,
+        *,
+        learning_sink: Callable[[CropLearningArtifacts], None] | None = None,
     ) -> PipelineResult:
         """Run the full pipeline on a single crop ROI.
 
@@ -127,6 +130,28 @@ class ParkingSlotPipeline:
         postprocess_overlay = pixel_slots_to_overlay_fc(
             enriched_slots, raster.affine, raster.crs_epsg,
         )
+
+        if learning_sink is not None:
+            bw = raster.bounds_wgs84
+            learning_sink(
+                CropLearningArtifacts(
+                    rgb_hwc=raster.pixels,
+                    segmentation_mask=clipped_mask,
+                    crop_meta={
+                        "affine": tuple(float(x) for x in raster.affine),
+                        "crs_epsg": raster.crs_epsg,
+                        "bounds_wgs84_west": bw.west,
+                        "bounds_wgs84_south": bw.south,
+                        "bounds_wgs84_east": bw.east,
+                        "bounds_wgs84_north": bw.north,
+                        "image_height": raster.height,
+                        "image_width": raster.width,
+                        "gsd_m": raster.gsd_m,
+                    },
+                    raw_detection_slots=list(baseline_geo),
+                    post_processed_slots=list(final_geo),
+                ),
+            )
 
         run_meta = RunMeta(
             segformer_checkpoint=self._settings.segmentation.segformer_checkpoint_dir,

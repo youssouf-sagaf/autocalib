@@ -7,6 +7,7 @@ import type {
   OverlayLayer,
   OverlayVisibility,
   PipelineJob,
+  ReprocessStep,
   Slot,
 } from '../types';
 import * as api from '../api/autoabsmap-api';
@@ -35,6 +36,12 @@ interface AbsmapState {
   straightenAnchorSlotId: string | null;
   straightenLoading: boolean;
   straightenError: string | null;
+  reprocessRefSlotId: string | null;
+  reprocessScopePolygon: GeoJSON.Polygon | null;
+  reprocessProposedSlots: Slot[];
+  reprocessLoading: boolean;
+  reprocessError: string | null;
+  reprocessedSteps: ReprocessStep[];
 }
 
 const initialState: AbsmapState = {
@@ -58,6 +65,12 @@ const initialState: AbsmapState = {
   straightenAnchorSlotId: null,
   straightenLoading: false,
   straightenError: null,
+  reprocessRefSlotId: null,
+  reprocessScopePolygon: null,
+  reprocessProposedSlots: [],
+  reprocessLoading: false,
+  reprocessError: null,
+  reprocessedSteps: [],
 };
 
 function truncateFuture(state: AbsmapState) {
@@ -159,11 +172,32 @@ export const saveSession = createAsyncThunk(
       final_slots: absmap.slots,
       baseline_slots: absmap.baselineSlots,
       edit_events: absmap.editHistory.slice(0, absmap.editIndex),
-      reprocessed_steps: [],
+      reprocessed_steps: absmap.reprocessedSteps,
       difficulty_tags: [],
     });
     log.info(`Session saved at ${result.saved_at}`);
     return result;
+  },
+);
+
+export const reprocessArea = createAsyncThunk(
+  'absmap/reprocessArea',
+  async (
+    args: { referenceSlot: Slot; scopePolygon: GeoJSON.Polygon },
+    { getState },
+  ) => {
+    const { absmap } = getState() as { absmap: AbsmapState };
+    const jobId = absmap.job?.id;
+    if (!jobId) throw new Error('No active job');
+    log.info(
+      `Reprocess request: ref=${args.referenceSlot.slot_id.slice(0, 8)}… on job ${jobId}`,
+    );
+    const result = await api.reprocessArea(jobId, {
+      reference_slot: args.referenceSlot,
+      scope_polygon: args.scopePolygon,
+    });
+    log.info(`Reprocess response: ${result.proposed_slots.length} proposed slots`);
+    return result.proposed_slots as Slot[];
   },
 );
 
@@ -345,6 +379,84 @@ const absmapSlice = createSlice({
       log.info('Straighten mode cleared');
     },
 
+    reprocessSetRef(state, action: PayloadAction<string | null>) {
+      state.reprocessRefSlotId = action.payload;
+      state.reprocessError = null;
+    },
+
+    reprocessSetScope(state, action: PayloadAction<GeoJSON.Polygon | null>) {
+      state.reprocessScopePolygon = action.payload;
+    },
+
+    reprocessAccept(state) {
+      const proposed = state.reprocessProposedSlots;
+      if (proposed.length === 0) return;
+      const refId = state.reprocessRefSlotId;
+      const scope = state.reprocessScopePolygon;
+
+      // Commit as undoable reprocess event
+      truncateFuture(state);
+      const evt: EditEvent = {
+        type: 'reprocess',
+        timestamp: Date.now(),
+        slot_ids: proposed.map((s) => s.slot_id),
+        before: [],
+        after: proposed,
+      };
+      state.editHistory.push(evt);
+      state.editIndex++;
+      applyEvent(state, evt);
+      state.isDirty = true;
+
+      // Record reprocess step with accepted = proposed
+      if (refId && scope) {
+        state.reprocessedSteps.push({
+          trigger_slot_id: refId,
+          scope_polygon: scope,
+          proposed,
+          accepted: proposed,
+        });
+      }
+
+      // Reset reprocess UI state
+      state.reprocessRefSlotId = null;
+      state.reprocessScopePolygon = null;
+      state.reprocessProposedSlots = [];
+      state.reprocessError = null;
+      log.info(`Reprocess accepted: ${proposed.length} slots committed`);
+    },
+
+    reprocessReject(state) {
+      const proposed = state.reprocessProposedSlots;
+      const refId = state.reprocessRefSlotId;
+      const scope = state.reprocessScopePolygon;
+
+      // Record rejection as learning signal (accepted = [])
+      if (refId && scope) {
+        state.reprocessedSteps.push({
+          trigger_slot_id: refId,
+          scope_polygon: scope,
+          proposed,
+          accepted: [],
+        });
+      }
+
+      // Reset reprocess UI state
+      state.reprocessRefSlotId = null;
+      state.reprocessScopePolygon = null;
+      state.reprocessProposedSlots = [];
+      state.reprocessError = null;
+      log.info(`Reprocess rejected: ${proposed.length} proposals discarded (signal saved)`);
+    },
+
+    reprocessReset(state) {
+      state.reprocessRefSlotId = null;
+      state.reprocessScopePolygon = null;
+      state.reprocessProposedSlots = [];
+      state.reprocessLoading = false;
+      state.reprocessError = null;
+    },
+
     resetSession(state) {
       state.slots = [];
       state.baselineSlots = [];
@@ -364,6 +476,12 @@ const absmapSlice = createSlice({
       state.straightenAnchorSlotId = null;
       state.straightenLoading = false;
       state.straightenError = null;
+      state.reprocessRefSlotId = null;
+      state.reprocessScopePolygon = null;
+      state.reprocessProposedSlots = [];
+      state.reprocessLoading = false;
+      state.reprocessError = null;
+      state.reprocessedSteps = [];
     },
   },
   extraReducers: (builder) => {
@@ -406,6 +524,22 @@ const absmapSlice = createSlice({
         if (totalSlots > 0) {
           state.dualMapActive = true;
         }
+      })
+      .addCase(reprocessArea.pending, (state) => {
+        state.reprocessLoading = true;
+        state.reprocessError = null;
+      })
+      .addCase(reprocessArea.fulfilled, (state, action) => {
+        state.reprocessLoading = false;
+        state.reprocessProposedSlots = action.payload;
+        if (action.payload.length === 0) {
+          state.reprocessError = 'No slots proposed for this area. Try a different reference slot or wider scope.';
+        }
+      })
+      .addCase(reprocessArea.rejected, (state, action) => {
+        state.reprocessLoading = false;
+        state.reprocessError = action.error.message ?? 'Reprocess failed';
+        log.error(`Reprocess failed: ${action.error.message}`);
       })
       .addCase(straightenRow.pending, (state) => {
         state.straightenLoading = true;
@@ -468,6 +602,11 @@ export const {
   bulkDeleteSlots,
   modifySlot,
   rejectStraighten,
+  reprocessSetRef,
+  reprocessSetScope,
+  reprocessAccept,
+  reprocessReject,
+  reprocessReset,
   undo,
   redo,
   resetSession,

@@ -99,9 +99,14 @@ class StraightenRequest(BaseModel):
 
 
 class ReprocessRequest(BaseModel):
-    """Reprocessing helper — reference slot + scope polygon → proposed slots."""
+    """Reprocessing helper — reference slot + scope polygon → proposed slots.
 
-    reference_slot_id: str
+    The operator places a reference slot manually inside the drawn scope zone;
+    the full slot geometry is sent so the backend can use its orientation and
+    size as the pattern to replicate.
+    """
+
+    reference_slot: GeoSlot
     scope_polygon: GeoJSONPolygon
 
 

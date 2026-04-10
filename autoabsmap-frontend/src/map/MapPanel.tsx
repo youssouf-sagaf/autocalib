@@ -72,6 +72,8 @@ interface MapPanelProps {
   dragPanEnabled?: boolean;
   /** Slot ids highlighted as pending bulk-delete confirmation (lasso preview). */
   bulkPreviewSlotIds?: string[] | null;
+  /** Proposed slots from reprocess — rendered as ghost polygons for review. */
+  reprocessProposedSlots?: Slot[];
 }
 
 // Data-driven color expression: slot source → color
@@ -98,6 +100,9 @@ const EMPTY_POINT_FC: GeoJSON.FeatureCollection<Point> = {
   features: [],
 };
 
+/** Invisible fill for hit-testing — overlay polygons are not interactive and lack slot_id. */
+const SLOTS_HIT_LAYER_ID = 'slots-hit-fill';
+
 export function MapPanel({
   viewState,
   onMove,
@@ -121,6 +126,7 @@ export function MapPanel({
   isEditMode = false,
   dragPanEnabled = true,
   bulkPreviewSlotIds = null,
+  reprocessProposedSlots,
 }: MapPanelProps) {
   const crops = useAppSelector((s) => s.absmap.crops);
   const finalSlots = useAppSelector((s) => s.absmap.slots);
@@ -181,6 +187,22 @@ export function MapPanel({
           }
         : EMPTY_FC,
     [slots, showCentroids, selectedSlotId, hoveredSlotId, bulkPreviewSet],
+  );
+
+  /** Footprint hit-target (below markers) so reprocess / straighten / delete work when clicking the OBB, not only the P icon. */
+  const slotsHitGeoJSON: GeoJSON.FeatureCollection = useMemo(
+    () =>
+      showSlots && slots.length > 0
+        ? {
+            type: 'FeatureCollection',
+            features: slots.map((slot) => ({
+              type: 'Feature' as const,
+              properties: { slot_id: slot.slot_id, source: slot.source },
+              geometry: slot.polygon,
+            })),
+          }
+        : EMPTY_FC,
+    [slots, showSlots],
   );
 
   const previewGeoJSON: GeoJSON.FeatureCollection = useMemo(
@@ -253,6 +275,21 @@ export function MapPanel({
     [modifyingSlot],
   );
 
+  const reprocessGhostGeoJSON: GeoJSON.FeatureCollection = useMemo(
+    () =>
+      reprocessProposedSlots && reprocessProposedSlots.length > 0
+        ? {
+            type: 'FeatureCollection',
+            features: reprocessProposedSlots.map((slot) => ({
+              type: 'Feature' as const,
+              properties: { slot_id: slot.slot_id, source: slot.source },
+              geometry: slot.polygon,
+            })),
+          }
+        : EMPTY_FC,
+    [reprocessProposedSlots],
+  );
+
   const mapRef = useRef<MapRef>(null);
 
   /** Mapbox often omits `features` on click; query the centroid layer explicitly in edit modes. */
@@ -261,7 +298,9 @@ export function MapPanel({
     const map = mapRef.current?.getMap();
     const pt = e.point;
     if (!map || pt == null) return;
-    const hits = map.queryRenderedFeatures([pt.x, pt.y], { layers: ['centroids-symbol'] });
+    const hits = map.queryRenderedFeatures([pt.x, pt.y], {
+      layers: ['centroids-symbol', SLOTS_HIT_LAYER_ID],
+    });
     if (hits.length > 0) {
       (e as MapMouseEvent & { features?: typeof hits }).features = hits;
     }
@@ -338,7 +377,7 @@ export function MapPanel({
         cursor={cursor}
         doubleClickZoom={!externalCursor}
         dragPan={dragPanEnabled}
-        interactiveLayerIds={showSlots ? ['centroids-symbol'] : []}
+        interactiveLayerIds={showSlots ? ['centroids-symbol', SLOTS_HIT_LAYER_ID] : []}
         onLoad={onMapLoad}
       >
         <NavigationControl position="bottom-right" />
@@ -398,6 +437,15 @@ export function MapPanel({
               'circle-stroke-color': tokens.primary,
               'circle-stroke-width': 2,
             }}
+          />
+        </Source>
+
+        {/* ── Slot OBB hit layer (invisible; interactive) — must sit below centroid symbols */}
+        <Source id="slots-hit" type="geojson" data={slotsHitGeoJSON}>
+          <Layer
+            id={SLOTS_HIT_LAYER_ID}
+            type="fill"
+            paint={{ 'fill-color': '#000000', 'fill-opacity': 0.01 }}
           />
         </Source>
 
@@ -530,6 +578,24 @@ export function MapPanel({
             type="line"
             paint={{
               'line-color': tokens.info,
+              'line-width': 2.5,
+              'line-dasharray': [4, 3],
+            }}
+          />
+        </Source>
+
+        {/* ── Reprocess proposed slots (orange ghost polygons) ── */}
+        <Source id="reprocess-ghosts" type="geojson" data={reprocessGhostGeoJSON}>
+          <Layer
+            id="reprocess-ghosts-fill"
+            type="fill"
+            paint={{ 'fill-color': '#e17055', 'fill-opacity': 0.25 }}
+          />
+          <Layer
+            id="reprocess-ghosts-line"
+            type="line"
+            paint={{
+              'line-color': '#e17055',
               'line-width': 2.5,
               'line-dasharray': [4, 3],
             }}

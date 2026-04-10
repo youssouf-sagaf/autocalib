@@ -8,6 +8,7 @@ import { useBulkDelete } from './hooks/useBulkDelete';
 import { useCopySlot } from './hooks/useCopySlot';
 import { useModifySlot } from './hooks/useModifySlot';
 import { useStraightenSlot } from './hooks/useStraightenSlot';
+import { useReprocessSlot } from './hooks/useReprocessSlot';
 import { useJobStream } from './hooks/useJobStream';
 import { AppShell } from './features/layout/AppShell';
 import { MapPanel, type MapViewState } from './map/MapPanel';
@@ -133,6 +134,28 @@ export default function App() {
     cancelStraighten,
   } = useStraightenSlot();
 
+  /* ── Reprocess mode ── */
+  const {
+    isReprocessMode,
+    reprocessStep,
+    reprocessProposedSlots,
+    pendingRefSlot,
+    hasPendingRef,
+    loading: reprocessLoading,
+    error: reprocessError,
+    handleMapClick: handleReprocessClick,
+    handleMouseMove: handleReprocessMouseMove,
+    handleKeyDown: handleReprocessKeyDown,
+    toggleReprocessMode: rawToggleReprocessMode,
+    cancelReprocess,
+    acceptProposed,
+    rejectProposed,
+    scopePreviewFeature,
+    scopeEdgeFeature,
+    scopeVertexFeatures,
+    cursor: reprocessCursor,
+  } = useReprocessSlot();
+
   /* ── Mutual exclusion: exit whichever mode is active ── */
   const exitCurrentMode = useCallback(() => {
     if (isDrawing) stopDrawing();
@@ -142,6 +165,7 @@ export default function App() {
     if (isModifyMode) cancelModify();
     if (isStraightenMode) cancelStraighten();
     if (isBulkDeleteMode) cancelBulkDelete();
+    if (isReprocessMode) cancelReprocess();
   }, [
     isDrawing,
     stopDrawing,
@@ -157,6 +181,8 @@ export default function App() {
     cancelStraighten,
     isBulkDeleteMode,
     cancelBulkDelete,
+    isReprocessMode,
+    cancelReprocess,
   ]);
 
   const enterMode = useCallback(
@@ -173,6 +199,7 @@ export default function App() {
   const toggleCopyMode = useCallback(() => enterMode(rawToggleCopyMode), [enterMode, rawToggleCopyMode]);
   const toggleModifyMode = useCallback(() => enterMode(rawToggleModifyMode), [enterMode, rawToggleModifyMode]);
   const toggleStraightenMode = useCallback(() => enterMode(rawToggleStraightenMode), [enterMode, rawToggleStraightenMode]);
+  const toggleReprocessMode = useCallback(() => enterMode(rawToggleReprocessMode), [enterMode, rawToggleReprocessMode]);
   const toggleBulkDeleteMode = useCallback(
     () => enterMode(rawToggleBulkDeleteMode),
     [enterMode, rawToggleBulkDeleteMode],
@@ -180,7 +207,7 @@ export default function App() {
   const startDrawingExclusive = useCallback(() => { exitCurrentMode(); startDrawing(); }, [exitCurrentMode, startDrawing]);
 
   const isAnyEditMode =
-    isAddMode || isDeleteMode || isBulkDeleteMode || isCopyMode || isModifyMode || isStraightenMode;
+    isAddMode || isDeleteMode || isBulkDeleteMode || isCopyMode || isModifyMode || isStraightenMode || isReprocessMode;
 
   /* ── Unified selectedSlotId (browse or delete mode) ── */
   const straightenAnchorSlotId = useAppSelector((s) => s.absmap.straightenAnchorSlotId);
@@ -200,6 +227,7 @@ export default function App() {
       if (isCopyMode) { handleCopyClick(e); return; }
       if (isModifyMode) { handleModifyClick(e); return; }
       if (isStraightenMode) { handleStraightenClick(e); return; }
+      if (isReprocessMode) { handleReprocessClick(e); return; }
 
       const features = e.features;
       if (features && features.length > 0) {
@@ -220,6 +248,7 @@ export default function App() {
       isCopyMode,
       isModifyMode,
       isStraightenMode,
+      isReprocessMode,
       handleClick,
       handleAddClick,
       handleDeleteClick,
@@ -227,6 +256,7 @@ export default function App() {
       handleCopyClick,
       handleModifyClick,
       handleStraightenClick,
+      handleReprocessClick,
     ],
   );
 
@@ -236,6 +266,7 @@ export default function App() {
       if (isAddMode) handleAddMouseMove(e);
       if (isBulkDeleteMode) handleBulkMouseMove(e);
       if (isModifyMode) handleModifyMouseMove(e);
+      if (isReprocessMode) handleReprocessMouseMove(e);
 
       const features = e.features;
       if (features && features.length > 0) {
@@ -247,7 +278,7 @@ export default function App() {
 
       handleMouseMove(e);
     },
-    [isAddMode, isBulkDeleteMode, isModifyMode, handleAddMouseMove, handleBulkMouseMove, handleModifyMouseMove, handleMouseMove],
+    [isAddMode, isBulkDeleteMode, isModifyMode, isReprocessMode, handleAddMouseMove, handleBulkMouseMove, handleModifyMouseMove, handleReprocessMouseMove, handleMouseMove],
   );
 
   /* ── Composed mousedown / mouseup (modify drag-and-drop) ── */
@@ -265,9 +296,9 @@ export default function App() {
     [isModifyMode, handleModifyMouseUp],
   );
 
-  const drawPreviewFeature = isBulkDeleteMode ? bulkPreviewFeature : previewFeature;
-  const drawEdgeFeature = isBulkDeleteMode ? bulkEdgeFeature : edgeFeature;
-  const drawVertexFeatures = isBulkDeleteMode ? bulkVertexFeatures : vertexFeatures;
+  const drawPreviewFeature = isReprocessMode ? scopePreviewFeature : isBulkDeleteMode ? bulkPreviewFeature : previewFeature;
+  const drawEdgeFeature = isReprocessMode ? scopeEdgeFeature : isBulkDeleteMode ? bulkEdgeFeature : edgeFeature;
+  const drawVertexFeatures = isReprocessMode ? scopeVertexFeatures : isBulkDeleteMode ? bulkVertexFeatures : vertexFeatures;
 
   /* ── Composed cursor ── */
   const composedCursor = (() => {
@@ -277,6 +308,7 @@ export default function App() {
     if (isCopyMode) return 'copy';
     if (isModifyMode) return 'move';
     if (isStraightenMode) return 'crosshair';
+    if (isReprocessMode) return reprocessCursor || 'crosshair';
     return cursor;
   })();
 
@@ -311,6 +343,7 @@ export default function App() {
     c: toggleCopyMode,
     m: toggleModifyMode,
     s: toggleStraightenMode,
+    r: toggleReprocessMode,
   };
 
   const composedKeyDown = useCallback(
@@ -347,6 +380,7 @@ export default function App() {
       handleCopyKeyDown(e);
       handleModifyKeyDown(e);
       handleStraightenKeyDown(e);
+      handleReprocessKeyDown(e);
       handleKeyDown(e);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -358,6 +392,7 @@ export default function App() {
       toggleCopyMode,
       toggleModifyMode,
       toggleStraightenMode,
+      toggleReprocessMode,
       isBulkDeleteMode,
       handleBulkKeyDown,
       handleAddKeyDown,
@@ -365,6 +400,7 @@ export default function App() {
       handleCopyKeyDown,
       handleModifyKeyDown,
       handleStraightenKeyDown,
+      handleReprocessKeyDown,
       handleKeyDown,
     ],
   );
@@ -400,6 +436,15 @@ export default function App() {
       onCancelModify={cancelModify}
       onToggleStraightenMode={toggleStraightenMode}
       onCancelStraighten={cancelStraighten}
+      onToggleReprocessMode={toggleReprocessMode}
+      onAcceptReprocess={acceptProposed}
+      onRejectReprocess={rejectProposed}
+      onCancelReprocess={cancelReprocess}
+      reprocessStep={reprocessStep}
+      hasPendingRef={hasPendingRef}
+      reprocessProposedCount={reprocessProposedSlots.length}
+      reprocessLoading={reprocessLoading}
+      reprocessError={reprocessError}
       onUndo={handleUndo}
       onRedo={handleRedo}
       canUndo={canUndo}
@@ -407,7 +452,7 @@ export default function App() {
     />
   );
 
-  const pendingOrModifyingSlot = pendingSlot ?? modifyingSlot;
+  const pendingOrModifyingSlot = pendingSlot ?? modifyingSlot ?? pendingRefSlot;
 
   return (
     <AppShell isDrawing={isDrawing} editMode={editMode} sidebar={sidebar} onFlyTo={handleFlyTo}>
@@ -445,6 +490,7 @@ export default function App() {
             modifyingSlot={modifyingSlot}
             isEditMode={isAnyEditMode}
             dragPanEnabled={!isModifyDragLocked}
+            reprocessProposedSlots={reprocessProposedSlots.length > 0 ? reprocessProposedSlots : undefined}
           />
         </div>
       ) : (
@@ -469,6 +515,7 @@ export default function App() {
           modifyingSlot={modifyingSlot}
           isEditMode={isAnyEditMode}
           dragPanEnabled={!isModifyDragLocked}
+          reprocessProposedSlots={reprocessProposedSlots.length > 0 ? reprocessProposedSlots : undefined}
         />
       )}
     </AppShell>

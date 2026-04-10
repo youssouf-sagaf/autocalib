@@ -13,6 +13,7 @@ const MODE_BANNERS: Partial<Record<EditMode, string>> = {
   copy: '<strong>Copy mode</strong> — Click a marker to duplicate · <kbd>Esc</kbd> to exit · <kbd>C</kbd> to exit',
   modify: '<strong>Modify mode</strong> — Press &amp; hold a marker · Drag to move · Release to lock · Move to rotate · Click to confirm · <kbd>Esc</kbd> to cancel · <kbd>M</kbd> to exit',
   straighten: '<strong>Straighten mode</strong> — Click two slots on the same row · Alignment applies immediately · <kbd>Z</kbd> to undo · <kbd>Esc</kbd> or <kbd>S</kbd> to exit',
+  reprocess: '<strong>Reprocess mode</strong> — Trace the zone to fill · Click a reference slot · Review proposals (Accept / Reject) · <kbd>Esc</kbd> to step back · <kbd>R</kbd> to exit',
 };
 
 interface AppShellProps {

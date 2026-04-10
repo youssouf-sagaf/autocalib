@@ -34,18 +34,8 @@ async def reprocess_area(job_id: str, request: APIReprocessRequest) -> dict:
     if not result:
         raise HTTPException(status_code=404, detail=f"No result for job {job_id}")
 
-    ref_slot = next(
-        (s for s in result.slots if s.slot_id == request.reference_slot_id),
-        None,
-    )
-    if not ref_slot:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Slot {request.reference_slot_id} not found in job result",
-        )
-
     domain_request = DomainReprocessRequest(
-        reference_slot=ref_slot,
+        reference_slot=request.reference_slot,
         scope_polygon=request.scope_polygon,
         existing_slots=result.slots,
     )
@@ -54,7 +44,7 @@ async def reprocess_area(job_id: str, request: APIReprocessRequest) -> dict:
 
     logger.info(
         "Reprocess job %s: ref=%s, %d proposed slots",
-        job_id, request.reference_slot_id, len(reprocess_result.proposed_slots),
+        job_id, request.reference_slot.slot_id, len(reprocess_result.proposed_slots),
     )
 
     return {

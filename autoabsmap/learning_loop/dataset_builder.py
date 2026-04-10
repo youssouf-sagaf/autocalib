@@ -198,7 +198,10 @@ class DatasetBuilder:
                     for slot in event.after:
                         ctx = _find_crop_for_slot(slot, crops)
                         if ctx is not None and ctx.mask is not None and ctx.meta is not None:
-                            if _slot_inside_mask(slot, ctx.mask, ctx.meta):
+                            inside = _slot_inside_mask(slot, ctx.mask, ctx.meta)
+                            if inside is None:
+                                continue  # cannot determine — skip signal (#4)
+                            if inside:
                                 continue  # added inside mask — not a seg FN
                         samples.append({
                             "session_id": session_id,
@@ -217,7 +220,10 @@ class DatasetBuilder:
                             continue  # operator deleting their own manual add
                         ctx = _find_crop_for_slot(slot, crops)
                         if ctx is not None and ctx.mask is not None and ctx.meta is not None:
-                            if not _slot_inside_mask(slot, ctx.mask, ctx.meta):
+                            inside = _slot_inside_mask(slot, ctx.mask, ctx.meta)
+                            if inside is None:
+                                continue  # cannot determine — skip signal (#4)
+                            if not inside:
                                 continue  # deleted outside mask — not a seg FP
                         samples.append({
                             "session_id": session_id,
@@ -327,6 +333,8 @@ class DatasetBuilder:
 
                 elif event.type in (EditEventType.delete, EditEventType.bulk_delete):
                     for slot in event.before:
+                        if slot.source == SlotSource.manual:
+                            continue  # operator deleting their own manual add (#6)
                         samples.append({
                             "session_id": session_id,
                             "signal_type": "fp",
@@ -470,38 +478,42 @@ def _find_crop_for_slot(
 ) -> _CropContext | None:
     """Find which crop a slot's centre falls into.
 
-    Returns the first matching crop, or the first crop with a mask (fallback),
-    or ``None`` if no crops are available.
+    Returns the first crop whose WGS84 bounds contain the slot's centre, or
+    ``None`` if no such crop exists.  No fallback to an unrelated crop is
+    performed — an unattributable slot is recorded without crop context so
+    callers never compare it against a mask it does not belong to (#5).
     """
     lng, lat = slot.center.lng, slot.center.lat
     for ctx in crops:
         if ctx.contains_wgs84(lng, lat):
             return ctx
-    # Fallback: return first crop with a mask (single-crop sessions)
-    for ctx in crops:
-        if ctx.mask is not None:
-            return ctx
-    return crops[0] if crops else None
+    return None
 
 
 def _slot_inside_mask(
     slot: GeoSlot,
     mask: np.ndarray,
     meta: CropMeta,
-) -> bool:
+) -> bool | None:
     """Check whether a GeoSlot's centre falls inside a segmentation mask.
 
     Uses the per-crop affine + CRS to convert WGS84 → pixel, then checks
     the mask value.  Mask convention: 0 = background, 255 = parkable.
+
+    Returns ``None`` when the verdict is indeterminate — either the WGS84 →
+    pixel transform failed (broken affine / pyproj error) or the computed
+    pixel lands outside the mask raster.  Callers treat ``None`` as "skip
+    this signal" (see #4) so broken transforms no longer silently flip
+    add/delete classifications.
     """
     px, py = _wgs84_to_pixel(slot.center.lng, slot.center.lat, meta)
     if px is None:
-        return True  # cannot determine → assume inside so signal still flows
+        return None  # cannot determine — caller skips the signal
     h, w = mask.shape[:2]
     row, col = int(round(py)), int(round(px))
     if 0 <= row < h and 0 <= col < w:
-        return mask[row, col] > 0
-    return False
+        return bool(mask[row, col] > 0)
+    return None  # pixel outside crop raster — unknown, caller skips
 
 
 def _wgs84_to_pixel(
@@ -555,11 +567,16 @@ def _generate_pseudo_mask(
 ) -> np.ndarray | None:
     """Generate a corrected binary mask from the final (operator-validated) slots.
 
-    Each slot's polygon is rasterised onto a blank mask of the same dimensions
-    as the original.  The result combines the original mask with the slot
-    evidence: union of (original mask) and (slot polygons), which fills in
-    zones the model missed and can serve as a pseudo ground truth for
-    SegFormer retraining.
+    The returned mask is the **union** of (original mask) ∪ (final slot polygons)
+    rasterised onto the same grid.  This fills in parkable zones the segmentation
+    model missed — i.e. corrects **false negatives** only.
+
+    **Limitation (#7)**: this is FN-only correction by design.  Regions that the
+    original mask flagged as parkable but that contain no operator-validated slot
+    are **not** removed, so false-positive mask areas persist in the pseudo
+    target.  Training SegFormer on this signal will push recall up but cannot
+    teach it to shrink over-covered zones.  A stricter correction scheme would
+    have to subtract non-slot parkable regions; that trade-off is deferred.
 
     Returns ``None`` if no slots fall within this crop.
     """

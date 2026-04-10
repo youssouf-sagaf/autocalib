@@ -3,6 +3,10 @@
 Three responsibilities: capture, dataset building, and benchmarking.
 Entry points: ``SessionStore.save()``, ``DatasetBuilder.build_*()``,
 ``BenchmarkRunner.run()``.
+
+CLI (manual): ``python -m autoabsmap.learning_loop.export_training_layout`` and
+``python -m autoabsmap.learning_loop.merge_training_datasets`` — see
+``absolutemap-gen/scripts/README.md``.
 """
 
 from autoabsmap.learning_loop.benchmark import BenchmarkReport, BenchmarkRunner, MatchResult

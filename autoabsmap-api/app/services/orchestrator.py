@@ -21,9 +21,12 @@ from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.geometry import box as shapely_box
 
 from autoabsmap.export.models import GeoSlot
+from autoabsmap.generator_engine.learning_artifacts import CropLearningArtifacts
 from autoabsmap.generator_engine.models import PipelineRequest, PipelineResult, StageProgress
 from autoabsmap.generator_engine.runner import ParkingSlotPipeline
+from autoabsmap.learning_loop.models import CropMeta
 from app.models import CropRequest, JobResult, OrchestratorProgress
+from app.services.session_capture import learning_session_store
 
 logger = logging.getLogger(__name__)
 
@@ -270,8 +273,24 @@ class MultiCropOrchestrator:
                 fetch_window=tile.fetch_window,
                 hints=tile.hints,  # type: ignore[arg-type]
             )
+
+            def _learning_sink(payload: CropLearningArtifacts, cidx: int = idx) -> None:
+                learning_session_store.save_crop_artifacts(
+                    job_id,
+                    cidx,
+                    seg_mask=payload.segmentation_mask,
+                    raw_slots=payload.raw_detection_slots,
+                    post_processed_slots=payload.post_processed_slots,
+                    crop_meta=CropMeta(**payload.crop_meta),
+                    rgb_hwc=payload.rgb_hwc,
+                )
+
             result = await asyncio.to_thread(
-                self._pipeline.run, request, _wrap_progress, tile_artifacts,
+                self._pipeline.run,
+                request,
+                _wrap_progress,
+                tile_artifacts,
+                learning_sink=_learning_sink,
             )
 
             crop_results.append(result)

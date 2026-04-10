@@ -11,6 +11,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+import cv2
 import numpy as np
 
 from autoabsmap.export.models import GeoSlot, LngLat, SlotSource, SlotStatus
@@ -140,12 +141,14 @@ class SessionStore:
         raw_slots: list[GeoSlot] | None = None,
         post_processed_slots: list[GeoSlot] | None = None,
         crop_meta: CropMeta | None = None,
+        rgb_hwc: np.ndarray | None = None,
     ) -> Path:
         """Save per-crop pipeline artifacts (seg mask, raw detections, post-processed).
 
         Called by the orchestrator after each crop completes, before operator editing.
         ``crop_meta`` carries the raster affine + bounds needed by the dataset
         builder for precise WGS84 ↔ pixel mapping.
+        When ``rgb_hwc`` is set (H×W×C uint8 RGB), writes ``rgb.png`` for retraining export.
         """
         from autoabsmap.export.geojson import geoslots_to_feature_collection
 
@@ -169,6 +172,16 @@ class SessionStore:
                 crop_dir / "post_processed.geojson",
                 geoslots_to_feature_collection(post_processed_slots),
             )
+
+        if rgb_hwc is not None:
+            if rgb_hwc.dtype != np.uint8 or rgb_hwc.ndim != 3 or rgb_hwc.shape[2] not in (3, 4):
+                logger.warning(
+                    "rgb_hwc for session %s crop %s ignored — expected HxWx3|4 uint8",
+                    session_id, crop_index,
+                )
+            else:
+                bgr = cv2.cvtColor(rgb_hwc[:, :, :3], cv2.COLOR_RGB2BGR)
+                cv2.imwrite(str(crop_dir / "rgb.png"), bgr)
 
         logger.debug(
             "Saved crop %d artifacts for session %s", crop_index, session_id,
@@ -250,6 +263,11 @@ class SessionStore:
         if not mask_path.exists():
             return None
         return np.load(mask_path)
+
+    def load_crop_rgb_path(self, session_id: str, crop_index: int) -> Path | None:
+        """Return path to ``rgb.png`` for this crop if present."""
+        p = self._base / session_id / "per_crop" / str(crop_index) / "rgb.png"
+        return p if p.is_file() else None
 
     def load_crop_meta(self, session_id: str, crop_index: int) -> CropMeta | None:
         """Load per-crop raster metadata (affine, CRS, bounds)."""
