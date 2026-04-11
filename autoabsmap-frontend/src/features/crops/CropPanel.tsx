@@ -99,14 +99,16 @@ export function CropPanel({
   const lastSavedAt = useAppSelector((s) => s.absmap.lastSavedAt);
   const saveError = useAppSelector((s) => s.absmap.saveError);
   const isRunning = job?.status === 'running' || job?.status === 'pending';
+  const hasSlots = displayCount > 0;
+  /** Server-backed AI assist (reprocess): needs a finished job + result in store. */
   const hasResults = job?.status === 'done' && displayCount > 0;
-  const aiAssistDisabledTitle =
-    !job?.id
-      ? 'Run slot mapping first'
-      : job.status !== 'done'
-        ? 'Available when the current mapping job has finished'
-        : displayCount === 0
-          ? 'No slots in this session'
+  const reprocessDisabledTitle =
+    !hasSlots
+      ? 'No slots available'
+      : !job?.id
+        ? 'Run slot mapping first — reprocess needs a job id on the server'
+        : job.status !== 'done'
+          ? 'Wait until the current mapping job has finished'
           : '';
 
   return (
@@ -179,9 +181,10 @@ export function CropPanel({
 
         <JobProgress />
 
-        {job?.status === 'done' && displayCount > 0 && (
+        {hasSlots && (
           <div className={styles.resultSummary}>
-            {displayCount} slot{displayCount !== 1 ? 's' : ''} detected
+            {displayCount} slot{displayCount !== 1 ? 's' : ''}
+            {job?.status === 'done' ? ' detected' : ' in session'}
             {slotCount === 0 && baselineCount > 0 && (
               <span className={styles.resultNote}> (baseline)</span>
             )}
@@ -221,7 +224,7 @@ export function CropPanel({
           <button
             className={`${styles.actionBtn} ${isAddMode ? styles.actionBtnActive : ''}`}
             onClick={onToggleAddMode}
-            disabled={!hasResults}
+            disabled={!hasSlots}
             title="Press A to toggle — click map to place a slot"
           >
             <span className={styles.actionIcon}>+</span>
@@ -230,7 +233,7 @@ export function CropPanel({
           <button
             className={`${styles.actionBtn} ${isDeleteMode ? styles.actionBtnActive : ''}`}
             onClick={onToggleDeleteMode}
-            disabled={!hasResults}
+            disabled={!hasSlots}
             title="Press D to toggle — click a slot to remove it"
           >
             <span className={styles.actionIcon}>&minus;</span>
@@ -239,7 +242,7 @@ export function CropPanel({
           <button
             className={`${styles.actionBtn} ${isBulkDeleteMode ? styles.actionBtnActive : ''}`}
             onClick={onToggleBulkDeleteMode}
-            disabled={!hasResults}
+            disabled={!hasSlots}
             title="Press B — draw a lasso; Enter confirms removal of all slots inside"
           >
             <span className={styles.actionIcon}>&#x29C9;</span>
@@ -248,7 +251,7 @@ export function CropPanel({
           <button
             className={`${styles.actionBtn} ${isCopyMode ? styles.actionBtnActive : ''}`}
             onClick={onToggleCopyMode}
-            disabled={!hasResults}
+            disabled={!hasSlots}
             title="Press C to toggle — click a slot to duplicate it"
           >
             <span className={styles.actionIcon}>&#x2398;</span>
@@ -257,7 +260,7 @@ export function CropPanel({
           <button
             className={`${styles.actionBtn} ${isModifyMode ? styles.actionBtnActive : ''}`}
             onClick={onToggleModifyMode}
-            disabled={!hasResults}
+            disabled={!hasSlots}
             title="Press M to toggle — click a slot to reposition/rotate it"
           >
             <span className={styles.actionIcon}>&#x270E;</span>
@@ -370,8 +373,8 @@ export function CropPanel({
             disabled={!hasResults}
             title={
               hasResults
-                ? 'Press R — pick reference slot, draw scope polygon, review proposals (use the Detections map if dual view)'
-                : aiAssistDisabledTitle
+                ? 'Press R — trace zone, place reference slot, review proposals (Detections map if dual view)'
+                : reprocessDisabledTitle
             }
           >
             <span className={styles.actionIcon}>&#x21BB;</span>
@@ -380,8 +383,12 @@ export function CropPanel({
           <button
             className={`${styles.actionBtn} ${isStraightenMode ? styles.actionBtnActive : ''}`}
             onClick={onToggleStraightenMode}
-            disabled={!hasResults}
-            title="Press S — click two anchors on the same row; alignment applies immediately (Undo with Z)"
+            disabled={!hasSlots}
+            title={
+              !hasSlots
+                ? 'No slots available'
+                : 'Press S — two anchors on the same row (needs a completed job on the server; Undo with Z)'
+            }
           >
             <span className={styles.actionIcon}>&#x2261;</span>
             <span>Straighten <kbd className={styles.kbd}>S</kbd></span>

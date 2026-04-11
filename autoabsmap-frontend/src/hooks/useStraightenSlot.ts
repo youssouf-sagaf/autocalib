@@ -15,7 +15,7 @@ export function useStraightenSlot() {
   const dispatch = useAppDispatch();
   const editMode = useAppSelector((s) => s.absmap.editMode);
   const anchorId = useAppSelector((s) => s.absmap.straightenAnchorSlotId);
-  const hasResults = useAppSelector(
+  const hasSlots = useAppSelector(
     (s) => s.absmap.slots.length > 0 || s.absmap.baselineSlots.length > 0,
   );
   const isStraightenMode = editMode === 'straighten';
@@ -23,7 +23,7 @@ export function useStraightenSlot() {
   const error = useAppSelector((s) => s.absmap.straightenError);
 
   const toggleStraightenMode = useCallback(() => {
-    if (!hasResults) return;
+    if (!hasSlots) return;
     if (isStraightenMode) {
       dispatch(rejectStraighten());
       dispatch(setEditMode('none'));
@@ -31,7 +31,7 @@ export function useStraightenSlot() {
       dispatch(straightenSetAnchor(null));
       dispatch(setEditMode('straighten'));
     }
-  }, [dispatch, isStraightenMode, hasResults]);
+  }, [dispatch, isStraightenMode, hasSlots]);
 
   const handleMapClick = useCallback(
     (e: MapMouseEvent) => {

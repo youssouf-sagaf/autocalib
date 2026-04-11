@@ -140,6 +140,16 @@ def _estimate_pitch(
 # ── Candidate generation ─────────────────────────────────────────────────
 
 
+def _candidate_obb_wgs84(
+    cand: _Candidate, ref_lng: float, ref_lat: float,
+) -> ShapelyPolygon:
+    """Build the WGS84 OBB polygon for a candidate (for containment checks)."""
+    corners = _obb_corners(cand)
+    ring = [_to_wgs84(x, y, ref_lng, ref_lat) for x, y in corners]
+    ring.append(ring[0])
+    return ShapelyPolygon(ring)
+
+
 def _generate_candidates(
     ref: _Candidate,
     pitch: float,
@@ -151,9 +161,9 @@ def _generate_candidates(
     """Place candidate slots along the reference row and adjacent parallel rows.
 
     For each row (reference + parallel offsets), walk in both directions
-    along the row axis.  A candidate is emitted when its centre falls
-    inside the scope polygon.  Walking stops after 2 consecutive misses
-    (irregular scope boundary tolerance).
+    along the row axis.  A candidate is emitted when its **entire OBB**
+    fits inside the scope polygon — not just the centre.  Walking stops
+    after 2 consecutive misses (irregular scope boundary tolerance).
     """
     row_dx = math.cos(ref.angle_rad)
     row_dy = math.sin(ref.angle_rad)
@@ -184,11 +194,10 @@ def _generate_candidates(
                 cx = base_cx + step * direction * pitch * row_dx
                 cy = base_cy + step * direction * pitch * row_dy
 
-                lng, lat = _to_wgs84(cx, cy, ref_lng, ref_lat)
-                if scope_shape.contains(Point(lng, lat)):
-                    candidates.append(
-                        _Candidate(cx, cy, ref.angle_rad, ref.width, ref.height),
-                    )
+                cand = _Candidate(cx, cy, ref.angle_rad, ref.width, ref.height)
+                obb = _candidate_obb_wgs84(cand, ref_lng, ref_lat)
+                if scope_shape.contains(obb):
+                    candidates.append(cand)
                     consecutive_out = 0
                 else:
                     consecutive_out += 1
