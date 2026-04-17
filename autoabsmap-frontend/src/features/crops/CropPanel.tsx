@@ -137,12 +137,12 @@ export function CropPanel({
             <ul className={styles.cropList}>
               {crops.map((_crop, i) => (
                 <li key={i} className={styles.cropItem}>
-                  <span className={styles.cropLabel}>Crop {i + 1}</span>
+                  <span className={styles.cropLabel}>ROI {i + 1}</span>
                   <button
                     className={styles.removeBtn}
                     onClick={() => dispatch(removeCrop(i))}
                     disabled={isRunning}
-                    title="Remove this crop"
+                    title="Remove this ROI"
                   >
                     ×
                   </button>

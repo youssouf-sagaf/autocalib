@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calib_gen"
+version = "0.1.0"
+description = "Camera calibration bbox generation (stack alignment, dedup, scope, empty-slot fill)"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.5",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+cv = [
+    "opencv-python-headless>=4.5",
+]
+
+[tool.setuptools.packages.find]
+include = ["calib_gen*"]

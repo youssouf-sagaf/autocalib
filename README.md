@@ -5,7 +5,7 @@
 The system is designed around three sequential capabilities:
 
 1. **Absolute map generation** (`autoabsmap`) — detect and geolocate every parking slot in a zone using satellite/aerial imagery, YOLO-OBB detection, and SegFormer segmentation. Produces a GeoJSON absolute map of slot OBBs in WGS84.
-2. **Calibration generation** (`calib-gen`) — given a camera image of a parking lot, generate the bounding boxes (bboxes) that correspond to each parking slot as seen by that camera.
+2. **Calibration generation** (`calib_gen`) — given a camera image of a parking lot, generate the bounding boxes (bboxes) that correspond to each parking slot as seen by that camera.
 3. **Pairing** (`pairing`) — couple each absolute map slot (`GeoSlot`) with its corresponding camera bbox, enabling fully automated camera calibration.
 
 ---
@@ -30,11 +30,11 @@ autocalib/
                            # Kept as reference. Not imported by any new code.
                            # [STATUS: read-only archive]
 
-  calib-gen/               # Camera bbox generation
-                           # [STATUS: future]
+  calib_gen/               # Camera calib: docs/, calib_gen/ (package), calib_gen-rd/ (R&D)
+                           # [STATUS: scaffold + spec]
 
-  pairing/                 # Geo slot ↔ camera bbox matching
-                           # [STATUS: future]
+  pairing/                 # Geo slot ↔ camera bbox matching (see pairing/docs/)
+                           # [STATUS: R&D under pairing/pairing-rd/]
 
   models/                  # Shared ML model weights (YOLO, SegFormer checkpoints)
   papers/                  # Research references
@@ -47,7 +47,7 @@ autocalib/
 
 The full system design — including the `autoabsmap` Python package layered structure, multi-crop pipeline, imagery provider protocol, learning loop persistence, KPI framework, and Cocopilot-FE integration path — is documented in:
 
-**[autoabsmap_architecture.md](autoabsmap_architecture.md)**
+**[plan_architecture.md](plan_architecture.md)** (index) — per-module specs in each package’s `plan_architecture.md`
 
 ---
 
@@ -88,13 +88,13 @@ The original research pipeline. Contains the SegFormer training scripts, the Fla
 
 See [`absolutemap-gen/README.md`](absolutemap-gen/README.md) for setup instructions if you need to run the original R&D code.
 
-### `calib-gen` — camera bbox generation *(future)*
+### `calib_gen` — camera bbox generation *(scaffold)*
 
-Given a camera image of a parking lot, produce the bounding boxes corresponding to each slot as seen by that camera. Will import `autoabsmap.export.models.GeoSlot` as an upstream dependency.
+Python package for calibration bbox generation (stack alignment, dedup, scope filter, empty-slot filler). Spec: [`calib_gen/docs/calib_generator.md`](calib_gen/docs/calib_generator.md). Does not import `autoabsmap` or `pairing`.
 
-### `pairing` — geo slot ↔ camera bbox matching *(future)*
+### `pairing` — geo slot ↔ camera bbox matching *(in progress)*
 
-The core of autocalib: match each `GeoSlot` from the absolute map with its corresponding camera bbox from `calib-gen`. Dependency chain: `autoabsmap ← calib-gen ← pairing`.
+Match each `GeoSlot` from the absolute map with its corresponding camera bbox from `calib_gen`. Spec: [`pairing/docs/doc.md`](pairing/docs/doc.md). Dependency chain: `autoabsmap ← calib_gen ← pairing`. R&D prototypes live in `pairing/pairing-rd/`.
 
 ---
 
@@ -146,5 +146,5 @@ Required environment variables (set in `.env`, never commit):
 | `autoabsmap-api` | In development |
 | `autoabsmap-frontend` | In development |
 | `absolutemap-gen` | R&D archive (read-only) |
-| `calib-gen` | Future |
-| `pairing` | Future |
+| `calib_gen` | Scaffold + spec |
+| `pairing` | Docs + R&D (`pairing-rd`) |

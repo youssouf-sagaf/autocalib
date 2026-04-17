@@ -97,6 +97,20 @@ htmlcov/
 logs/*.log
 
 # ========================================
+# calib-gen outputs
+# ========================================
+calib-gen/output/
+calib-gen/calib_gen.egg-info/
+calib-gen/calib_gen-rd/
+
+# ========================================
+# pairing outputs
+# ========================================
+pairing/output/
+pairing/pairing.egg-info/
+pairing/pairing-rd/
+
+# ========================================
 # Frontend build + deps
 # ========================================
 autoabsmap-frontend/node_modules/
