@@ -1,0 +1,129 @@
+.drawerSlot {
+  flex-shrink: 0;
+  width: 0;
+  overflow: hidden;
+  background: #141425;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  transition: width 0.28s ease;
+}
+
+.drawerSlotOpen {
+  overflow: visible;
+}
+
+.drawerResizing {
+  transition: none;
+}
+
+.drawerInner {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.resizeHandle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  transform: translateX(-50%);
+  z-index: 30;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.resizeHandle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.15s, width 0.15s;
+}
+
+.resizeHandle:hover::after,
+.drawerResizing .resizeHandle::after {
+  width: 3px;
+  background: rgba(34, 211, 238, 0.65);
+}
+
+.toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px 10px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  background: rgba(20, 20, 37, 0.95);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.25);
+  transition: background 0.15s, right 0.28s ease;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0.02em;
+}
+
+.toggle:hover {
+  background: rgba(34, 211, 238, 0.15);
+  border-color: rgba(34, 211, 238, 0.35);
+  color: #67e8f9;
+}
+
+.toggleOpen {
+  right: var(--preview-width, 50%);
+  transition: background 0.15s, right 0.28s ease;
+}
+
+.toggleResizing {
+  transition: background 0.15s;
+}
+
+.toggleIcon {
+  writing-mode: horizontal-tb;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.toggleBusy {
+  border-color: rgba(139, 92, 246, 0.55);
+  color: #c4b5fd;
+}
+
+.toggleSpinner {
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(196, 181, 253, 0.35);
+  border-top-color: #c4b5fd;
+  border-radius: 50%;
+  animation: previewSpin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes previewSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

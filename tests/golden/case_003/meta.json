@@ -1,0 +1,32 @@
+{
+  "case_name": "case_003",
+  "source_run": "0005_parking_tour_d_auvergne",
+  "git_revision": "9ef3bc8",
+  "num_slots": 186,
+  "num_occupied": 118,
+  "num_empty": 68,
+  "gis": {
+    "schema_version": "1",
+    "stage": "00_gis_input",
+    "data": {
+      "source_path": "/Users/youssoufsagaf/work/cocoparks-dev/autocalib/absolutemap-gen/artifacts/mapbox_detection_dataset/0005_parking_tour_d_auvergne.tif",
+      "crs_wkt": "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]",
+      "crs_epsg": 4326,
+      "transform_affine": [
+        6.705522537231445e-07,
+        0.0,
+        -4.110911737057734,
+        0.0,
+        -4.4873281739854496e-07,
+        47.9950231094879
+      ],
+      "width": 1280,
+      "height": 1280,
+      "nodata": null,
+      "extra": {
+        "gsd_meters": 0.049953
+      }
+    }
+  },
+  "captured_from": "/Users/youssoufsagaf/work/cocoparks-dev/autocalib/absolutemap-gen/artifacts/run_output/0005_parking_tour_d_auvergne"
+}

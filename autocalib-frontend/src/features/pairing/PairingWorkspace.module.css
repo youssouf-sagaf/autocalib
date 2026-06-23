@@ -1,0 +1,170 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.zoneColorDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Banner action buttons (proposal accept / skip / cancel) ── */
+
+.suggestActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.suggestAccept,
+.suggestReject,
+.suggestCancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-primary);
+  color: #fff;
+  transition: background 0.15s;
+}
+
+.suggestAccept {
+  background: rgba(255, 255, 255, 0.25);
+}
+.suggestAccept:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.suggestReject {
+  background: rgba(255, 255, 255, 0.15);
+}
+.suggestReject:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.suggestCancel {
+  background: rgba(255, 255, 255, 0.1);
+}
+.suggestCancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Split panels ── */
+
+.panels {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.pairPane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Draggable seam between map (top) and image (bottom); rail is centered on this line */
+.splitHandleArea {
+  position: relative;
+  flex: 0 0 12px;
+  z-index: 18;
+}
+
+.splitDragZone {
+  position: absolute;
+  inset: 0;
+  cursor: row-resize;
+  touch-action: none;
+  background: rgba(255, 255, 255, 0.06);
+  box-sizing: border-box;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.splitDragZone:hover {
+  background: rgba(150, 122, 220, 0.12);
+}
+
+/* Straddles the map/image seam; anchored left so it does not cover panel centers */
+.pairingRailFloating {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 19;
+  pointer-events: none;
+}
+
+.pairingRailFloating button {
+  pointer-events: auto;
+}
+
+/* ── Zone bar — light theme aligned with the rest of the shell ── */
+
+.zoneBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--color-surface);
+  flex-shrink: 0;
+  overflow-x: auto;
+  border-top: 1px solid var(--color-border);
+}
+
+.zoneChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-family: var(--font-secondary);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+  white-space: nowrap;
+}
+
+.zoneChip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.zoneChipActive {
+  border-color: var(--color-primary);
+  background: rgba(55, 188, 155, 0.08);
+  color: var(--color-text);
+}
+
+.zoneCounts {
+  opacity: 0.7;
+}
+
+.zonePaired {
+  font-size: 10px;
+  color: var(--color-success, #37bc9b);
+  opacity: 0.85;
+}

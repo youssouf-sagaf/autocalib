@@ -1,0 +1,35 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.failed {
+  border: 1px solid var(--color-danger);
+  background: rgba(218, 68, 83, 0.06);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.failed .label {
+  color: var(--color-danger);
+}

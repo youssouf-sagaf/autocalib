@@ -1,0 +1,177 @@
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── Header actions ── */
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.headerExtras {
+  flex-shrink: 0;
+}
+
+.modeBannerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.headerSearch {
+  flex: 1 1 auto;
+  min-width: 120px;
+  max-width: 420px;
+  display: flex;
+  justify-content: center;
+}
+
+.headerViewTools {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.dualBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dualBtn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.dualBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dualBtn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* ── G-pending hint (chord overlay) ── */
+
+.gPendingHint {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #f1f5f9;
+  font-size: 13px;
+  border-radius: 8px;
+  z-index: 9999;
+  animation: fadeIn 0.1s ease;
+  pointer-events: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Content (full-width, no right sidebar) ── */
+
+.content {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvasStage {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  width: 100%;
+}
+
+/* Single in-flow child: workspaces use flex:1 and need a flex parent to fill height */
+.stageBody {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.leftRailAnchor {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.leftRailAnchor > * {
+  pointer-events: auto;
+}
+
+.leftRailAnchorTop {
+  top: 12px;
+  transform: none;
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
+  overflow-x: visible;
+  scrollbar-width: thin;
+}
+
+/* ── Floating toolbar (bottom of content area) ── */
+
+.floatingToolbar {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: auto;
+}
+
+.statusBarAnchor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 18;
+  pointer-events: auto;
+}

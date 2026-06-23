@@ -1,0 +1,101 @@
+/* Shared by Absmap, Calib, and Pairing — one width everywhere (fits “Straighten”, Pairing labels) */
+.rail {
+  --edit-rail-width: 84px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--edit-rail-width);
+  min-width: var(--edit-rail-width);
+  max-width: var(--edit-rail-width);
+  gap: 3px;
+  padding: 8px 8px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.12);
+  pointer-events: auto;
+}
+
+.sep {
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 2px;
+  flex-shrink: 0;
+}
+
+.btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 3px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-family: var(--font-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.1s;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Label line(s) stay inside the rail; icon row unchanged */
+.btn > span:not(.icon) {
+  max-width: 100%;
+}
+
+.btn:hover:not(:disabled) {
+  background: rgba(150, 122, 220, 0.08);
+  color: var(--color-text);
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn.active:hover {
+  background: var(--color-primary-dark);
+  color: #fff;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.railFooter {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 4px 2px;
+  line-height: 1.3;
+  opacity: 0.85;
+}

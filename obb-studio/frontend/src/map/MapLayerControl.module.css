@@ -1,0 +1,109 @@
+.fab {
+  position: absolute;
+  right: 10px;
+  bottom: 150px;
+  width: 29px;
+  height: 29px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(22, 29, 39, 0.95);
+  border: 1px solid #1e2936;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  color: #94a3b8;
+  z-index: 5;
+  padding: 0;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.fab:hover {
+  background: #1e2936;
+  color: #e2e8f0;
+}
+
+.fab.active {
+  background: #37bc9b;
+  color: #fff;
+  border-color: #37bc9b;
+}
+
+.fab svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+
+.popover {
+  position: absolute;
+  right: 50px;
+  bottom: 150px;
+  z-index: 6;
+  min-width: 220px;
+  background: #161d27;
+  border: 1px solid #1e2936;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  padding: 6px;
+  font-family: var(--font-primary);
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.popoverHeader {
+  padding: 6px 8px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid #1e2936;
+  margin-bottom: 4px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  color: inherit;
+  font: inherit;
+}
+
+.option:hover:not(:disabled) {
+  background: rgba(55, 188, 155, 0.12);
+}
+
+.option:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.option.selected {
+  background: rgba(55, 188, 155, 0.18);
+  font-weight: 600;
+}
+
+.optionLabel {
+  flex: 1;
+}
+
+.optionCheck {
+  color: #37bc9b;
+  font-weight: 700;
+  width: 14px;
+  text-align: center;
+}
+
+.optionHint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}

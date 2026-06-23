@@ -1,0 +1,140 @@
+# ========================================
+# Secrets & Credentials
+# ========================================
+.env
+.env.example
+**/.env.example
+*firebase*adminsdk*.json
+*-adminsdk-*.json
+*.credentials.json
+service-account*.json
+
+# ========================================
+# Heavy data directories
+# ========================================
+research/
+sessions/
+absolutemap-gen/data/
+absolutemap-gen/artifacts/
+absolutemap-gen/tmp/
+absolutemap-gen/daniel-code/
+absolutemap-gen/tests/apklot_segmentation/
+absolutemap-gen/tests/koutaki_2016_parking_extraction/.cache/
+absolutemap-gen/tests/koutaki_2016_parking_extraction/runs_mapbox/
+models/
+papers/
+data/huggingface-cache/
+
+# ========================================
+# ML training outputs (outside artifacts/)
+# ========================================
+absolutemap-gen/segformer/checkpoints/
+absolutemap-gen/segformer/output/
+
+# ========================================
+# Virtual environments
+# ========================================
+.venv/
+venv/
+env/
+
+# ========================================
+# Model weights & large binaries
+# ========================================
+autoabsmap/checkpoints/
+autoabsmap/artifacts/
+# R&D absolutemap weights, datasets, and run outputs (not versioned; GitHub 100MB limit)
+autoabsmap/absolutemap_rd/artifacts/
+*.pth
+*.pt
+*.onnx
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.zip
+*.tar.gz
+*.tar.bz2
+
+# ========================================
+# Generated images (outputs — not source code)
+# ========================================
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+*.bmp
+# Committed UI assets (logos, favicons, flags)
+!autocalib-frontend/src/assets/
+!autocalib-frontend/src/assets/**
+!autocalib-frontend/public/
+!autocalib-frontend/public/**
+
+# ========================================
+# Python
+# ========================================
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# ========================================
+# Tools & caches
+# ========================================
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ========================================
+# Jupyter
+# ========================================
+.ipynb_checkpoints/
+
+# ========================================
+# macOS
+# ========================================
+.DS_Store
+
+# ========================================
+# Logs (keep directory, ignore contents)
+# ========================================
+logs/*.log
+
+# ========================================
+# Pairing persistence (one JSON per device under pairing/pairings/)
+# ========================================
+pairing/pairings/*
+!pairing/pairings/.gitkeep
+
+# ========================================
+# calib_gen outputs
+# ========================================
+calib_gen/output/
+calib_gen/*.egg-info/
+calib_gen/calib_gen_rd/
+
+# ========================================
+# pairing outputs
+# ========================================
+pairing/output/
+pairing/*.egg-info/
+pairing/pairing_rd/
+
+# ========================================
+# Frontend build + deps
+# ========================================
+autocalib-frontend/node_modules/
+autocalib-api/static/
+
+# ========================================
+# IDE / editor
+# ========================================
+.claude/
+obb-studio/data/

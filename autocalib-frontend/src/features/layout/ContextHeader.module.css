@@ -1,0 +1,112 @@
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, max-content) minmax(0, 1fr);
+  align-items: center;
+  height: 48px;
+  padding: 0 16px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  z-index: 20;
+  column-gap: 12px;
+}
+
+/* ── Left: breadcrumb ── */
+
+.left {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  justify-self: start;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.crumbBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-family: var(--font-primary);
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+
+.crumbBtn:hover {
+  color: var(--color-brand);
+  background: rgba(150, 122, 220, 0.08);
+}
+
+.crumbMuted {
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.crumbSep {
+  color: var(--color-border);
+  font-size: 12px;
+}
+
+.crumbCurrent {
+  color: var(--color-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Center strip (e.g. calib confidence) ── */
+
+.centerStrip {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  gap: 14px;
+  min-width: 0;
+  max-width: min(100%, 720px);
+  padding: 0 8px;
+}
+
+/* ── Right: actions ── */
+
+.right {
+  grid-column: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  justify-self: stretch;
+  min-width: 0;
+  width: 100%;
+}
+
+.cmdKBtn {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.cmdKBtn:hover {
+  border-color: var(--color-brand);
+}
+
+.cmdKBtn kbd {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-family: var(--font-primary);
+}

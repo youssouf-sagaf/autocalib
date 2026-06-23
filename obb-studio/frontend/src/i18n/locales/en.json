@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "annotate": "Annotate",
+    "datasets": "Datasets",
+    "train": "Training",
+    "eval": "Evaluation"
+  },
+  "app": {
+    "title": "OBB Studio"
+  },
+  "imagerySource": {
+    "layerControlTitle": "Imagery",
+    "layerControlAria": "Switch imagery source",
+    "mapbox": "Mapbox satellite",
+    "ignCurrent": "IGN current",
+    "ignPleiades2026": "Pléiades 2026",
+    "hintFranceOnly": "France only"
+  },
+  "annotate": {
+    "drawRoi": "Place training tile",
+    "drawRoiActive": "Click the map to place a {{meters}} m square (1024 px @ 0.05 GSD)",
+    "drawRoiHint": "Move over the map · click to place the tile",
+    "roiReady": "{{px}}×{{px}} px · ~{{meters}} m — ready",
+    "roiPlaced": "Training tile placed ({{size}} m)",
+    "stopDraw": "Cancel",
+    "stepHint": "Step 2 — select a saved tile and draw OBBs.",
+    "selectTile": "Select a tile from the list to annotate.",
+    "loadingTile": "Loading tile…",
+    "saved": "Saved {{count}} OBB(s)",
+    "fetchTile": "Fetch tile",
+    "save": "Save",
+    "classVehicle": "Vehicle",
+    "markBackground": "Background",
+    "clickObbHint": "Click 3 points to define oriented box (center edge, width, height)"
+  },
+  "common": {
+    "refresh": "Refresh"
+  },
+  "crop": {
+    "stepHint": "Step 1 — place the tile on the map: one click saves the crop.",
+    "moveHint": "Move over the map to position the {{px}}×{{px}} px tile (~{{meters}} m), then click to save.",
+    "placeTileShortcut": "Toggle Place training tile tool ({{key}})",
+    "saving": "Saving tile…",
+    "savedTiles": "Saved tiles",
+    "savedCount": "{{count}} tile(s) in library",
+    "noTilesYet": "No tiles yet",
+    "nextStepHint": "Switch to Annotate tab to label OBBs.",
+    "saved": "{{count}} tile(s) saved — open Annotate tab"
+  },
+  "datasets": {
+    "title": "Dataset explorer",
+    "create": "Create dataset",
+    "tiles": "Tiles"
+  },
+  "train": {
+    "title": "Training",
+    "start": "Start training",
+    "runs": "Runs",
+    "liveMetrics": "Live metrics"
+  },
+  "eval": {
+    "title": "Evaluation",
+    "run": "Run evaluation"
+  },
+  "search": {
+    "placeholder": "Address, city or GPS coordinates (lat, lng)…",
+    "coordsSuggestion": "GPS coordinates — {{lat}}, {{lng}}"
+  },
+  "workspace": {
+    "tabCrop": "Crop",
+    "tabAnnotation": "Annotate",
+    "tabInference": "Inference",
+    "tabResultats": "Results",
+    "imagerySource": "Imagery source",
+    "zone": "Zone",
+    "launchFetch": "Fetch training tile",
+    "inferenceJobs": "Training jobs",
+    "runBrowser": "Run browser",
+    "live": "Live",
+    "idle": "Idle",
+    "noRuns": "No runs yet",
+    "noMapboxToken": "Missing VITE_MAPBOX_TOKEN — set it in .env",
+    "activityFeed": "Activity",
+    "addObb": "Add OBB",
+    "activeTile": "Active tile",
+    "collapseLeft": "Collapse left panel",
+    "expandLeft": "Expand left panel",
+    "collapseRight": "Collapse right panel",
+    "expandRight": "Expand right panel"
+  }
+}

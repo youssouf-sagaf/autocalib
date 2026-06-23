@@ -1,0 +1,66 @@
+/* Single source of truth for inline mode banners. One per workspace at a time.
+ *
+ * Variants — drives background colour and the kbd pill contrast:
+ *   .info     — blue   · in-progress edit / select mode  (default)
+ *   .primary  — green  · drawing / capture in progress
+ *   .warning  — amber  · view-only / read-only state
+ *   .danger   — red    · validation error inline (alert modal for transient feedback)
+ *
+ * Format — keep callers consistent:
+ *   <strong>Mode</strong> — action · <Kbd>X</Kbd> desc · …
+ * For a sub-line of secondary hints, render a `.subline` paragraph below.
+ */
+
+.banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 20px;
+  color: #fff;
+  font-size: 12px;
+  font-family: var(--font-primary);
+  line-height: 1.35;
+  text-align: center;
+  flex-shrink: 0;
+  z-index: 15;
+}
+
+.bannerLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.subline {
+  font-size: 11px;
+  opacity: 0.85;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.info {
+  background: var(--color-info, #3bafda);
+}
+
+.primary {
+  background: var(--color-primary, #37bc9b);
+}
+
+.warning {
+  background: var(--color-warning, #f6bb42);
+  color: #1f2937;
+}
+
+.danger {
+  background: var(--color-danger, #da4453);
+}
+
+.banner strong {
+  font-weight: 700;
+}

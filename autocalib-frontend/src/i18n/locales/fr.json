@@ -1,0 +1,844 @@
+{
+  "language": {
+    "fr": "FR",
+    "en": "EN",
+    "switchAria": "Langue de l’interface"
+  },
+  "common": {
+    "undo": "Annuler",
+    "undoBack": "Retour",
+    "redo": "Refaire",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "reset": "Réinitialiser",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "apply": "Appliquer",
+    "switch": "Changer",
+    "refresh": "Actualiser",
+    "loading": "Chargement…",
+    "or": "ou",
+    "unknownError": "Erreur inconnue",
+    "noDevice": "Aucun appareil",
+    "reference": "Référence",
+    "frame": "Image {{index}} / {{total}}",
+    "viewOnly": "LECTURE SEULE",
+    "browse": "PARCOURS",
+    "select": "SÉLECTION",
+    "lasso": "LASSO",
+    "add": "AJOUT",
+    "modify": "MODIFIER",
+    "bulkDelete": "SUPPRESSION MASSIVE",
+    "multiResize": "TAILLE BBOX",
+    "stop": "Arrêter",
+    "running": "En cours…",
+    "clearAll": "Tout effacer",
+    "pairsProgress": "{{paired}}/{{total}} appariés",
+    "pairsZones": "{{pairs}} paires · {{zones}} zones",
+    "paired": "appariés",
+    "roi": "ROI {{n}}"
+  },
+  "nav": {
+    "dashboard": "Accueil",
+    "absoluteMap": "Carte absolue",
+    "calibration": "Calibration",
+    "pairing": "Appariement",
+    "absmapShort": "Absmap",
+    "goDashboard": "Aller au tableau de bord (G H)",
+    "collapseSidebar": "Réduire la barre latérale (⌘B)",
+    "expandSidebar": "Développer la barre latérale (⌘B)",
+    "shortcuts": "Raccourcis",
+    "brandTitle": "Cocoparks",
+    "logout": "Déconnexion",
+    "accountMenu": "Compte"
+  },
+  "auth": {
+    "email": "Courriel",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion…",
+    "loginWelcome": "Heureux de vous revoir !",
+    "loginSubtitle": "Connectez-vous avec votre compte Cocopilot.",
+    "invalidCredentials": "Courriel ou mot de passe incorrect.",
+    "firebaseNotConfigured": "L'authentification n'est pas configurée sur ce serveur.",
+    "guest": "Utilisateur",
+    "accessDeniedTitle": "Accès réservé au staff",
+    "accessDeniedMessage": "Outils Autocalib est réservé aux comptes staff Cocoparks.",
+    "profileLoadFailed": "Impossible de charger votre profil Cocopilot. Veuillez vous reconnecter."
+  },
+  "bulkDeleteConfirm": {
+    "title": "Supprimer des places ?",
+    "body_one": "Voulez-vous supprimer {{count}} place pour {{client}} ?",
+    "body_other": "Voulez-vous supprimer {{count}} places pour {{client}} ?",
+    "confirm_one": "Supprimer {{count}} place",
+    "confirm_other": "Supprimer {{count}} places"
+  },
+  "notifications": {
+    "title": "Activité",
+    "openPanel": "Ouvrir les notifications",
+    "closeAria": "Fermer les notifications",
+    "unread_one": "{{count}} non lue",
+    "unread_other": "{{count}} non lues",
+    "markAllRead": "Tout marquer comme lu",
+    "empty": "Aucune activité pour cette session.",
+    "ageJustNow": "À l'instant",
+    "ageMinutes": "Il y a {{count}} min",
+    "ageMinutes_other": "Il y a {{count}} min",
+    "ageHours": "Il y a {{count}} h",
+    "ageHours_other": "Il y a {{count}} h",
+    "ageDays": "Il y a {{count}} j",
+    "ageDays_other": "Il y a {{count}} j",
+    "events": {
+      "pipelineDone_one": "{{added}} slot ajouté · {{tiles}} tuile(s)",
+      "pipelineDone_other": "{{added}} slots ajoutés · {{tiles}} tuile(s)",
+      "pipelineEmpty": "Aucune place détectée — utilisez l’outil Étendre",
+      "saveB2bSuccess": "Session synchronisée en prod · {{total}} places ({{created}} créées)",
+      "saveB2bNoCreates": "Sync terminée — aucune place créée en prod",
+      "saveB2bFailed": "Échec de la sync prod",
+      "calibSaved": "Calibration enregistrée en prod · {{count}} bbox",
+      "calibSaveFailed": "Échec de l’enregistrement calibration en prod"
+    }
+  },
+  "alerts": {
+    "ok": "OK",
+    "dismissHint": "Entrée ou Échap pour fermer",
+    "jobDone": {
+      "title": "Pipeline terminée",
+      "message_one": "{{added}} slot ajouté · {{tiles}} tuile(s)",
+      "message_other": "{{added}} slots ajoutés · {{tiles}} tuile(s)"
+    },
+    "jobDoneEmpty": {
+      "title": "Aucune place détectée",
+      "message": "Utilisez l’outil Étendre pour en ajouter."
+    },
+    "lassoNoHits": {
+      "title": "Aucune place supprimable",
+      "message": "Aucune place supprimable dans le lasso. Retracez ou appuyez sur Échap."
+    },
+    "lassoCopyTooShort": {
+      "title": "Sélection trop courte",
+      "message": "Tracez une boucle plus grande."
+    },
+    "cloneRowNoPick": {
+      "title": "Aucune place sélectionnée",
+      "message": "Aucune place dans le lasso — session ou référence B2B."
+    },
+    "cloneRowNeedSlots": {
+      "title": "Aucune place sur la carte",
+      "message": "Générez, ajoutez ou chargez la référence B2B."
+    },
+    "cloneRowNothingCommitted": {
+      "title": "Aucune copie enregistrée",
+      "message": "Réessayez avec une autre sélection."
+    }
+  },
+  "dashboard": {
+    "title": "Espace de travail",
+    "subtitle": "Choisissez un client pour centrer la carte, puis un appareil pour la calibration.",
+    "switchClientTitle": "Changer de client (⌘D)",
+    "switchDeviceTitle": "Changer d’appareil (⌘D)",
+    "selectClient": "Sélectionner un client",
+    "selectCocospot": "Sélectionner un Cocospot",
+    "cards": {
+      "absmap": {
+        "title": "Carte absolue",
+        "description": "Générez et éditez des plans de places depuis l’imagerie aérienne. Tracez des ROI, lancez la pipeline IA, affinez avec les outils d’édition."
+      },
+      "calib": {
+        "title": "Calibration",
+        "description": "Générez des boîtes englobantes stables pour les vues caméra. Sélectionnez appareil et client, lancez la détection sur les images, affinez les résultats."
+      },
+      "pairing": {
+        "title": "Appariement",
+        "description": "Liez les places géo de la carte absolue aux boîtes de calibration. Modes manuel, par zone et suggestion auto."
+      }
+    },
+    "recentClients": "Clients récents",
+    "recentDevices": "Cocospots récents",
+    "footerPalette": "Appuyez sur <kbdCmdK/> pour ouvrir la palette de commandes",
+    "footerShortcuts": "Appuyez sur <kbdQ/> pour tous les raccourcis"
+  },
+  "commands": {
+    "goHome": "Aller au tableau de bord",
+    "goAbsmap": "Aller à la carte absolue",
+    "goCalib": "Aller à la calibration",
+    "goPairing": "Aller à l’appariement",
+    "toggleSidebar": "Basculer la barre latérale",
+    "toggleDualMap": "Basculer la double carte",
+    "switchClient": "Changer de client",
+    "switchDevice": "Changer de Cocospot (appareil)",
+    "showShortcuts": "Afficher les raccourcis clavier",
+    "save": "Enregistrer la session",
+    "absmapAddSlot": "Ajouter une place",
+    "absmapEraser": "Gomme — suppression au clic",
+    "absmapLasso": "Lasso — suppression en masse",
+    "absmapDrawRoi": "Tracer une ROI",
+    "absmapLaunch": "Lancer la pipeline",
+    "absmapStraighten": "Aligner une rangée",
+    "absmapReprocess": "Retraiter une zone",
+    "absmapOverlayDet": "Basculer couche Détections",
+    "absmapOverlayPost": "Basculer couche Post-traitement",
+    "calibRun": "Lancer la détection",
+    "calibLock": "Verrouiller la sélection",
+    "calibDelete": "Supprimer les bbox sélectionnées",
+    "pairingPair": "Outil Apparier",
+    "pairingZone": "Tracer une zone d’appariement",
+    "pairingAuto": "Suggestion automatique",
+    "pairingSave": "Enregistrer les appariements"
+  },
+  "commandCategories": {
+    "navigation": "Navigation",
+    "view": "Affichage",
+    "device": "Appareil",
+    "help": "Aide",
+    "other": "Autre",
+    "absmap": "Carte absolue",
+    "calib": "Calibration",
+    "pairing": "Appariement"
+  },
+  "toolDock": {
+    "expand": "Étendre la barre d’outils",
+    "collapse": "Réduire la barre d’outils",
+    "groups": {
+      "selection": "Sélection",
+      "edit": "Édition",
+      "ai": "IA",
+      "history": "Historique",
+      "actions": "Actions",
+      "pairing": "Appariement",
+      "zone": "Zone"
+    }
+  },
+  "statusBar": {
+    "unsaved": "Non enregistré",
+    "exitTool": "quitter",
+    "absmap": {
+      "select": "V Sélection",
+      "drawing": "R Tracer ROI",
+      "slotCount": "{{count}} places",
+      "selectedCount": "{{count}} sélectionnées",
+      "deleteSelection": "supprimer la sélection",
+      "needRoi": "Tracez une ROI avec R pour lancer la pipeline",
+      "modes": {
+        "eraser": "E Gomme",
+        "bulk_delete": "L Lasso",
+        "add": "A Ajouter",
+        "copy": "C Copier",
+        "modify": "M Modifier",
+        "straighten": "Y Aligner",
+        "reprocess": "B Retraiter",
+        "tile_row": "T Étendre",
+        "clone_row": "⇧R Dupliquer rangée"
+      },
+      "hints": {
+        "select": "Clic = sélectionner · Maj+clic = multi · Clic droit = type de place · Del = supprimer la sélection",
+        "drawing": "Clic = sommet · double-clic = fermer · Esc = annuler le dernier point",
+        "eraser": "Clic = supprimer une place · Esc quitter",
+        "bulk_delete": "Halo rouge = cible · relâcher pour confirmer · Esc annuler",
+        "add": "Glissez le marqueur + sur la carte · Esc annuler",
+        "copy": "Clic sur une épingle pour dupliquer",
+        "modify": "Glissez une épingle pour déplacer",
+        "straighten": "Deux clics sur la même rangée",
+        "reprocess": "Tracez la zone · cliquez une place de référence",
+        "tile_row": "Cliquez une place · visez le trou · Entrée accepter",
+        "clone_row": "Lasso autour des places · déplacez · Entrée valider"
+      }
+    },
+    "calib": {
+      "select": "V Sélection",
+      "bboxCount": "{{count}} bbox",
+      "selectedCount": "{{count}} sélectionnées",
+      "hint": "Del supprime la sélection · K verrouille",
+      "modes": {
+        "select": "V Sélection",
+        "lasso_select": "L Lasso",
+        "add": "A Ajouter",
+        "modify": "M Modifier"
+      },
+      "hints": {
+        "select": "Clic = basculer · glisser sur le vide = encadré · Maj+glisser ajoute · L lasso",
+        "lasso_select": "Glisser sur le vide · relâcher ferme · Maj ajoute · S rectangle",
+        "add": "Clic pour placer une bbox",
+        "modify": "Glisser une bbox pour la déplacer (verrouillées bloquées)"
+      }
+    },
+    "pairing": {
+      "default": "V Navigation",
+      "autoSuggest": "Q Suggestion auto",
+      "hint": "P apparier · Z zone pairing",
+      "tools": {
+        "pair": "P Apparier",
+        "unpair": "U Désapparier",
+        "draw_zone": "Z Zone Pairing"
+      },
+      "hints": {
+        "pair": "Place sur la carte puis bbox sur l’image · <kCmdZ/> retour · <kP/> quitter",
+        "unpair": "Clic sur une place ou bbox liée · <kCmdZ/> retour · <kU/> quitter",
+        "draw_zone": "Lasso carte ou image · puis l’autre côté · <kEsc/> annuler · <kZ/> quitter",
+        "draw_zoneNeedImage": "Zone carte tracée — lasso image · <kEsc/> annuler · <kZ/> quitter",
+        "draw_zoneNeedMap": "Zone image tracée — lasso carte · <kEsc/> annuler · <kZ/> quitter",
+        "autoSuggest": "Suggestion auto — lasso carte ou image · <kQ/> quitter",
+        "zoneRejected": "Zone rejetée — {{message}}"
+      }
+    }
+  },
+  "commandPalette": {
+    "placeholder": "Saisir une commande…",
+    "empty": "Aucune commande pour cette recherche."
+  },
+  "contextHeader": {
+    "switchClientTitle": "Changer de client (⌘D)",
+    "selectClientTitle": "Sélectionnez un client pour centrer la carte",
+    "selectClient": "Sélectionner un client…",
+    "switchDeviceTitle": "Changer de Cocospot (⌘D)",
+    "selectDeviceTitle": "Sélectionnez un appareil pour la calibration",
+    "selectDevice": "Sélectionner un appareil…",
+    "commandPaletteTitle": "Palette de commandes (⌘K)"
+  },
+  "clientPicker": {
+    "title": "Sélectionner un client",
+    "refreshListingTitle": "Recharger l’annuaire clients depuis le serveur",
+    "closeTitle": "Fermer",
+    "closeAria": "Fermer",
+    "client": "Client (ville)",
+    "loadingClients": "Chargement des clients…",
+    "loadingClientsShort": "chargement…",
+    "availableClients": "{{count}} disponibles",
+    "selectClient": "Sélectionner un client…",
+    "hint": "Centre la carte sur cette ville. L’appareil se choisit dans Calibration.",
+    "recent": "Clients récents",
+    "filterPlaceholder": "Filtrer…"
+  },
+  "search": {
+    "placeholder": "Adresse ou coordonnées GPS (lat, lng)…",
+    "coordsSuggestion": "Coordonnées GPS — {{lat}}, {{lng}}"
+  },
+  "appShell": {
+    "drawingBanner": "<strong>Trace</strong> — cliquez pour placer les sommets · double-clic ou clic sur le premier point pour fermer · <kEsc/> annuler le dernier point",
+    "dualMap": "Double carte",
+    "dualMapTitleOn": "Basculer la vue double carte",
+    "dualMapTitleWait": "Lancer la pipeline d’abord",
+    "gHint": "<span>G →</span>",
+    "gHintOr": "ou",
+    "modes": {
+      "add": {
+        "title": "Mode ajout de slot",
+        "body": "Appuyez sur la carte · glissez le marqueur + · relâchez pour placer · <kEsc/> annuler · <kA/> quitter"
+      },
+      "bulk_delete": {
+        "title": "Suppression lasso",
+        "body": "Tracez un lasso · halo rouge = places à supprimer · relâchez pour confirmer · <kEsc/> annuler · <kL/> quitter"
+      },
+      "delete": {
+        "title": "Suppression au clic",
+        "body": "Cliquez une place pour la supprimer · restez en mode pour en enlever d'autres · <kEsc/> · <kDel/> quitter"
+      },
+      "copy": {
+        "title": "Mode copie",
+        "body": "Cliquez une épingle pour dupliquer · <kEsc/> · <kC/> quitter"
+      },
+      "modify": {
+        "title": "Mode modification",
+        "body": "Glissez une épingle pour déplacer · relâchez pour valider · clic sur la carte pour placer (après Copie) · <kEsc/> annuler · <kM/> quitter"
+      },
+      "straighten": {
+        "title": "Mode alignement",
+        "body": "Cliquez deux places sur la même rangée · l’alignement s’applique tout de suite · <kCmdZ/> annuler · <kEsc/> · <kY/> quitter"
+      },
+      "reprocess": {
+        "title": "Mode retraitement",
+        "body": "Tracez la zone à compléter · cliquez une place de référence · examinez les propositions (Accepter / Rejeter) · <kEsc/> revenir en arrière · <kB/> quitter"
+      },
+      "tile_row": {
+        "title": "Étendre rangée",
+        "body": "Cliquez une place ou une zone vide · bougez la souris pour orienter le bbox · clic pour valider l’orientation · visez le trou · clic ou glisser pour confirmer · +/- nombre · <kEnter/> accepter · <kEsc/> annuler · <kT/> quitter"
+      },
+      "clone_row": {
+        "title": "Dupliquer rangée",
+        "body": "Tracez un lasso autour des places (session ou référence B2B) · relâchez · déplacez · <kEnter/> valider · <kEsc/> annuler · <kR/> quitter"
+      }
+    }
+  },
+  "map": {
+    "reference": "Référence",
+    "detections": "Détections"
+  },
+  "absmapRail": {
+    "ariaLabel": "Outils d’édition carte",
+    "select": "Sélection",
+    "eraser": "Gomme",
+    "add": "Ajouter",
+    "rowBrush": "Étendre",
+    "cloneRow": "Dupliquer rangée",
+    "lasso": "Lasso",
+    "copy": "Copier",
+    "modify": "Modifier",
+    "straighten": "Mise au carré",
+    "reprocess": "Retraiter",
+    "titleSelect": "Sélectionner des places (V)",
+    "titleEraser": "Gomme — clic pour supprimer une place (E)",
+    "titleLasso": "Lasso — suppression en masse (L)",
+    "titleRowBrush": "Étendre une rangée — cliquez une place puis visez le trou ({{shortcut}})",
+    "titleCloneRow": "Dupliquer une rangée — clic+glisser sur une place ({{shortcut}})",
+    "titleTool": "{{label}}{{shortcut}}",
+    "titleStraighten": "Aligner la rangée — deux clics ({{shortcut}})",
+    "titleReprocess": "Retraiter une zone ({{shortcut}})",
+    "titleUndo": "Annuler (⌘Z)",
+    "titleRedo": "Refaire (⌘⇧Z · ⌘Y)"
+  },
+  "absmapBottom": {
+    "waitPipeline": "Attendre la fin de la pipeline",
+    "stopDraw": "Arrêter la trace (Esc · O)",
+    "drawRoi": "Tracer un polygone ROI (R)",
+    "drawRoiLabel": "Tracer ROI",
+    "viewRoiList": "Voir la liste des ROI",
+    "pipelineRunning": "Pipeline en cours…",
+    "needRoi": "Tracez au moins une ROI d’abord (R)",
+    "launchTitle": "Lancer la cartographie ({{count}} ROI) · J",
+    "launch": "Lancer"
+  },
+  "absmapSession": {
+    "saveDirty": "Enregistrer la session",
+    "saveClean": "Aucune modification à enregistrer",
+    "saving": "Enregistrement…",
+    "refreshingOverlay": "Overlay prod…",
+    "syncingProd": "Sync cocopilot…",
+    "retrySave": "Réessayer",
+    "saveError": "Erreur B2B",
+    "resetSession": "Réinitialiser la session",
+    "overlayToggle": "Basculer la couche {{label}}",
+    "overlayDet": "Dét.",
+    "overlayPost": "Post",
+    "overlayDetection": "Détections",
+    "overlayPostFull": "Post-traitement",
+    "overlayRoi": "ROI",
+    "overlayGroupAria": "Couches",
+    "layersMenu": "Calques",
+    "layersMenuTitle": "Afficher ou masquer les couches pipeline"
+  },
+  "imagerySource": {
+    "groupAria": "Source d'imagerie",
+    "toggle": "Utiliser l'imagerie {{label}} au prochain lancement",
+    "mapbox": "Mapbox satellite",
+    "ignCurrent": "IGN — actuel",
+    "ignPleiades2026": "IGN — Pléiades 2026",
+    "hintFranceOnly": "France métro uniquement",
+    "layerControlTitle": "Imagerie satellite",
+    "layerControlAria": "Ouvrir le sélecteur d'imagerie satellite",
+    "wysiwygHint": "L'affichage correspond à l'orthophoto utilisée pour les crops et la détection."
+  },
+  "slotTypePopover": {
+    "title": "Type de place",
+    "titleMultiple": "Type de place ({{count}})",
+    "mixedTypes": "Types variés",
+    "closeAria": "Fermer",
+    "hint": "Couleur sur la carte",
+    "category": "Catégorie"
+  },
+  "slotTypes": {
+    "groups": {
+      "commonPlaces": "Places courantes",
+      "accessibility": "Accessibilité & véhicules",
+      "regulation": "Réglementation",
+      "network": "Réseau & arrêts",
+      "technical": "Technique & maintenance"
+    },
+    "common": "Classique voirie",
+    "short_duration": "Arrêt minute / courte durée",
+    "pmr": "PMR",
+    "evh": "Électrique / recharge",
+    "bike": "Vélo",
+    "scooter": "Deux-roues / trottinette",
+    "forbidden": "Stationnement interdit",
+    "delivery_dotted": "Livraison (créneaux mixtes)",
+    "delivery_only": "Livraison (exclusive)",
+    "bus_stop": "Arrêt de bus",
+    "taxi": "Taxi",
+    "trolley": "Chariot / manutention",
+    "pole": "Poteau / obstacle",
+    "to_delete": "À supprimer"
+  },
+  "jobProgress": {
+    "failed": "Échec : {{message}}"
+  },
+  "devicePicker": {
+    "title": "Changer d’appareil",
+    "refreshListingTitle": "Recharger les répertoires client et appareils depuis le serveur",
+    "closeTitle": "Fermer",
+    "client": "Client",
+    "device": "Appareil",
+    "loadingClients": "Chargement des clients…",
+    "loadingClientsShort": "chargement…",
+    "availableClients": "{{count}} disponibles",
+    "selectClient": "Sélectionnez un client…",
+    "loadingDevices": "chargement…",
+    "updatingDevices": "mise à jour…",
+    "devicesCount": "{{count}} appareils",
+    "devicesCache": "{{count}} (cache)",
+    "reloadDevicesTitle": "Recharger la liste d’appareils pour ce client depuis le serveur",
+    "reloadDevices": "Recharger les appareils",
+    "pickClientFirst": "Choisissez d’abord un client",
+    "loadingDevicesEllipsis": "Chargement des appareils…",
+    "noDevicesForClient": "Aucun appareil pour ce client",
+    "selectDevice": "Sélectionnez un appareil…",
+    "recent": "Récent",
+    "filterPlaceholder": "Filtrer…",
+    "removeRecentTitle": "Retirer des récents",
+    "noMatchingDevices": "Aucun appareil correspondant",
+    "closeAria": "Fermer"
+  },
+  "shortcutOverlay": {
+    "title": "Raccourcis clavier",
+    "note": "⌘ = Ctrl (Win/Linux)",
+    "closeAria": "Fermer",
+    "groups": {
+      "global": "Global",
+      "absmap": "Carte absolue",
+      "calib": "Calibration",
+      "pairing": "Appariement"
+    },
+    "otherWorkspaces": "Autres espaces de travail",
+    "global": {
+      "palette": "Palette de commandes",
+      "save": "Enregistrer",
+      "undo": "Retour",
+      "redo": "Refaire",
+      "sidebar": "Basculer la barre latérale",
+      "devicePicker": "Sélecteur client / appareil",
+      "absmap": "Carte absolue",
+      "calibration": "Calibration",
+      "pairingNav": "Appariement",
+      "dashboard": "Tableau de bord",
+      "dualMap": "Double carte",
+      "pan": "Pan temporaire (maintenu)",
+      "thisSheet": "Afficher cette feuille",
+      "esc": "Fermer · désélectionner · quitter l’outil"
+    },
+    "absmap": {
+      "select": "Sélection / navigation",
+      "eraser": "Gomme — suppression au clic",
+      "addSlot": "Ajouter une place",
+      "deleteSelection": "Supprimer la sélection",
+      "lassoDelete": "Lasso — suppression en masse",
+      "copySlot": "Copier une place",
+      "modifySlot": "Modifier une place",
+      "straighten": "Aligner la rangée",
+      "reprocess": "Retraiter une zone",
+      "rowBrush": "Étendre une rangée (clic place + viser le trou)",
+      "cloneRow": "Dupliquer une rangée",
+      "drawRoi": "Tracer / arrêter ROI",
+      "launchPipeline": "Lancer la pipeline",
+      "undo": "Retour",
+      "redo": "Refaire"
+    },
+    "calib": {
+      "rectSelect": "Sélection (V)",
+      "lasso": "Lasso main levée",
+      "addBbox": "Ajouter une bbox",
+      "modifyBbox": "Modifier une bbox",
+      "lockSelection": "Verrouiller / déverrouiller la sélection",
+      "deleteSelected": "Supprimer la sélection",
+      "shiftDrag": "Ajouter à la sélection",
+      "zoom": "Zoom",
+      "undo": "Retour",
+      "redo": "Refaire"
+    },
+    "pairing": {
+      "pairTool": "Outil d’appariement",
+      "unpairTool": "Outil de désappariement",
+      "mapZone": "Zone carte",
+      "zone": "Zone Pairing",
+      "imageZone": "Zone image (I)",
+      "autoSuggest": "Basculer suggestion auto",
+      "finishZone": "Terminer la zone · accepter la proposition",
+      "skipProposal": "Ignorer la proposition",
+      "reverseSide": "Inverser le côté de la zone",
+      "deleteZone": "Supprimer la zone active",
+      "undo": "Retour",
+      "redo": "Refaire"
+    }
+  },
+  "calib": {
+    "confidenceFilter": "Filtre confidence",
+    "confidenceFilterTitle": "Filtre sur la confidence : seules les détections dont le score est au moins égal à ce % restent visibles.",
+    "confidenceAria": "Seuil minimal de confidence pour afficher une détection",
+    "railAria": "Outils d’édition calibration",
+    "select": "Sélection",
+    "lassoTool": "Lasso",
+    "add": "Ajouter",
+    "modify": "Modifier",
+    "lock": "Verrouiller",
+    "titleLock": "Verrouiller / déverrouiller la sélection (K)",
+    "titleDeleteBboxes": "Supprimer les bbox sélectionnées (Suppr)",
+    "bottomPrevFrame": "Image précédente",
+    "bottomNextFrame": "Image suivante",
+    "bottomRefView": "Vue référence",
+    "bottomBackRef": "Retour à la vue référence",
+    "resizeTitle": "Même taille carrée (px) pour toutes les bbox — les verrouillées inchangées",
+    "resize": "Taille bbox",
+    "zoomCanvasAria": "Zoom du canevas de calibration",
+    "modes": {
+      "select": {
+        "title": "Mode sélection",
+        "body": "Cliquez les bbox pour basculer · glissez sur le vide pour sélection encadrée · <kShift/>+glisser ajoute · <kL/> lasso libre · <kS/> quitter"
+      },
+      "lasso_select": {
+        "title": "Lasso main levée",
+        "body": "Cliquez-glissez sur le vide · relâcher ferme · bbox à l’intérieur sélectionnées · <kShift/> ajouter · <kS/> rectangle · <kDel/> retirer · <kEsc/> quitter"
+      },
+      "add": {
+        "title": "Mode ajout",
+        "body": "Cliquez pour placer une bbox · <kEsc/> · <kA/> quitter"
+      },
+      "modify": {
+        "title": "Mode modification",
+        "body": "Glissez une bbox pour la déplacer (bbox verrouillées bloquées) · <kEsc/> · <kM/> quitter"
+      }
+    },
+    "viewOnlyBanner": "<strong>Lecture seule</strong> — Image {{frame}} · l’édition est désactivée · passez à la Référence pour modifier les bbox",
+    "switchToReference": "Passer à la Référence",
+    "starting": "Démarrage…",
+    "loadingFromProd": "Chargement de la calibration en production…",
+    "runningBackgroundTitle": "Détection en arrière-plan",
+    "runningBackgroundHint": "Ouvrez l’éditeur quand vous êtes prêt — l’image ne se charge qu’après un clic sur Générer.",
+    "detectionFinishedTitle": "Détection terminée",
+    "detectionFinishedHint": "Le résultat est prêt. Cliquez sur Générer pour charger les images et la superposition bbox dans cet éditeur.",
+    "generate": "Générer",
+    "regenerate": "Régénérer",
+    "saveCalib": "Enregistrer",
+    "saveToProd": "Enregistrer En Prod",
+    "savingCalib": "Enregistrement…",
+    "saveCalibTitle": "Enregistrer les bbox et les appariements en production",
+    "saveToProdTitle": "Publier la construction bbox vers la calibration en prod",
+    "noDataTitle": "Pas encore de données de calibration pour ce Cocospot",
+    "prodExistsOnGenerateTitle": "Une calibration existe déjà en prod pour ce Cocospot",
+    "prodExistsOnGenerateHint": "Ouvrez « Éditer les Calibs » pour la consulter ou la modifier, ou lancez une construction ici pour en créer une nouvelle.",
+    "prodExists": {
+      "badge": "Calibration en prod",
+      "lead": "{{count}} bbox déjà enregistrées sur ce Cocospot",
+      "hint": "Choisissez comment continuer.",
+      "editDesc": "Consulter et modifier les bbox enregistrées en production.",
+      "editCta": "Ouvrir l’éditeur",
+      "buildDesc": "Relancer une détection ML pour reconstruire la calibration."
+    },
+    "noData": {
+      "badge": "À construire",
+      "hint": "Lancez une détection ML pour générer les premières bbox de calibration."
+    },
+    "goToProductionTab": "Éditer les Calibs",
+    "goToConstructionTab": "Générer les Calibs",
+    "pickCocospotTitle": "Sélectionnez un Cocospot (client + appareil) pour lancer la calibration",
+    "selectDeviceTitle": "Sélectionnez un appareil pour ce client",
+    "selectDeviceCta": "Choisir un Cocospot…",
+    "selectDeviceCmd": "Ouvrez le sélecteur d’appareil avec <kCmdD/>",
+    "deviceIdLine": "ID appareil · {{id}}",
+    "pickCocospotCmd": "Choisissez un client sur le tableau de bord ou la carte absolue, puis un appareil ici avec <kCmdD/>",
+    "generationFailed": "Échec de la génération",
+    "retry": "Réessayer",
+    "statusBboxes": "{{count}} bbox",
+    "statusSelected": " · {{count}} sélectionnées",
+    "reference": "Référence",
+    "frameLabel": "Image {{current}} / {{total}}",
+    "noProdSaved": "Aucune calibration enregistrée pour cet appareil",
+    "tabs": {
+      "aria": "Modes de l’espace calibration",
+      "production": "Éditer les Calibs",
+      "productionTitle": "Éditer les Calibs — bbox en prod enregistrées",
+      "generate": "Générer les Calibs",
+      "generateTitle": "Générer les Calibs — générer et affiner via ML"
+    },
+    "preview": {
+      "title": "Aide à la Calib",
+      "toggleLabel": "Aide à la Calib",
+      "open": "Ouvrir l’aperçu calibration",
+      "close": "Fermer l’aperçu calibration",
+      "prev": "Précédent",
+      "next": "Suivant",
+      "rankNav": "Rang {{rank}} / {{total}} — Véhicules : {{count}}",
+      "resizeHandle": "Redimensionner le panneau aperçu",
+      "refresh": "Actualiser l'aperçu des lastpics",
+      "refreshing": "Actualisation…",
+      "loading": "Chargement de l'aperçu…",
+      "scanning": "Analyse des images en cours…",
+      "analyzingInBackground": "Analyse en cours — rouvrir l'aperçu",
+      "empty": "Aucun aperçu en cache — lancez d'abord une actualisation pour analyser les lastpics.",
+      "noImages": "Analyse terminée : aucune image lastpics diurne exploitable trouvée.",
+      "retry": "Réessayer",
+      "alreadyRunning": "Une actualisation est déjà en cours — polling GET…",
+      "pollingAfterPost": "POST accepté — en attente du statut « en cours » via GET…",
+      "postFailed": "Échec du POST calib-preview/refresh.",
+      "pollFailed": "Échec du polling GET calib-preview.",
+      "loadFailed": "Impossible de charger le cache calib-preview.",
+      "pollTimeout": "Délai dépassé — l'analyse n'a pas renvoyé de résultat. Réessayez.",
+      "refreshFailed": "L'analyse des lastpics a échoué (statut failed).",
+      "statusLine": "Statut : {{status}} · GET #{{attempt}} · job {{jobId}}",
+      "status": {
+        "idle": "inactif",
+        "running": "en cours",
+        "completed": "terminé",
+        "failed": "échoué"
+      },
+      "aggregated": "Agrégé (top 5)",
+      "rank": "Rang {{rank}}",
+      "refreshedAt": "Dernière actualisation : {{date}}",
+      "legend": {
+        "car": "Voiture",
+        "moto": "Moto",
+        "van": "Camionnette"
+      }
+    }
+  },
+  "pairing": {
+    "savePairings": "Enregistrer",
+    "pendingChanges": "{{count}} modification(s) non enregistrée(s)",
+    "unpairConfirm": {
+      "title": "Supprimer des appariements en prod ?",
+      "body_one": "{{count}} appariement sera retiré de la prod lors de l’enregistrement.",
+      "body_other": "{{count}} appariements seront retirés de la prod lors de l’enregistrement.",
+      "confirm_one": "Supprimer {{count}} appariement",
+      "confirm_other": "Supprimer {{count}} appariements"
+    },
+    "zoneConfirm": {
+      "title": "Enregistrer les appariements ?",
+      "body": "{{slots}} place(s) ↔ {{bboxes}} bbox · enregistrer en prod ?",
+      "bodyMismatch": "{{slots}} place(s) vs {{bboxes}} bbox — les effectifs doivent correspondre.",
+      "bodyEmpty": "Aucune place ni bbox dans les zones — retracez les lassos."
+    },
+    "saveTitleOk": "Enregistrer les appariements et la calibration pour cet appareil",
+    "saveTitleNeedDevice": "Sélectionnez client et appareil (⌘D)",
+    "saveTitleNeedDeviceOnly": "Sélectionnez un appareil (⌘D) pour enregistrer",
+    "saveTitleNeedClient": "Sélectionnez d’abord un client",
+    "saveTitleNeedAbsmapSave": "Enregistrez d’abord les places absmap en prod (slot_id requis)",
+    "railAria": "Outils d’appariement",
+    "pair": "Apparier",
+    "unpair": "Désapparier",
+    "mapZone": "Zone carte",
+    "zone": "Zone Pairing",
+    "imgZone": "Zone image",
+    "undoPairing": "Annuler l’appariement (⌘Z)",
+    "autoSuggestOn": "Suggestion auto ACTIVÉE",
+    "autoSuggest": "Suggestion auto",
+    "titleAutoSuggestExit": "Quitter le mode suggestion auto (Q)",
+    "titleAutoSuggestEnter": "Activer le mode suggestion auto (Q)",
+    "reverseNoZone": "Sélectionnez une zone à inverser",
+    "reverseNoPairings": "Aucun appariement à inverser",
+    "reverseProdOk": "Inverser l’ordre côté {{side}} pour les appariements prod (R)",
+    "sideMap": "carte",
+    "sideImage": "image",
+    "reverseOk": "Inverser l’ordre du côté {{side}} (R)",
+    "reversePick": "Sélectionnez une zone sur la carte ou l’image pour inverser",
+    "unpairZoneTitleOk": "Désapparier tous les liens de cette zone",
+    "unpairZoneTitleNeed": "Sélectionnez une zone à désapparier",
+    "unpairZone": "Désapparier la zone",
+    "deleteZoneTitleOk": "Supprimer la zone et ses paires (Suppr)",
+    "deleteZoneTitleNeed": "Sélectionnez une zone à supprimer",
+    "deleteZone": "Supprimer la zone",
+    "reverse": "Inverser",
+    "modes": {
+      "pair": {
+        "title": "Mode apparier",
+        "body": "Sélectionnez une place sur la carte puis une bbox sur l’image · l’appariement s’applique tout de suite · <kCmdZ/> annuler · <kP/> quitter"
+      },
+      "unpair": {
+        "title": "Mode désapparier",
+        "body": "Cliquez une place ou bbox liée pour retirer la paire · <kCmdZ/> annuler · <kU/> quitter"
+      },
+      "draw_zone": {
+        "title": "Mode zone d’appariement",
+        "body": "Tracez un lasso sur la carte ou l’image · puis sur l’autre côté · relâchez pour valider · <kEsc/> annuler · <kZ/> quitter",
+        "bodyNeedImage": "Zone carte tracée — tracez maintenant la zone image · <kEsc/> annuler · <kZ/> quitter",
+        "bodyNeedMap": "Zone image tracée — tracez maintenant la zone carte · <kEsc/> annuler · <kZ/> quitter"
+      }
+    },
+    "accept": "Accepter",
+    "skip": "Ignorer",
+    "proposalBanner": "<strong>Proposition {{current}}/{{total}}</strong> — {{slots}} places ↔ {{bboxes}} bbox",
+    "autoSuggestBanner": "<strong>Suggestion auto ACTIVÉE</strong> — Tracez une zone sur la carte ou l’image pour obtenir une proposition de l’autre côté · <kQ/> quitter",
+    "zoneRejected": "<strong>Zone rejetée</strong> — {{message}}",
+    "splitResizeAria": "Redimensionner les panneaux carte et image",
+    "zoneChipTitle": "{{slots}} places ↔ {{bboxes}} bbox · Cliquez pour sélectionner"
+  },
+  "pairingMap": {
+    "noSlotsTitle": "Pas encore de places géo pour l’appariement",
+    "noSlotsHint": "Lancez la carte absolue pour ce Cocospot afin de créer des places.",
+    "noSlotsClientTitle": "Pas encore de places pour ce client",
+    "noSlotsClientHint": "Lancez la carte absolue (le client suffit — pas d’appareil requis), puis revenez ici.",
+    "selectClientTitle": "Sélectionnez un client pour centrer la carte",
+    "selectClientHint": "Choisissez une ville avec <kCmdD/> sur le tableau de bord ou la carte absolue."
+  },
+  "pairingImage": {
+    "noBboxesTitle": "Pas encore de bbox de calibration pour ce Cocospot",
+    "noBboxesHint": "Lancez la Calibration pour cet appareil, attendez les bbox, puis rouvrez l’Appariement.",
+    "selectCocospotTitle": "Sélectionnez un Cocospot pour charger les bbox caméra",
+    "selectCocospotHint": "Choisissez client + appareil avec <kCmdD/>, lancez Calibration, puis revenez ici.",
+    "selectClientTitle": "Sélectionnez un client pour centrer la carte",
+    "selectClientHint": "Choisissez une ville avec <kCmdD/> sur le tableau de bord ou la carte absolue.",
+    "selectDeviceTitle": "Sélectionnez un appareil pour charger les bbox caméra",
+    "selectDeviceHint": "Ouvrez Calibration, choisissez un Cocospot avec <kCmdD/>, lancez la détection, puis revenez ici.",
+    "filterBanner": "Aucune détection au-dessus du seuil du curseur « Filtre confidence » (barre du bas en Calibration) — augmentez-le pour les voir ici.",
+    "zoomImageAria": "Zoom image"
+  },
+  "saveFeedback": {
+    "closeAria": "Fermer le résumé d’enregistrement",
+    "stats": {
+      "created": "Créées",
+      "updated": "Modifiées",
+      "deleted": "Supprimées",
+      "savedBboxes": "Bbox",
+      "savedSlots": "Slots",
+      "deletedBboxes": "Supprimées",
+      "savedSlotList": "Slots en prod : {{items}}",
+      "addedSlotList": "Slots ajoutés : {{items}}",
+      "deletedBboxList": "Bbox supprimées : {{items}}",
+      "deletedBboxKeysMore": "(+{{more}} autres)",
+      "pairedLinks": "Appariés",
+      "pairedList": "Slot ↔ bbox : {{items}}",
+      "pairingNew": "Nouveaux",
+      "pairingModified": "Modifiés",
+      "pairingRemoved": "Supprimés",
+      "pairingTotal": "{{total}} appariement(s) en prod",
+      "calibTotal": "{{total}} bbox en prod",
+      "total": "{{total}} places pour ce client"
+    },
+    "absmap": {
+      "success": {
+        "title": "Places enregistrées pour ce client",
+        "subtitle": "{{created}} créée(s), {{updated}} modifiée(s), {{deleted}} supprimée(s)"
+      },
+      "empty": {
+        "title": "Enregistrement terminé — aucune création",
+        "subtitle": "Aucune place pipeline n’a été créée pour ce client. Vérifiez le client B2B et les ROI, puis réessayez."
+      },
+      "warning": {
+        "title": "Enregistré avec avertissement",
+        "subtitle": "Les places ont été enregistrées pour ce client, mais un point d’attention subsiste."
+      },
+      "error": {
+        "title": "Échec de l’enregistrement",
+        "subtitle": "Impossible d’enregistrer les places pour ce client."
+      }
+    },
+    "calib": {
+      "success": {
+        "title": "Calibration enregistrée",
+        "subtitle": "{{created}} créée(s), {{updated}} modifiée(s), {{deleted}} supprimée(s)"
+      },
+      "error": {
+        "title": "Échec de l’enregistrement",
+        "subtitle": "La calibration n’a pas pu être enregistrée en prod."
+      }
+    },
+    "pairing": {
+      "success": {
+        "title": "Appariements enregistrés",
+        "subtitle": "{{created}} nouveau(x), {{updated}} modifié(s), {{deleted}} supprimé(s)",
+        "subtitleFallback": "{{paired}} appariement(s) enregistré(s)"
+      },
+      "error": {
+        "title": "Échec de l’enregistrement",
+        "subtitle": "Les appariements n’ont pas pu être enregistrés."
+      }
+    }
+  }
+}

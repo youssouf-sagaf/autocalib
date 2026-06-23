@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "annotate": "Annoter",
+    "datasets": "Jeux de données",
+    "train": "Entraînement",
+    "eval": "Évaluation"
+  },
+  "app": {
+    "title": "OBB Studio"
+  },
+  "imagerySource": {
+    "layerControlTitle": "Imagerie",
+    "layerControlAria": "Changer la source d'imagerie",
+    "mapbox": "Satellite Mapbox",
+    "ignCurrent": "IGN actuel",
+    "ignPleiades2026": "Pléiades 2026",
+    "hintFranceOnly": "France uniquement"
+  },
+  "annotate": {
+    "drawRoi": "Placer la tuile",
+    "drawRoiActive": "Cliquez sur la carte pour placer un carré de {{meters}} m (1024 px @ 0,05 GSD)",
+    "drawRoiHint": "Survolez la carte · cliquez pour placer la tuile",
+    "roiReady": "{{px}}×{{px}} px · ~{{meters}} m — prêt",
+    "roiPlaced": "Tuile placée ({{size}} m)",
+    "stopDraw": "Annuler",
+    "stepHint": "Étape 2 — choisir une tuile et dessiner les OBB.",
+    "selectTile": "Sélectionnez une tuile dans la liste.",
+    "loadingTile": "Chargement de la tuile…",
+    "saved": "{{count}} OBB enregistré(s)",
+    "fetchTile": "Récupérer la tuile",
+    "save": "Enregistrer",
+    "classVehicle": "Véhicule",
+    "markBackground": "Arrière-plan",
+    "clickObbHint": "3 clics pour la boîte orientée (centre-bord, largeur, hauteur)"
+  },
+  "common": {
+    "refresh": "Actualiser"
+  },
+  "crop": {
+    "stepHint": "Étape 1 — placez la tuile sur la carte : un clic enregistre le crop.",
+    "moveHint": "Survolez la carte pour positionner la tuile {{px}}×{{px}} px (~{{meters}} m), puis cliquez pour enregistrer.",
+    "placeTileShortcut": "Activer/désactiver l'outil Placer la tuile ({{key}})",
+    "saving": "Enregistrement…",
+    "savedTiles": "Tuiles enregistrées",
+    "savedCount": "{{count}} tuile(s) en bibliothèque",
+    "noTilesYet": "Aucune tuile",
+    "nextStepHint": "Passez à l'onglet Annoter pour labelliser.",
+    "saved": "{{count}} tuile(s) enregistrée(s) — onglet Annoter"
+  },
+  "datasets": {
+    "title": "Explorateur de jeux",
+    "create": "Créer un jeu",
+    "tiles": "Tuiles"
+  },
+  "train": {
+    "title": "Entraînement",
+    "start": "Lancer l'entraînement",
+    "runs": "Exécutions",
+    "liveMetrics": "Métriques en direct"
+  },
+  "eval": {
+    "title": "Évaluation",
+    "run": "Lancer l'évaluation"
+  },
+  "search": {
+    "placeholder": "Adresse, ville ou coordonnées GPS (lat, lng)…",
+    "coordsSuggestion": "Coordonnées GPS — {{lat}}, {{lng}}"
+  },
+  "workspace": {
+    "tabCrop": "Crop",
+    "tabAnnotation": "Annoter",
+    "tabInference": "Inférence",
+    "tabResultats": "Résultats",
+    "imagerySource": "Source d'imagerie",
+    "zone": "Zone",
+    "launchFetch": "Lancer la récupération",
+    "inferenceJobs": "Jobs d'entraînement",
+    "runBrowser": "Historique des runs",
+    "live": "En cours",
+    "idle": "Inactif",
+    "noRuns": "Aucun run",
+    "noMapboxToken": "VITE_MAPBOX_TOKEN manquant — définir dans .env",
+    "activityFeed": "Activité",
+    "addObb": "Ajouter OBB",
+    "activeTile": "Tuile active",
+    "collapseLeft": "Replier le panneau gauche",
+    "expandLeft": "Déplier le panneau gauche",
+    "collapseRight": "Replier le panneau droit",
+    "expandRight": "Déplier le panneau droit"
+  }
+}

@@ -1,0 +1,48 @@
+/* Map-style +/− stack, vertically centered on the chosen edge */
+.root,
+.rootRight {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 4px;
+  gap: 0;
+  pointer-events: auto;
+}
+
+.root {
+  left: 12px;
+}
+
+.rootRight {
+  right: 12px;
+}
+
+.group {
+  flex-direction: column;
+  gap: 0;
+  align-items: stretch;
+}
+
+.btn {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.group .btn:first-child {
+  border-radius: 8px 8px 4px 4px;
+}
+
+.group .btn:last-child {
+  border-radius: 4px 4px 8px 8px;
+}
+
+.group .btn:only-child {
+  border-radius: 8px;
+}

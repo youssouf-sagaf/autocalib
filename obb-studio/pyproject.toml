@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "obb-studio"
+version = "0.1.0"
+description = "Cocoparks OBB annotation and YOLO-OBB training studio"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+    "geojson-pydantic>=1.0",
+    "numpy>=1.24",
+    "opencv-python-headless>=4.5",
+    "Pillow>=10.0",
+    "ultralytics>=8.0",
+    "torch>=2.0",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = ["httpx>=0.27", "pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]

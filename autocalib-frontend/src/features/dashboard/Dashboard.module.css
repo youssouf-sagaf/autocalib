@@ -1,0 +1,286 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 32px;
+  overflow-y: auto;
+  height: 100%;
+  background: var(--color-bg);
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.heading {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  font-family: var(--font-secondary);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: var(--color-text-muted);
+  max-width: 480px;
+  margin-bottom: 20px;
+}
+
+/* ── Device CTA (no device selected) ── */
+
+.devicePrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(55, 188, 155, 0.25);
+  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+}
+
+.devicePrimary:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(55, 188, 155, 0.32);
+}
+
+.devicePrimary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+/* ── Device chip (device already selected) ── */
+
+.deviceChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 13px;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.deviceChip:hover {
+  border-color: var(--color-brand);
+  background: rgba(150, 122, 220, 0.06);
+}
+
+.deviceChip:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.deviceChip svg {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.deviceChipClient {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.deviceChipSep {
+  color: var(--color-border);
+}
+
+.deviceChipDevice {
+  font-weight: 600;
+}
+
+.deviceChipAction {
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid var(--color-border);
+  color: var(--color-primary);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* ── Workflow cards ── */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 900px;
+  width: 100%;
+  margin-bottom: 40px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  font-family: var(--font-primary);
+  position: relative;
+}
+
+.card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 24px rgba(150, 122, 220, 0.1);
+  transform: translateY(-2px);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.cardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(150, 122, 220, 0.08);
+  color: var(--color-primary);
+}
+
+.cardBody {
+  flex: 1;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.cardDesc {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  color: var(--color-text-muted);
+}
+
+/* ── Recent devices ── */
+
+.recent {
+  max-width: 900px;
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+.recentTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.recentList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.recentItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-primary);
+  transition: all 0.12s;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.recentItem:hover {
+  border-color: var(--color-primary);
+  background: rgba(150, 122, 220, 0.04);
+}
+
+.recentTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recentDevice {
+  font-weight: 500;
+}
+
+.recentClient {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.stepBadges {
+  display: flex;
+  gap: 6px;
+}
+
+.stepBadge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.stepDone {
+  color: #27ae60;
+  background: rgba(39, 174, 96, 0.1);
+}
+
+.stepPending {
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Footer ── */
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.footerSep {
+  color: var(--color-border);
+}
+
+@media (max-width: 768px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,132 @@
+/* Square button positioned above the Mapbox NavigationControl.
+   The bottom-right corner stacks (from bottom): attribution bar (~22px + 10px
+   margin) + NavigationControl (3 buttons × 29px ≈ 95px + 10px margin).
+   Total ~140px, so we sit at 150px to clear the stack with a small gap. */
+.fab {
+  position: absolute;
+  right: 10px;
+  bottom: 150px;
+  width: 29px;
+  height: 29px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  color: #444;
+  z-index: 5;
+  padding: 0;
+  transition: background 0.12s;
+}
+
+.fab:hover {
+  background: #fff;
+  color: #222;
+}
+
+.fab.active {
+  background: #2979ff;
+  color: #fff;
+  border-color: #2979ff;
+}
+
+.fab svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+
+/* Popover anchored to the left of the FAB, aligned on its bottom edge. */
+.popover {
+  position: absolute;
+  right: 50px;
+  bottom: 150px;
+  z-index: 6;
+  min-width: 220px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  padding: 6px;
+  font-family: var(--font-primary);
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.popoverHeader {
+  padding: 6px 8px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 4px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  color: inherit;
+  font: inherit;
+}
+
+.option:hover:not(:disabled) {
+  background: rgba(41, 121, 255, 0.08);
+}
+
+.option:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.option.selected {
+  background: rgba(41, 121, 255, 0.12);
+  font-weight: 600;
+}
+
+.optionLabel {
+  flex: 1;
+}
+
+.optionCheck {
+  color: #2979ff;
+  font-weight: 700;
+  width: 14px;
+  text-align: center;
+}
+
+.optionHint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.popoverDivider {
+  padding: 8px 8px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin-top: 4px;
+}
+
+.popoverHint {
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}

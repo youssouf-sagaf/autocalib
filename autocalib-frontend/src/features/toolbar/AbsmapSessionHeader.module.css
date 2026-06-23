@@ -1,0 +1,213 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: nowrap;
+}
+
+.saveBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.saveRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+/* Pairing header still uses .cluster */
+.cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dirty {
+  color: var(--color-warning, #f6bb42);
+  border-color: rgba(246, 187, 66, 0.65);
+}
+
+.dirtyFilled {
+  background: var(--ui-warning-bg, rgba(246, 187, 66, 0.18));
+  color: #9a7b0a;
+  font-weight: 600;
+}
+
+.dirtyFilled:hover:not(:disabled) {
+  background: rgba(246, 187, 66, 0.28);
+  border-color: var(--color-warning, #f6bb42);
+  color: #7a6208;
+}
+
+.layersWrap {
+  position: relative;
+  flex-shrink: 0;
+  padding-left: 14px;
+  border-left: 1px solid var(--color-border);
+}
+
+.layersBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-text-muted);
+  font-size: var(--ui-chrome-font-size, 12px);
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.layersBtn:hover,
+.layersBtnOpen {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.layersBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.layersPopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  min-width: 200px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.layersItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--ui-chrome-font-size, 12px);
+  font-family: var(--font-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.layersItem:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.layersItemOn {
+  font-weight: 600;
+}
+
+.overlayDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  flex-shrink: 0;
+}
+
+.btnBusy {
+  pointer-events: none;
+}
+
+.syncStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-family: var(--font-primary);
+  white-space: nowrap;
+}
+
+.saveErrorRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  max-width: min(420px, 50vw);
+}
+
+.saveError {
+  font-size: 12px;
+  font-family: var(--font-primary);
+  color: var(--color-error, #c0392b);
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid rgba(192, 57, 43, 0.25);
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: help;
+  white-space: nowrap;
+}
+
+.retryBtn {
+  padding: 3px 8px;
+  border: 1px solid var(--color-error, #c0392b);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--color-error, #c0392b);
+  font-size: 12px;
+  font-family: var(--font-primary);
+  cursor: pointer;
+}
+
+.retryBtn:hover:not(:disabled) {
+  background: rgba(192, 57, 43, 0.08);
+}
+
+.retryBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

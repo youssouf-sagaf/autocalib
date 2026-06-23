@@ -1,0 +1,133 @@
+@import './theme/uiTokens.css';
+
+:root {
+  --color-brand: #967adc;
+  --color-brand-dark: #7e5fd4;
+  --color-brand-light: #bcaae9;
+  --color-primary: #37bc9b;
+  --color-primary-dark: #2a9e84;
+  --color-primary-light: #7ddfc7;
+  --color-secondary: #55595c;
+  --color-success: #37bc9b;
+  --color-info: #3bafda;
+  --color-warning: #f6bb42;
+  --color-danger: #da4453;
+  --color-bg: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-sidebar-bg: #1d2b36;
+  --color-sidebar-text: #dcdcdc;
+  --color-sidebar-border: #162029;
+  --font-primary: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-secondary: 'Muli', 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Focus ring for keyboard nav ── */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Default kbd pill — square ratio, currentColor-driven so banners on
+ *    coloured surfaces and dark sidebars all use the same shape. JSX should
+ *    prefer the <Kbd> component; this rule covers raw <kbd> elements
+ *    rendered via dangerouslySetInnerHTML in mode banners. ── */
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  color: inherit;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+/* ── Absolute Map stage (fills AppShell canvas area) ── */
+
+.absmapStage {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ── Dual map layout ── */
+
+.dualMapContainer {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.dualMapContainer > :first-child,
+.dualMapContainer > :last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.dualMapDivider {
+  width: 1px;
+  background: var(--color-border);
+  cursor: col-resize;
+  z-index: 5;
+  flex-shrink: 0;
+}
+
+.tileRowAcceptBtn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tileRowAcceptBtn:hover {
+  background: var(--color-primary-dark);
+}

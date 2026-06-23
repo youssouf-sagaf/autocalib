@@ -1,0 +1,15 @@
+{
+  "stage": "03_detection",
+  "schema_version": "2",
+  "mode": "yolo_obb_spots",
+  "image_height": 1280,
+  "image_width": 1280,
+  "class_names": {
+    "0": "empty_slot",
+    "1": "occupied_slot"
+  },
+  "num_spots": 0,
+  "num_occupied": 0,
+  "num_empty": 0,
+  "spots": []
+}

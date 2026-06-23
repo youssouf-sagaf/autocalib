@@ -1,0 +1,51 @@
+# Cloud Build — autocalib GPU image (PyTorch CUDA + Vite frontend).
+# Usage (from repo root):
+#   gcloud builds submit --config=cloudbuild.gpu.yaml --substitutions=...
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_IMAGE}
+      - --build-arg
+      - VITE_MAPBOX_TOKEN=${_VITE_MAPBOX_TOKEN}
+      - --build-arg
+      - VITE_API_URL=${_VITE_API_URL}
+      - --build-arg
+      - VITE_FIREBASE_API_KEY=${_VITE_FIREBASE_API_KEY}
+      - --build-arg
+      - VITE_AUTH_DOMAIN=${_VITE_AUTH_DOMAIN}
+      - --build-arg
+      - VITE_DATABASE_URL=${_VITE_DATABASE_URL}
+      - --build-arg
+      - VITE_PROJECT_ID=${_VITE_PROJECT_ID}
+      - --build-arg
+      - VITE_STORAGE_BUCKET=${_VITE_STORAGE_BUCKET}
+      - --build-arg
+      - VITE_MESSAGING_SENDER_ID=${_VITE_MESSAGING_SENDER_ID}
+      - --build-arg
+      - VITE_ID=${_VITE_ID}
+      - --build-arg
+      - VITE_MEASUREMENT_ID=${_VITE_MEASUREMENT_ID}
+      - --build-arg
+      - VITE_B2B_BASE_URL=${_VITE_B2B_BASE_URL}
+      - .
+images:
+  - ${_IMAGE}
+substitutions:
+  _IMAGE: europe-west4-docker.pkg.dev/cv-cocoparks/autocalib/autocalib-gpu:latest
+  _VITE_MAPBOX_TOKEN: ""
+  _VITE_API_URL: ""
+  _VITE_FIREBASE_API_KEY: ""
+  _VITE_AUTH_DOMAIN: ""
+  _VITE_DATABASE_URL: ""
+  _VITE_PROJECT_ID: ""
+  _VITE_STORAGE_BUCKET: ""
+  _VITE_MESSAGING_SENDER_ID: ""
+  _VITE_ID: ""
+  _VITE_MEASUREMENT_ID: ""
+  _VITE_B2B_BASE_URL: ""
+options:
+  machineType: E2_HIGHCPU_32
+  logging: CLOUD_LOGGING_ONLY
+timeout: 3600s

@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Virtual env & node_modules
+.venv
+venv
+env
+autocalib-frontend/node_modules
+
+# Python caches
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.egg-info
+
+# Runtime data
+sessions
+logs
+pairings
+data
+
+# R&D / legacy
+absolutemap-gen
+autoabsmap/absolutemap_rd
+calib_gen/calib_gen_rd
+calib_gen/tmp
+pairing/pairing_rd
+tests
+
+# IDE / local
+.cursor
+.claude
+*.md
+
+# Misc
+.DS_Store
+.coverage
+htmlcov
+.ipynb_checkpoints

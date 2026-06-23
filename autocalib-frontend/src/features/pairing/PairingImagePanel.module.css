@@ -1,0 +1,97 @@
+/* Match Calib canvas area (CalibWorkspace .canvasArea) */
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: #1a1a2e;
+  position: relative;
+}
+
+.canvasWrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  position: absolute;
+  inset: 0;
+}
+
+.bgCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.emptyState {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #7a7a9a;
+  gap: 6px;
+}
+
+.emptyState p {
+  font-size: 14px;
+}
+
+.emptyTitle {
+  text-align: center;
+  max-width: 340px;
+  line-height: 1.35;
+}
+
+.emptyDeviceLine {
+  text-align: center;
+  max-width: 420px;
+  line-height: 1.35;
+}
+
+.emptyMeta {
+  font-weight: 400;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.emptyHint {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.42);
+  text-align: center;
+  max-width: 380px;
+  line-height: 1.35;
+}
+
+.emptyState small {
+  font-size: 12px;
+  color: #555;
+}
+
+.filterBanner {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  max-width: min(420px, calc(100% - 24px));
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #e5e7eb;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
+  z-index: 2;
+  pointer-events: none;
+}

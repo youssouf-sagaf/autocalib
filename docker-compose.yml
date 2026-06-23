@@ -1,0 +1,39 @@
+services:
+  autocalib:
+    build:
+      context: .
+      args:
+        VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN}
+        VITE_API_URL: ${VITE_API_URL:-}
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
+        VITE_AUTH_DOMAIN: ${VITE_AUTH_DOMAIN}
+        VITE_DATABASE_URL: ${VITE_DATABASE_URL}
+        VITE_PROJECT_ID: ${VITE_PROJECT_ID}
+        VITE_STORAGE_BUCKET: ${VITE_STORAGE_BUCKET}
+        VITE_MESSAGING_SENDER_ID: ${VITE_MESSAGING_SENDER_ID}
+        VITE_ID: ${VITE_ID}
+        VITE_MEASUREMENT_ID: ${VITE_MEASUREMENT_ID}
+        VITE_B2B_BASE_URL: ${VITE_B2B_BASE_URL}
+    # CUDA image — local tag on VM for ops (no Artifact Registry push from this workflow).
+    image: autocalib-gpu:latest
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      PREWARM_ML_MODELS: "true"
+      HF_HOME: /root/.cache/huggingface
+      # VM has no GPU — auto falls back to CPU. Cloud Run deploy sets SAM3_DEVICE=cuda.
+      SAM3_DEVICE: auto
+    volumes:
+      - ./sessions:/app/sessions
+      # Survives docker compose rebuild — avoids re-downloading SAM3 (~3 GB).
+      - ./data/huggingface-cache:/root/.cache/huggingface
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # SAM3 prewarm can take several minutes on first boot (HF download ~3 GB).
+      start_period: 600s

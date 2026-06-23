@@ -1,0 +1,102 @@
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Shared sidebar control (Cocopilot menu-dark nav item) ── */
+
+.sideBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #dcdcdc;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'Open Sans', var(--font-primary);
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.sideBtn:hover {
+  color: #c3c3c3;
+  background-color: #162029;
+}
+
+.sideBtnActive {
+  font-weight: 700;
+  color: #dcdcdc;
+  background: #121b22;
+  border-right: 4px solid var(--color-info, #3bafda);
+}
+
+.expanded .sideBtn {
+  justify-content: flex-start;
+}
+
+.collapsed .sideBtn {
+  padding: 10px 0;
+  gap: 0;
+}
+
+.iconSlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  flex-shrink: 0;
+  position: relative;
+  top: 1px;
+}
+
+.label {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bellBtn {
+  composes: sideBtn;
+  flex-shrink: 0;
+}
+
+.badgeDot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-info, #3bafda);
+  box-shadow: 0 0 0 2px var(--color-sidebar-bg, #1d2b36);
+}
+
+.expanded .bellBtn .badgeDot {
+  top: 5px;
+  right: 4px;
+}
+
+.divider {
+  height: 1px;
+  margin: 4px 20px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.utilityBtn {
+  composes: sideBtn;
+  color: #a8b4be;
+}
+
+.utilityBtn:hover {
+  color: #c3c3c3;
+}

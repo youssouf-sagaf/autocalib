@@ -1,0 +1,7 @@
+# GPU overlay for TEST_AUTOCALIB_GPU (Tesla T4 + nvidia-container-toolkit).
+# Usage on VM: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build -d
+services:
+  autocalib:
+    gpus: all
+    environment:
+      SAM3_DEVICE: cuda

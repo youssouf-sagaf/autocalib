@@ -1,0 +1,248 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.switchRefBtn {
+  padding: 3px 10px;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  background: rgba(31, 41, 55, 0.08);
+  color: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.switchRefBtn:hover {
+  background: rgba(31, 41, 55, 0.18);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.canvasArea {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  background: #1a1a2e;
+  min-height: 0;
+}
+
+.canvasMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.canvasMainWithPreview {
+  flex: 0 0 auto;
+}
+
+.canvasMainResizing {
+  transition: none;
+}
+
+.canvasAreaResizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.canvasWrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #aaa;
+  font-size: 11px;
+  font-family: var(--font-secondary);
+  flex-shrink: 0;
+}
+
+.deviceChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+}
+
+.deviceLabel {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  font-family: var(--font-secondary);
+}
+
+/* ── Overlays ── */
+
+.progressOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 26, 46, 0.92);
+  z-index: 10;
+  gap: 16px;
+}
+
+.progressSpinnerWrap {
+  color: #c4b5fd;
+  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.35));
+}
+
+.progressStage {
+  color: #ccc;
+  font-size: 14px;
+  font-family: var(--font-secondary);
+}
+
+.progressBarOuter {
+  width: 280px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressBarInner {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.emptyState {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #7a7a9a;
+  gap: 8px;
+}
+
+.emptyState p {
+  font-size: 14px;
+}
+
+.emptyTitle {
+  text-align: center;
+  max-width: 340px;
+  line-height: 1.4;
+}
+
+.emptyDeviceLine {
+  text-align: center;
+  max-width: 420px;
+  line-height: 1.35;
+}
+
+.emptyMeta {
+  font-weight: 400;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.emptyState small {
+  font-size: 12px;
+  color: #555;
+}
+
+.emptyState kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+  color: #888;
+}
+
+.primaryCta {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.primaryCta:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.primaryCta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.secondaryCta {
+  padding: 8px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  background: transparent;
+  color: #ccc;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.secondaryCta:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.secondaryCta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.errorTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-danger);
+  text-align: center;
+}
+
+.errorBody {
+  font-size: 13px;
+  color: #aaa;
+  text-align: center;
+  max-width: 380px;
+  line-height: 1.4;
+}

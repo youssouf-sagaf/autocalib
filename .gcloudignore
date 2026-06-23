@@ -1,0 +1,26 @@
+# Cloud Build upload — based on .dockerignore; keep committed frontend assets.
+.git
+.gitignore
+.venv
+venv
+env
+autocalib-frontend/node_modules
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.egg-info
+sessions
+logs
+data
+absolutemap-gen
+autoabsmap/absolutemap_rd
+calib_gen/calib_gen_rd
+pairing/pairing_rd
+tests
+.cursor
+.claude
+.DS_Store
+.env
+obb-studio

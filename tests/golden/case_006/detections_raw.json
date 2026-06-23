@@ -1,0 +1,3448 @@
+{
+  "stage": "03_detection",
+  "schema_version": "2",
+  "mode": "yolo_obb_spots",
+  "image_height": 1280,
+  "image_width": 1280,
+  "class_names": {
+    "0": "empty_slot",
+    "1": "occupied_slot"
+  },
+  "num_spots": 264,
+  "num_occupied": 216,
+  "num_empty": 48,
+  "spots": [
+    {
+      "center_xy": [
+        750.73,
+        945.38
+      ],
+      "width": 46.14,
+      "height": 94.49,
+      "angle_rad": 0.4016,
+      "confidence": 0.99,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        54.15,
+        803.0
+      ],
+      "width": 42.3,
+      "height": 88.96,
+      "angle_rad": 0.379,
+      "confidence": 0.9893,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        214.9,
+        543.95
+      ],
+      "width": 45.56,
+      "height": 90.81,
+      "angle_rad": 0.4112,
+      "confidence": 0.9871,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        252.99,
+        666.94
+      ],
+      "width": 43.13,
+      "height": 91.46,
+      "angle_rad": 0.4618,
+      "confidence": 0.9847,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        14.7,
+        886.87
+      ],
+      "width": 43.61,
+      "height": 89.5,
+      "angle_rad": 0.3917,
+      "confidence": 0.9844,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        281.76,
+        1033.3
+      ],
+      "width": 41.47,
+      "height": 84.57,
+      "angle_rad": 0.4159,
+      "confidence": 0.9839,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1235.37,
+        839.76
+      ],
+      "width": 96.04,
+      "height": 45.67,
+      "angle_rad": 0.1331,
+      "confidence": 0.9833,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        870.25,
+        1228.69
+      ],
+      "width": 43.93,
+      "height": 98.13,
+      "angle_rad": 0.3893,
+      "confidence": 0.9832,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        166.51,
+        971.62
+      ],
+      "width": 42.07,
+      "height": 84.04,
+      "angle_rad": 0.5042,
+      "confidence": 0.9828,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        964.6,
+        1036.44
+      ],
+      "width": 42.92,
+      "height": 95.7,
+      "angle_rad": 0.3924,
+      "confidence": 0.9817,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        716.31,
+        920.66
+      ],
+      "width": 45.25,
+      "height": 88.7,
+      "angle_rad": 0.5291,
+      "confidence": 0.981,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        213.41,
+        879.3
+      ],
+      "width": 43.54,
+      "height": 86.97,
+      "angle_rad": 0.4123,
+      "confidence": 0.9807,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        480.45,
+        1022.21
+      ],
+      "width": 47.65,
+      "height": 95.5,
+      "angle_rad": 0.4616,
+      "confidence": 0.9806,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        884.75,
+        889.3
+      ],
+      "width": 46.46,
+      "height": 95.16,
+      "angle_rad": 0.3847,
+      "confidence": 0.9806,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        326.03,
+        946.88
+      ],
+      "width": 46.44,
+      "height": 96.56,
+      "angle_rad": 0.4393,
+      "confidence": 0.9806,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        471.17,
+        446.64
+      ],
+      "width": 45.83,
+      "height": 95.28,
+      "angle_rad": 0.4359,
+      "confidence": 0.9792,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        676.2,
+        1127.83
+      ],
+      "width": 45.69,
+      "height": 92.09,
+      "angle_rad": 0.3865,
+      "confidence": 0.9789,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        590.64,
+        1191.83
+      ],
+      "width": 42.61,
+      "height": 86.32,
+      "angle_rad": 0.3996,
+      "confidence": 0.9784,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        547.7,
+        27.88
+      ],
+      "width": 48.43,
+      "height": 82.74,
+      "angle_rad": 0.4345,
+      "confidence": 0.9774,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        552.0,
+        1173.94
+      ],
+      "width": 45.55,
+      "height": 91.58,
+      "angle_rad": 0.4535,
+      "confidence": 0.9774,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        433.56,
+        1013.16
+      ],
+      "width": 48.75,
+      "height": 102.62,
+      "angle_rad": 0.4181,
+      "confidence": 0.9773,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1141.87,
+        74.89
+      ],
+      "width": 46.21,
+      "height": 104.1,
+      "angle_rad": 0.411,
+      "confidence": 0.9758,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        911.87,
+        555.17
+      ],
+      "width": 45.9,
+      "height": 100.29,
+      "angle_rad": 0.4456,
+      "confidence": 0.975,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        680.9,
+        894.22
+      ],
+      "width": 48.88,
+      "height": 95.24,
+      "angle_rad": 0.4681,
+      "confidence": 0.9745,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        127.06,
+        949.19
+      ],
+      "width": 47.98,
+      "height": 97.11,
+      "angle_rad": 0.3971,
+      "confidence": 0.9744,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        658.23,
+        185.63
+      ],
+      "width": 44.14,
+      "height": 84.47,
+      "angle_rad": 0.5432,
+      "confidence": 0.9743,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        160.01,
+        1216.78
+      ],
+      "width": 45.06,
+      "height": 92.09,
+      "angle_rad": 0.3737,
+      "confidence": 0.9741,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        944.67,
+        680.82
+      ],
+      "width": 45.81,
+      "height": 87.6,
+      "angle_rad": 0.5354,
+      "confidence": 0.9731,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        472.33,
+        1127.42
+      ],
+      "width": 45.39,
+      "height": 95.22,
+      "angle_rad": 0.3918,
+      "confidence": 0.9727,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        397.84,
+        397.01
+      ],
+      "width": 45.39,
+      "height": 89.77,
+      "angle_rad": 0.3886,
+      "confidence": 0.9725,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        637.31,
+        1113.99
+      ],
+      "width": 41.59,
+      "height": 87.63,
+      "angle_rad": 0.3862,
+      "confidence": 0.9712,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        600.85,
+        851.24
+      ],
+      "width": 45.75,
+      "height": 89.65,
+      "angle_rad": 0.4604,
+      "confidence": 0.9711,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        821.36,
+        627.01
+      ],
+      "width": 46.33,
+      "height": 92.07,
+      "angle_rad": 0.511,
+      "confidence": 0.9693,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        494.9,
+        682.07
+      ],
+      "width": 47.37,
+      "height": 99.72,
+      "angle_rad": 0.4733,
+      "confidence": 0.9693,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        517.86,
+        359.77
+      ],
+      "width": 43.56,
+      "height": 94.54,
+      "angle_rad": 0.3523,
+      "confidence": 0.969,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1005.63,
+        1050.44
+      ],
+      "width": 44.59,
+      "height": 90.41,
+      "angle_rad": 0.3874,
+      "confidence": 0.969,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        249.93,
+        902.28
+      ],
+      "width": 46.49,
+      "height": 93.72,
+      "angle_rad": 0.3919,
+      "confidence": 0.9686,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        406.8,
+        289.23
+      ],
+      "width": 50.5,
+      "height": 102.64,
+      "angle_rad": 0.4454,
+      "confidence": 0.968,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        173.72,
+        859.1
+      ],
+      "width": 47.31,
+      "height": 94.47,
+      "angle_rad": 0.4409,
+      "confidence": 0.9679,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        133.74,
+        841.35
+      ],
+      "width": 42.67,
+      "height": 92.87,
+      "angle_rad": 0.3753,
+      "confidence": 0.9676,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        716.33,
+        1146.14
+      ],
+      "width": 45.02,
+      "height": 92.63,
+      "angle_rad": 0.3721,
+      "confidence": 0.9668,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        172.47,
+        625.59
+      ],
+      "width": 46.24,
+      "height": 94.65,
+      "angle_rad": 0.4309,
+      "confidence": 0.9663,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        85.07,
+        932.09
+      ],
+      "width": 42.09,
+      "height": 92.53,
+      "angle_rad": 0.4136,
+      "confidence": 0.9661,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        512.78,
+        1149.72
+      ],
+      "width": 47.8,
+      "height": 93.21,
+      "angle_rad": 0.3544,
+      "confidence": 0.9658,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        797.36,
+        492.72
+      ],
+      "width": 45.07,
+      "height": 99.88,
+      "angle_rad": 0.4087,
+      "confidence": 0.9653,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        520.43,
+        456.76
+      ],
+      "width": 45.13,
+      "height": 93.83,
+      "angle_rad": 0.4293,
+      "confidence": 0.9649,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        330.66,
+        1263.7
+      ],
+      "width": 48.97,
+      "height": 40.46,
+      "angle_rad": 0.3938,
+      "confidence": 0.9646,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        243.58,
+        1014.2
+      ],
+      "width": 49.33,
+      "height": 95.34,
+      "angle_rad": 0.4128,
+      "confidence": 0.9645,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        201.17,
+        1234.04
+      ],
+      "width": 42.3,
+      "height": 83.59,
+      "angle_rad": 0.4487,
+      "confidence": 0.9644,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        42.6,
+        1154.83
+      ],
+      "width": 47.89,
+      "height": 91.59,
+      "angle_rad": 0.4751,
+      "confidence": 0.9638,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        630.22,
+        1213.15
+      ],
+      "width": 47.58,
+      "height": 93.18,
+      "angle_rad": 0.3763,
+      "confidence": 0.9622,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        878.46,
+        997.31
+      ],
+      "width": 48.04,
+      "height": 95.57,
+      "angle_rad": 0.3595,
+      "confidence": 0.9604,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        287.35,
+        1258.13
+      ],
+      "width": 50.1,
+      "height": 57.71,
+      "angle_rad": 0.3708,
+      "confidence": 0.9602,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        338.73,
+        593.79
+      ],
+      "width": 49.72,
+      "height": 97.98,
+      "angle_rad": 0.3945,
+      "confidence": 0.9592,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        123.74,
+        1192.51
+      ],
+      "width": 46.04,
+      "height": 96.41,
+      "angle_rad": 0.444,
+      "confidence": 0.9583,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        83.97,
+        1174.74
+      ],
+      "width": 47.77,
+      "height": 93.88,
+      "angle_rad": 0.3864,
+      "confidence": 0.9566,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        832.95,
+        987.01
+      ],
+      "width": 43.71,
+      "height": 102.19,
+      "angle_rad": 0.3823,
+      "confidence": 0.9557,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        293.12,
+        686.06
+      ],
+      "width": 44.22,
+      "height": 100.62,
+      "angle_rad": 0.4128,
+      "confidence": 0.9544,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        383.23,
+        1102.02
+      ],
+      "width": 46.87,
+      "height": 95.18,
+      "angle_rad": 0.3706,
+      "confidence": 0.9533,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        799.52,
+        853.75
+      ],
+      "width": 51.13,
+      "height": 100.54,
+      "angle_rad": 0.3983,
+      "confidence": 0.9528,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1052.82,
+        387.45
+      ],
+      "width": 45.46,
+      "height": 95.49,
+      "angle_rad": 0.3906,
+      "confidence": 0.9526,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        756.27,
+        470.22
+      ],
+      "width": 49.18,
+      "height": 102.75,
+      "angle_rad": 0.3969,
+      "confidence": 0.9517,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        625.34,
+        523.1
+      ],
+      "width": 41.31,
+      "height": 82.48,
+      "angle_rad": 0.5533,
+      "confidence": 0.951,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        756.18,
+        1259.54
+      ],
+      "width": 40.04,
+      "height": 58.39,
+      "angle_rad": 0.4112,
+      "confidence": 0.9509,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1254.83,
+        601.61
+      ],
+      "width": 56.91,
+      "height": 49.24,
+      "angle_rad": 0.1996,
+      "confidence": 0.95,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        894.66,
+        310.78
+      ],
+      "width": 46.42,
+      "height": 89.33,
+      "angle_rad": 0.4233,
+      "confidence": 0.9485,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1009.4,
+        363.87
+      ],
+      "width": 47.31,
+      "height": 94.97,
+      "angle_rad": 0.5823,
+      "confidence": 0.9474,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1110.36,
+        729.01
+      ],
+      "width": 45.22,
+      "height": 102.53,
+      "angle_rad": 0.1352,
+      "confidence": 0.9471,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        930.4,
+        899.88
+      ],
+      "width": 45.41,
+      "height": 92.31,
+      "angle_rad": 0.4245,
+      "confidence": 0.9463,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1059.65,
+        31.07
+      ],
+      "width": 42.32,
+      "height": 80.98,
+      "angle_rad": 0.4362,
+      "confidence": 0.9458,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1098.17,
+        404.4
+      ],
+      "width": 49.36,
+      "height": 96.5,
+      "angle_rad": 0.418,
+      "confidence": 0.9456,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        907.6,
+        660.09
+      ],
+      "width": 45.69,
+      "height": 96.94,
+      "angle_rad": 0.5067,
+      "confidence": 0.9446,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        524.5,
+        1038.49
+      ],
+      "width": 47.29,
+      "height": 95.49,
+      "angle_rad": 0.4036,
+      "confidence": 0.9443,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1096.5,
+        55.9
+      ],
+      "width": 48.92,
+      "height": 109.01,
+      "angle_rad": 0.4036,
+      "confidence": 0.9422,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1230.36,
+        109.65
+      ],
+      "width": 50.27,
+      "height": 108.56,
+      "angle_rad": 0.423,
+      "confidence": 0.9416,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        906.73,
+        13.92
+      ],
+      "width": 50.28,
+      "height": 41.09,
+      "angle_rad": 0.2423,
+      "confidence": 0.9387,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        15.89,
+        784.53
+      ],
+      "width": 46.06,
+      "height": 97.65,
+      "angle_rad": 0.4181,
+      "confidence": 0.9382,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        615.03,
+        745.35
+      ],
+      "width": 46.24,
+      "height": 98.88,
+      "angle_rad": 0.4529,
+      "confidence": 0.9376,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        258.85,
+        565.32
+      ],
+      "width": 48.2,
+      "height": 95.04,
+      "angle_rad": 0.4116,
+      "confidence": 0.9372,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        943.95,
+        208.34
+      ],
+      "width": 54.76,
+      "height": 111.54,
+      "angle_rad": 0.3848,
+      "confidence": 0.9372,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        745.47,
+        580.78
+      ],
+      "width": 45.37,
+      "height": 88.92,
+      "angle_rad": 0.4773,
+      "confidence": 0.9369,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        480.74,
+        794.48
+      ],
+      "width": 46.05,
+      "height": 90.54,
+      "angle_rad": 0.3928,
+      "confidence": 0.9349,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        422.45,
+        633.93
+      ],
+      "width": 45.74,
+      "height": 94.46,
+      "angle_rad": 0.3906,
+      "confidence": 0.9341,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1038.29,
+        722.7
+      ],
+      "width": 51.88,
+      "height": 107.07,
+      "angle_rad": 0.3192,
+      "confidence": 0.9327,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1165.07,
+        325.77
+      ],
+      "width": 45.41,
+      "height": 95.26,
+      "angle_rad": 0.1619,
+      "confidence": 0.9324,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        123.38,
+        597.44
+      ],
+      "width": 51.09,
+      "height": 95.75,
+      "angle_rad": 0.4957,
+      "confidence": 0.9317,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        986.05,
+        232.22
+      ],
+      "width": 46.69,
+      "height": 100.06,
+      "angle_rad": 0.4636,
+      "confidence": 0.9276,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        797.48,
+        957.78
+      ],
+      "width": 43.27,
+      "height": 90.79,
+      "angle_rad": 0.3849,
+      "confidence": 0.9272,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        522.93,
+        815.46
+      ],
+      "width": 44.3,
+      "height": 93.33,
+      "angle_rad": 0.3785,
+      "confidence": 0.927,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        959.17,
+        14.67
+      ],
+      "width": 49.06,
+      "height": 44.09,
+      "angle_rad": 0.2548,
+      "confidence": 0.9266,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        756.09,
+        1169.42
+      ],
+      "width": 42.99,
+      "height": 92.36,
+      "angle_rad": 0.3727,
+      "confidence": 0.9259,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1047.54,
+        612.87
+      ],
+      "width": 50.37,
+      "height": 111.41,
+      "angle_rad": 0.3697,
+      "confidence": 0.9255,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        845.49,
+        870.93
+      ],
+      "width": 42.27,
+      "height": 89.29,
+      "angle_rad": 0.4131,
+      "confidence": 0.9249,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        589.86,
+        44.93
+      ],
+      "width": 46.06,
+      "height": 89.94,
+      "angle_rad": 0.4254,
+      "confidence": 0.9233,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        295.01,
+        580.99
+      ],
+      "width": 44.39,
+      "height": 86.76,
+      "angle_rad": 0.4648,
+      "confidence": 0.9191,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        974.53,
+        334.69
+      ],
+      "width": 49.34,
+      "height": 100.58,
+      "angle_rad": 0.5224,
+      "confidence": 0.9138,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        168.46,
+        517.31
+      ],
+      "width": 53.11,
+      "height": 102.13,
+      "angle_rad": 0.4101,
+      "confidence": 0.9122,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        569.58,
+        724.46
+      ],
+      "width": 49.45,
+      "height": 102.39,
+      "angle_rad": 0.4425,
+      "confidence": 0.9109,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        455.65,
+        659.87
+      ],
+      "width": 45.04,
+      "height": 99.59,
+      "angle_rad": 0.4825,
+      "confidence": 0.9108,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        703.53,
+        561.11
+      ],
+      "width": 43.49,
+      "height": 83.02,
+      "angle_rad": 0.5122,
+      "confidence": 0.9091,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1069.06,
+        988.89
+      ],
+      "width": 45.54,
+      "height": 88.0,
+      "angle_rad": 0.1228,
+      "confidence": 0.908,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1028.31,
+        1264.64
+      ],
+      "width": 52.45,
+      "height": 36.99,
+      "angle_rad": 0.2797,
+      "confidence": 0.9076,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        211.63,
+        652.5
+      ],
+      "width": 43.23,
+      "height": 88.81,
+      "angle_rad": 0.3814,
+      "confidence": 0.9074,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        5.74,
+        1135.71
+      ],
+      "width": 43.91,
+      "height": 90.68,
+      "angle_rad": 0.4272,
+      "confidence": 0.9063,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        398.13,
+        990.57
+      ],
+      "width": 44.1,
+      "height": 95.23,
+      "angle_rad": 0.4428,
+      "confidence": 0.9051,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        963.39,
+        1257.06
+      ],
+      "width": 47.45,
+      "height": 68.66,
+      "angle_rad": 0.4376,
+      "confidence": 0.9028,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1152.92,
+        416.96
+      ],
+      "width": 47.0,
+      "height": 97.19,
+      "angle_rad": 0.1365,
+      "confidence": 0.9023,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        997.88,
+        590.33
+      ],
+      "width": 47.81,
+      "height": 98.93,
+      "angle_rad": 0.374,
+      "confidence": 0.9,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1187.85,
+        87.23
+      ],
+      "width": 46.23,
+      "height": 94.76,
+      "angle_rad": 0.3536,
+      "confidence": 0.8993,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        619.38,
+        167.85
+      ],
+      "width": 47.55,
+      "height": 96.35,
+      "angle_rad": 0.3843,
+      "confidence": 0.8992,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        316.19,
+        254.47
+      ],
+      "width": 45.65,
+      "height": 90.75,
+      "angle_rad": 0.3995,
+      "confidence": 0.8959,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        797.53,
+        1265.35
+      ],
+      "width": 48.36,
+      "height": 38.02,
+      "angle_rad": 0.3986,
+      "confidence": 0.8949,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        824.83,
+        157.6
+      ],
+      "width": 46.58,
+      "height": 106.35,
+      "angle_rad": 0.4111,
+      "confidence": 0.8939,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        785.28,
+        605.26
+      ],
+      "width": 45.39,
+      "height": 91.75,
+      "angle_rad": 0.5027,
+      "confidence": 0.8923,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        441.42,
+        776.93
+      ],
+      "width": 45.56,
+      "height": 95.28,
+      "angle_rad": 0.4225,
+      "confidence": 0.8901,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        329.86,
+        709.14
+      ],
+      "width": 44.48,
+      "height": 101.38,
+      "angle_rad": 0.376,
+      "confidence": 0.8892,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        794.17,
+        1188.01
+      ],
+      "width": 41.31,
+      "height": 87.98,
+      "angle_rad": 0.3733,
+      "confidence": 0.8832,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        562.69,
+        834.69
+      ],
+      "width": 43.83,
+      "height": 94.74,
+      "angle_rad": 0.3412,
+      "confidence": 0.8825,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1056.6,
+        1074.86
+      ],
+      "width": 54.77,
+      "height": 96.84,
+      "angle_rad": 0.1694,
+      "confidence": 0.8805,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1240.51,
+        791.23
+      ],
+      "width": 85.89,
+      "height": 47.62,
+      "angle_rad": 0.1298,
+      "confidence": 0.8787,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        950.63,
+        570.61
+      ],
+      "width": 47.66,
+      "height": 95.06,
+      "angle_rad": 0.4653,
+      "confidence": 0.8767,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        783.35,
+        135.49
+      ],
+      "width": 48.21,
+      "height": 94.99,
+      "angle_rad": 0.5149,
+      "confidence": 0.8732,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        312.46,
+        358.03
+      ],
+      "width": 48.36,
+      "height": 90.15,
+      "angle_rad": 0.4175,
+      "confidence": 0.8723,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        363.06,
+        970.49
+      ],
+      "width": 40.49,
+      "height": 90.3,
+      "angle_rad": 0.4093,
+      "confidence": 0.8663,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        402.11,
+        760.33
+      ],
+      "width": 44.97,
+      "height": 98.37,
+      "angle_rad": 0.4093,
+      "confidence": 0.8652,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        742.35,
+        119.03
+      ],
+      "width": 50.83,
+      "height": 98.3,
+      "angle_rad": 0.4126,
+      "confidence": 0.8589,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        960.58,
+        14.26
+      ],
+      "width": 47.6,
+      "height": 44.81,
+      "angle_rad": 0.2403,
+      "confidence": 0.8577,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        863.55,
+        645.97
+      ],
+      "width": 45.34,
+      "height": 96.49,
+      "angle_rad": 0.3852,
+      "confidence": 0.8571,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        593.26,
+        495.18
+      ],
+      "width": 50.65,
+      "height": 103.43,
+      "angle_rad": 0.4297,
+      "confidence": 0.8565,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        601.95,
+        1086.84
+      ],
+      "width": 46.87,
+      "height": 94.22,
+      "angle_rad": 0.3793,
+      "confidence": 0.8559,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        562.3,
+        371.02
+      ],
+      "width": 49.46,
+      "height": 95.97,
+      "angle_rad": 0.4687,
+      "confidence": 0.855,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        317.81,
+        1055.35
+      ],
+      "width": 45.28,
+      "height": 91.09,
+      "angle_rad": 0.3907,
+      "confidence": 0.8547,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        352.67,
+        381.69
+      ],
+      "width": 45.26,
+      "height": 90.51,
+      "angle_rad": 0.4427,
+      "confidence": 0.848,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        734.66,
+        791.1
+      ],
+      "width": 52.76,
+      "height": 113.01,
+      "angle_rad": 0.4463,
+      "confidence": 0.8475,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1224.66,
+        938.78
+      ],
+      "width": 115.51,
+      "height": 58.48,
+      "angle_rad": 0.174,
+      "confidence": 0.843,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        433.0,
+        1107.46
+      ],
+      "width": 44.05,
+      "height": 89.2,
+      "angle_rad": 0.414,
+      "confidence": 0.8427,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1013.08,
+        22.28
+      ],
+      "width": 57.48,
+      "height": 67.15,
+      "angle_rad": 0.2794,
+      "confidence": 0.8403,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        529.02,
+        702.32
+      ],
+      "width": 43.65,
+      "height": 87.42,
+      "angle_rad": 0.5497,
+      "confidence": 0.8383,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        715.42,
+        1245.62
+      ],
+      "width": 46.17,
+      "height": 83.88,
+      "angle_rad": 0.418,
+      "confidence": 0.8306,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        203.38,
+        989.06
+      ],
+      "width": 45.59,
+      "height": 94.98,
+      "angle_rad": 0.4265,
+      "confidence": 0.8281,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        579.78,
+        147.74
+      ],
+      "width": 43.59,
+      "height": 83.75,
+      "angle_rad": 0.5596,
+      "confidence": 0.8158,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        362.65,
+        269.53
+      ],
+      "width": 50.78,
+      "height": 107.23,
+      "angle_rad": 0.4387,
+      "confidence": 0.8151,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        642.36,
+        868.87
+      ],
+      "width": 46.85,
+      "height": 94.54,
+      "angle_rad": 0.4014,
+      "confidence": 0.8146,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        862.49,
+        6.86
+      ],
+      "width": 49.91,
+      "height": 26.64,
+      "angle_rad": 0.2258,
+      "confidence": 0.8141,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        688.36,
+        776.75
+      ],
+      "width": 45.92,
+      "height": 96.8,
+      "angle_rad": 0.4592,
+      "confidence": 0.8104,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        873.33,
+        533.97
+      ],
+      "width": 46.17,
+      "height": 92.09,
+      "angle_rad": 0.4699,
+      "confidence": 0.805,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        913.17,
+        1248.59
+      ],
+      "width": 46.2,
+      "height": 88.86,
+      "angle_rad": 0.4256,
+      "confidence": 0.8008,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        921.65,
+        1022.2
+      ],
+      "width": 49.67,
+      "height": 104.66,
+      "angle_rad": 0.3465,
+      "confidence": 0.7922,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        866.52,
+        178.93
+      ],
+      "width": 49.11,
+      "height": 106.16,
+      "angle_rad": 0.4343,
+      "confidence": 0.7883,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        50.89,
+        910.09
+      ],
+      "width": 41.81,
+      "height": 87.3,
+      "angle_rad": 0.4322,
+      "confidence": 0.77,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        969.51,
+        921.88
+      ],
+      "width": 45.32,
+      "height": 93.37,
+      "angle_rad": 0.4586,
+      "confidence": 0.7693,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1030.46,
+        242.78
+      ],
+      "width": 51.71,
+      "height": 111.64,
+      "angle_rad": 0.4211,
+      "confidence": 0.7664,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        833.32,
+        512.38
+      ],
+      "width": 45.68,
+      "height": 93.42,
+      "angle_rad": 0.4632,
+      "confidence": 0.7602,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        663.74,
+        543.85
+      ],
+      "width": 50.15,
+      "height": 95.94,
+      "angle_rad": 0.3496,
+      "confidence": 0.7594,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        628.17,
+        62.12
+      ],
+      "width": 49.01,
+      "height": 96.66,
+      "angle_rad": 0.4756,
+      "confidence": 0.7573,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        562.72,
+        1063.42
+      ],
+      "width": 45.56,
+      "height": 98.73,
+      "angle_rad": 0.3999,
+      "confidence": 0.7317,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        385.35,
+        607.18
+      ],
+      "width": 46.34,
+      "height": 93.85,
+      "angle_rad": 0.4603,
+      "confidence": 0.7205,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        673.23,
+        1227.84
+      ],
+      "width": 43.98,
+      "height": 88.43,
+      "angle_rad": 0.3173,
+      "confidence": 0.7126,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        897.1,
+        196.33
+      ],
+      "width": 47.11,
+      "height": 98.81,
+      "angle_rad": 0.3774,
+      "confidence": 0.7115,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1010.45,
+        946.5
+      ],
+      "width": 52.06,
+      "height": 102.04,
+      "angle_rad": 0.4012,
+      "confidence": 0.7104,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1199.25,
+        1171.95
+      ],
+      "width": 105.35,
+      "height": 45.3,
+      "angle_rad": 0.2184,
+      "confidence": 0.7052,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1121.31,
+        642.51
+      ],
+      "width": 44.09,
+      "height": 88.86,
+      "angle_rad": 0.1778,
+      "confidence": 0.6985,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        350.73,
+        1079.33
+      ],
+      "width": 41.05,
+      "height": 88.06,
+      "angle_rad": 0.4749,
+      "confidence": 0.6864,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        839.66,
+        294.84
+      ],
+      "width": 54.13,
+      "height": 107.39,
+      "angle_rad": 0.3808,
+      "confidence": 0.6773,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        555.61,
+        476.26
+      ],
+      "width": 41.39,
+      "height": 80.42,
+      "angle_rad": 0.4773,
+      "confidence": 0.672,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        289.19,
+        925.05
+      ],
+      "width": 45.09,
+      "height": 85.68,
+      "angle_rad": 0.3385,
+      "confidence": 0.6622,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        481.6,
+        794.41
+      ],
+      "width": 46.01,
+      "height": 90.82,
+      "angle_rad": 0.4078,
+      "confidence": 0.6574,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        498.7,
+        114.84
+      ],
+      "width": 46.61,
+      "height": 90.99,
+      "angle_rad": 0.4999,
+      "confidence": 0.6568,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1208.82,
+        1128.46
+      ],
+      "width": 104.53,
+      "height": 45.23,
+      "angle_rad": 0.1953,
+      "confidence": 0.6502,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        369.56,
+        731.29
+      ],
+      "width": 43.68,
+      "height": 91.49,
+      "angle_rad": 0.3711,
+      "confidence": 0.6484,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        602.37,
+        390.48
+      ],
+      "width": 46.36,
+      "height": 100.09,
+      "angle_rad": 0.4199,
+      "confidence": 0.647,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1191.41,
+        1220.91
+      ],
+      "width": 119.11,
+      "height": 52.81,
+      "angle_rad": 0.1832,
+      "confidence": 0.6455,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        986.85,
+        705.41
+      ],
+      "width": 50.53,
+      "height": 102.3,
+      "angle_rad": 0.3711,
+      "confidence": 0.6291,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        982.57,
+        708.61
+      ],
+      "width": 53.74,
+      "height": 105.71,
+      "angle_rad": 0.47,
+      "confidence": 0.5944,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        318.52,
+        1053.63
+      ],
+      "width": 47.11,
+      "height": 95.95,
+      "angle_rad": 0.3733,
+      "confidence": 0.5938,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        800.18,
+        1264.29
+      ],
+      "width": 46.63,
+      "height": 34.99,
+      "angle_rad": 0.4199,
+      "confidence": 0.5819,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        761.36,
+        827.08
+      ],
+      "width": 42.0,
+      "height": 94.64,
+      "angle_rad": 0.5517,
+      "confidence": 0.5773,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        204.45,
+        987.33
+      ],
+      "width": 47.34,
+      "height": 101.13,
+      "angle_rad": 0.4152,
+      "confidence": 0.5565,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        714.17,
+        1246.63
+      ],
+      "width": 45.55,
+      "height": 80.9,
+      "angle_rad": 0.4242,
+      "confidence": 0.5476,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        242.89,
+        1250.1
+      ],
+      "width": 47.38,
+      "height": 81.35,
+      "angle_rad": 0.3799,
+      "confidence": 0.5469,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1080.88,
+        635.64
+      ],
+      "width": 39.27,
+      "height": 89.63,
+      "angle_rad": 0.3638,
+      "confidence": 0.5348,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1272.24,
+        137.16
+      ],
+      "width": 48.21,
+      "height": 94.91,
+      "angle_rad": 0.4102,
+      "confidence": 0.5184,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        930.28,
+        324.85
+      ],
+      "width": 41.47,
+      "height": 83.24,
+      "angle_rad": 0.5612,
+      "confidence": 0.5052,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1072.73,
+        739.03
+      ],
+      "width": 38.89,
+      "height": 86.7,
+      "angle_rad": 0.2913,
+      "confidence": 0.4804,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        940.61,
+        210.39
+      ],
+      "width": 56.14,
+      "height": 110.33,
+      "angle_rad": 0.4239,
+      "confidence": 0.4747,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        17.26,
+        783.29
+      ],
+      "width": 45.18,
+      "height": 93.92,
+      "angle_rad": 0.465,
+      "confidence": 0.471,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        500.11,
+        113.78
+      ],
+      "width": 47.66,
+      "height": 91.34,
+      "angle_rad": 0.5106,
+      "confidence": 0.4619,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        765.28,
+        822.6
+      ],
+      "width": 38.67,
+      "height": 91.92,
+      "angle_rad": 0.4286,
+      "confidence": 0.4542,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1056.98,
+        280.75
+      ],
+      "width": 45.27,
+      "height": 91.68,
+      "angle_rad": 0.4214,
+      "confidence": 0.4525,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        433.23,
+        418.51
+      ],
+      "width": 45.38,
+      "height": 90.91,
+      "angle_rad": 0.5139,
+      "confidence": 0.4502,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        834.19,
+        1203.5
+      ],
+      "width": 46.28,
+      "height": 103.79,
+      "angle_rad": 0.3611,
+      "confidence": 0.4475,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        119.03,
+        599.53
+      ],
+      "width": 55.27,
+      "height": 102.58,
+      "angle_rad": 0.4807,
+      "confidence": 0.4385,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        835.07,
+        1203.42
+      ],
+      "width": 46.7,
+      "height": 103.18,
+      "angle_rad": 0.3963,
+      "confidence": 0.4277,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        551.73,
+        477.86
+      ],
+      "width": 40.55,
+      "height": 83.32,
+      "angle_rad": 0.5409,
+      "confidence": 0.4189,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        963.6,
+        1038.02
+      ],
+      "width": 41.56,
+      "height": 90.39,
+      "angle_rad": 0.4086,
+      "confidence": 0.4082,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1098.09,
+        302.3
+      ],
+      "width": 48.93,
+      "height": 90.28,
+      "angle_rad": 0.4304,
+      "confidence": 0.4004,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        96.73,
+        811.28
+      ],
+      "width": 46.33,
+      "height": 96.0,
+      "angle_rad": 0.4644,
+      "confidence": 0.4003,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1173.79,
+        1255.16
+      ],
+      "width": 82.82,
+      "height": 25.66,
+      "angle_rad": 0.1565,
+      "confidence": 0.3988,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1095.11,
+        407.27
+      ],
+      "width": 51.32,
+      "height": 101.46,
+      "angle_rad": 0.4594,
+      "confidence": 0.3972,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        164.53,
+        519.19
+      ],
+      "width": 55.39,
+      "height": 100.67,
+      "angle_rad": 0.4755,
+      "confidence": 0.396,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1092.21,
+        57.42
+      ],
+      "width": 49.85,
+      "height": 104.92,
+      "angle_rad": 0.5183,
+      "confidence": 0.3888,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1030.75,
+        1264.03
+      ],
+      "width": 50.84,
+      "height": 35.63,
+      "angle_rad": 0.1846,
+      "confidence": 0.3873,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1203.33,
+        1175.5
+      ],
+      "width": 116.35,
+      "height": 52.2,
+      "angle_rad": 0.1797,
+      "confidence": 0.3866,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1209.75,
+        1129.14
+      ],
+      "width": 115.12,
+      "height": 51.97,
+      "angle_rad": 0.173,
+      "confidence": 0.3855,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        565.9,
+        725.87
+      ],
+      "width": 50.53,
+      "height": 102.44,
+      "angle_rad": 0.5114,
+      "confidence": 0.383,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1231.33,
+        882.3
+      ],
+      "width": 100.99,
+      "height": 45.92,
+      "angle_rad": 0.1284,
+      "confidence": 0.382,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1214.67,
+        1083.05
+      ],
+      "width": 104.76,
+      "height": 46.1,
+      "angle_rad": 0.2157,
+      "confidence": 0.382,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        349.7,
+        1075.04
+      ],
+      "width": 40.58,
+      "height": 83.55,
+      "angle_rad": 0.516,
+      "confidence": 0.3774,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1264.09,
+        508.62
+      ],
+      "width": 44.04,
+      "height": 49.68,
+      "angle_rad": 0.2538,
+      "confidence": 0.3749,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        542.45,
+        126.11
+      ],
+      "width": 43.94,
+      "height": 80.17,
+      "angle_rad": 0.5055,
+      "confidence": 0.3715,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1055.05,
+        1073.43
+      ],
+      "width": 54.27,
+      "height": 94.18,
+      "angle_rad": 0.2241,
+      "confidence": 0.354,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        452.95,
+        95.92
+      ],
+      "width": 56.19,
+      "height": 106.61,
+      "angle_rad": 0.4795,
+      "confidence": 0.3517,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1127.62,
+        317.33
+      ],
+      "width": 33.12,
+      "height": 81.42,
+      "angle_rad": 0.3674,
+      "confidence": 0.3358,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        289.84,
+        924.16
+      ],
+      "width": 45.0,
+      "height": 89.44,
+      "angle_rad": 0.3312,
+      "confidence": 0.3339,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        455.4,
+        96.16
+      ],
+      "width": 51.31,
+      "height": 95.48,
+      "angle_rad": 0.4499,
+      "confidence": 0.3297,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1042.78,
+        615.23
+      ],
+      "width": 53.47,
+      "height": 108.8,
+      "angle_rad": 0.4509,
+      "confidence": 0.3257,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        577.95,
+        146.15
+      ],
+      "width": 41.14,
+      "height": 83.13,
+      "angle_rad": 0.5587,
+      "confidence": 0.3215,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1232.6,
+        886.64
+      ],
+      "width": 113.19,
+      "height": 52.63,
+      "angle_rad": 0.1316,
+      "confidence": 0.3142,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        914.74,
+        1247.0
+      ],
+      "width": 46.29,
+      "height": 89.57,
+      "angle_rad": 0.4303,
+      "confidence": 0.309,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        404.3,
+        291.7
+      ],
+      "width": 53.6,
+      "height": 107.13,
+      "angle_rad": 0.4792,
+      "confidence": 0.3079,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        797.84,
+        850.58
+      ],
+      "width": 52.53,
+      "height": 99.43,
+      "angle_rad": 0.4893,
+      "confidence": 0.3074,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        709.62,
+        441.62
+      ],
+      "width": 50.09,
+      "height": 108.48,
+      "angle_rad": 0.4335,
+      "confidence": 0.2979,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        297.4,
+        578.49
+      ],
+      "width": 41.33,
+      "height": 93.24,
+      "angle_rad": 0.392,
+      "confidence": 0.2962,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        909.62,
+        10.78
+      ],
+      "width": 47.24,
+      "height": 36.74,
+      "angle_rad": 0.2793,
+      "confidence": 0.2941,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        824.1,
+        278.13
+      ],
+      "width": 88.84,
+      "height": 84.6,
+      "angle_rad": 0.4076,
+      "confidence": 0.2923,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        358.71,
+        272.64
+      ],
+      "width": 52.71,
+      "height": 109.58,
+      "angle_rad": 0.497,
+      "confidence": 0.2916,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        538.89,
+        131.66
+      ],
+      "width": 45.06,
+      "height": 83.58,
+      "angle_rad": 0.5376,
+      "confidence": 0.2739,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        662.28,
+        544.02
+      ],
+      "width": 52.99,
+      "height": 101.57,
+      "angle_rad": 0.4368,
+      "confidence": 0.2727,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        7.1,
+        845.3
+      ],
+      "width": 17.35,
+      "height": 35.58,
+      "angle_rad": 0.0398,
+      "confidence": 0.2658,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        751.07,
+        470.34
+      ],
+      "width": 52.56,
+      "height": 106.82,
+      "angle_rad": 0.5348,
+      "confidence": 0.2644,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        533.82,
+        698.3
+      ],
+      "width": 42.43,
+      "height": 97.56,
+      "angle_rad": 0.4347,
+      "confidence": 0.2631,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        682.87,
+        83.2
+      ],
+      "width": 64.16,
+      "height": 110.74,
+      "angle_rad": 0.3732,
+      "confidence": 0.2601,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1032.84,
+        727.02
+      ],
+      "width": 51.43,
+      "height": 103.8,
+      "angle_rad": 0.4213,
+      "confidence": 0.2586,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        335.14,
+        592.89
+      ],
+      "width": 53.32,
+      "height": 100.21,
+      "angle_rad": 0.4313,
+      "confidence": 0.2578,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        796.69,
+        493.98
+      ],
+      "width": 44.17,
+      "height": 92.79,
+      "angle_rad": 0.4271,
+      "confidence": 0.249,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        868.53,
+        535.6
+      ],
+      "width": 50.81,
+      "height": 103.37,
+      "angle_rad": 0.5453,
+      "confidence": 0.2457,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1245.4,
+        793.07
+      ],
+      "width": 88.09,
+      "height": 55.28,
+      "angle_rad": 0.0657,
+      "confidence": 0.2397,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        591.21,
+        494.78
+      ],
+      "width": 53.53,
+      "height": 101.36,
+      "angle_rad": 0.5046,
+      "confidence": 0.2225,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        729.39,
+        219.38
+      ],
+      "width": 99.02,
+      "height": 78.45,
+      "angle_rad": 0.365,
+      "confidence": 0.2189,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1222.37,
+        936.75
+      ],
+      "width": 114.81,
+      "height": 51.77,
+      "angle_rad": 0.1813,
+      "confidence": 0.2117,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1084.12,
+        632.15
+      ],
+      "width": 36.21,
+      "height": 89.04,
+      "angle_rad": 0.2341,
+      "confidence": 0.2097,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        571.57,
+        723.41
+      ],
+      "width": 48.33,
+      "height": 101.44,
+      "angle_rad": 0.4675,
+      "confidence": 0.2061,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        608.32,
+        387.36
+      ],
+      "width": 48.28,
+      "height": 101.48,
+      "angle_rad": 0.3377,
+      "confidence": 0.2013,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        503.19,
+        15.96
+      ],
+      "width": 45.79,
+      "height": 61.96,
+      "angle_rad": 0.4493,
+      "confidence": 0.2013,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1223.67,
+        1039.4
+      ],
+      "width": 95.72,
+      "height": 42.92,
+      "angle_rad": 0.1566,
+      "confidence": 0.2,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1257.56,
+        558.88
+      ],
+      "width": 62.06,
+      "height": 46.5,
+      "angle_rad": 0.1425,
+      "confidence": 0.1983,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        559.98,
+        371.1
+      ],
+      "width": 52.26,
+      "height": 99.94,
+      "angle_rad": 0.4925,
+      "confidence": 0.1901,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        351.08,
+        1077.43
+      ],
+      "width": 34.18,
+      "height": 86.33,
+      "angle_rad": 0.3918,
+      "confidence": 0.1899,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1271.65,
+        273.08
+      ],
+      "width": 14.63,
+      "height": 30.36,
+      "angle_rad": -0.031,
+      "confidence": 0.1828,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1271.52,
+        267.83
+      ],
+      "width": 14.63,
+      "height": 31.64,
+      "angle_rad": -0.0566,
+      "confidence": 0.1806,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        649.84,
+        765.7
+      ],
+      "width": 44.55,
+      "height": 98.75,
+      "angle_rad": 0.4913,
+      "confidence": 0.1804,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1223.6,
+        990.84
+      ],
+      "width": 111.67,
+      "height": 49.12,
+      "angle_rad": 0.1667,
+      "confidence": 0.1799,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        678.92,
+        82.43
+      ],
+      "width": 60.0,
+      "height": 104.45,
+      "angle_rad": 0.3614,
+      "confidence": 0.1793,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        902.71,
+        663.18
+      ],
+      "width": 47.94,
+      "height": 101.91,
+      "angle_rad": 0.5154,
+      "confidence": 0.1753,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1007.64,
+        947.43
+      ],
+      "width": 51.37,
+      "height": 100.56,
+      "angle_rad": 0.4402,
+      "confidence": 0.1752,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        919.08,
+        1022.88
+      ],
+      "width": 52.64,
+      "height": 105.73,
+      "angle_rad": 0.4266,
+      "confidence": 0.1725,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1238.74,
+        841.44
+      ],
+      "width": 100.11,
+      "height": 52.78,
+      "angle_rad": 0.1251,
+      "confidence": 0.1724,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        741.15,
+        582.52
+      ],
+      "width": 49.64,
+      "height": 96.47,
+      "angle_rad": 0.5423,
+      "confidence": 0.1723,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        455.62,
+        311.59
+      ],
+      "width": 56.46,
+      "height": 114.42,
+      "angle_rad": 0.3767,
+      "confidence": 0.1698,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1271.53,
+        268.08
+      ],
+      "width": 21.92,
+      "height": 57.0,
+      "angle_rad": -0.0041,
+      "confidence": 0.1657,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        1069.89,
+        985.06
+      ],
+      "width": 46.71,
+      "height": 94.86,
+      "angle_rad": 0.1391,
+      "confidence": 0.1625,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        289.85,
+        1262.19
+      ],
+      "width": 46.32,
+      "height": 37.83,
+      "angle_rad": 0.3629,
+      "confidence": 0.1557,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        434.73,
+        419.24
+      ],
+      "width": 46.26,
+      "height": 91.24,
+      "angle_rad": 0.5202,
+      "confidence": 0.1556,
+      "class_id": 0,
+      "occupied": false,
+      "source": "yolo"
+    },
+    {
+      "center_xy": [
+        555.71,
+        475.08
+      ],
+      "width": 36.35,
+      "height": 75.57,
+      "angle_rad": 0.4567,
+      "confidence": 0.1516,
+      "class_id": 1,
+      "occupied": true,
+      "source": "yolo"
+    }
+  ]
+}

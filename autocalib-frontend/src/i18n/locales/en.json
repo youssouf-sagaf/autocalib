@@ -1,0 +1,844 @@
+{
+  "language": {
+    "fr": "FR",
+    "en": "EN",
+    "switchAria": "Interface language"
+  },
+  "common": {
+    "undo": "Undo",
+    "undoBack": "Undo",
+    "redo": "Redo",
+    "delete": "Delete",
+    "save": "Save",
+    "reset": "Reset",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "close": "Close",
+    "apply": "Apply",
+    "switch": "Switch",
+    "refresh": "Refresh",
+    "loading": "Loading…",
+    "or": "or",
+    "unknownError": "Unknown error",
+    "noDevice": "No device",
+    "reference": "Reference",
+    "frame": "Frame {{index}} / {{total}}",
+    "viewOnly": "VIEW ONLY",
+    "browse": "BROWSE",
+    "select": "SELECT",
+    "lasso": "LASSO",
+    "add": "ADD",
+    "modify": "MODIFY",
+    "bulkDelete": "BULK DELETE",
+    "multiResize": "SIZE BBOX",
+    "stop": "Stop",
+    "running": "Running…",
+    "clearAll": "Clear all",
+    "pairsProgress": "{{paired}}/{{total}} paired",
+    "pairsZones": "{{pairs}} pairs · {{zones}} zones",
+    "paired": "paired",
+    "roi": "ROI {{n}}"
+  },
+  "nav": {
+    "dashboard": "Home",
+    "absoluteMap": "Absolute Map",
+    "calibration": "Calibration",
+    "pairing": "Pairing",
+    "absmapShort": "Absmap",
+    "goDashboard": "Go to Dashboard (G H)",
+    "collapseSidebar": "Collapse sidebar (⌘B)",
+    "expandSidebar": "Expand sidebar (⌘B)",
+    "shortcuts": "Shortcuts",
+    "brandTitle": "Cocoparks",
+    "logout": "Log out",
+    "accountMenu": "Account"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "loginWelcome": "Welcome back!",
+    "loginSubtitle": "Sign in with your Cocopilot account.",
+    "invalidCredentials": "Invalid email or password.",
+    "firebaseNotConfigured": "Authentication is not configured on this server.",
+    "guest": "User",
+    "accessDeniedTitle": "Staff access only",
+    "accessDeniedMessage": "Autocalib Tools is reserved for Cocoparks staff accounts.",
+    "profileLoadFailed": "Could not load your Cocopilot profile. Please sign in again."
+  },
+  "bulkDeleteConfirm": {
+    "title": "Delete slots?",
+    "body_one": "Do you want to delete {{count}} slot for {{client}}?",
+    "body_other": "Do you want to delete {{count}} slots for {{client}}?",
+    "confirm_one": "Delete {{count}} slot",
+    "confirm_other": "Delete {{count}} slots"
+  },
+  "notifications": {
+    "title": "Activity",
+    "openPanel": "Open notifications",
+    "closeAria": "Close notifications",
+    "unread_one": "{{count}} unread",
+    "unread_other": "{{count}} unread",
+    "markAllRead": "Mark all as read",
+    "empty": "No activity for this session yet.",
+    "ageJustNow": "Just now",
+    "ageMinutes": "{{count}} min ago",
+    "ageMinutes_other": "{{count}} min ago",
+    "ageHours": "{{count}} h ago",
+    "ageHours_other": "{{count}} h ago",
+    "ageDays": "{{count}} d ago",
+    "ageDays_other": "{{count}} d ago",
+    "events": {
+      "pipelineDone_one": "{{added}} slot added · {{tiles}} tile(s)",
+      "pipelineDone_other": "{{added}} slots added · {{tiles}} tile(s)",
+      "pipelineEmpty": "No slots detected — please use the Extend tool",
+      "saveB2bSuccess": "Session synced to production · {{total}} slots ({{created}} created)",
+      "saveB2bNoCreates": "Sync finished — no slots created in prod",
+      "saveB2bFailed": "Production sync failed",
+      "calibSaved": "Calibration saved to production · {{count}} bbox(es)",
+      "calibSaveFailed": "Failed to save calibration to production"
+    }
+  },
+  "alerts": {
+    "ok": "OK",
+    "dismissHint": "Enter or Esc to close",
+    "jobDone": {
+      "title": "Pipeline complete",
+      "message_one": "{{added}} slot added · {{tiles}} tile(s)",
+      "message_other": "{{added}} slots added · {{tiles}} tile(s)"
+    },
+    "jobDoneEmpty": {
+      "title": "No slots detected",
+      "message": "Use the Extend tool to add slots."
+    },
+    "lassoNoHits": {
+      "title": "No deletable slots",
+      "message": "No deletable slots in the lasso. Draw again or press Esc."
+    },
+    "lassoCopyTooShort": {
+      "title": "Selection too short",
+      "message": "Draw a larger loop."
+    },
+    "cloneRowNoPick": {
+      "title": "No slots selected",
+      "message": "No slots in the lasso — session or B2B reference."
+    },
+    "cloneRowNeedSlots": {
+      "title": "No slots on the map",
+      "message": "Generate, add, or load the B2B reference overlay."
+    },
+    "cloneRowNothingCommitted": {
+      "title": "No copies saved",
+      "message": "Try again with a different selection."
+    }
+  },
+  "dashboard": {
+    "title": "Workspace",
+    "subtitle": "Pick a client to zoom the map, then a device when you run calibration.",
+    "switchClientTitle": "Switch client (⌘D)",
+    "switchDeviceTitle": "Switch device (⌘D)",
+    "selectClient": "Select client",
+    "selectCocospot": "Select Cocospot",
+    "cards": {
+      "absmap": {
+        "title": "Absolute Map",
+        "description": "Generate and edit parking slot maps from aerial imagery. Draw ROIs, run the AI pipeline, refine with editing tools."
+      },
+      "calib": {
+        "title": "Calibration",
+        "description": "Generate stable bounding boxes for camera views. Select device and client, run detection across frames, refine results."
+      },
+      "pairing": {
+        "title": "Pairing",
+        "description": "Link geo slots from the absolute map to calibration bounding boxes. Manual, zone-based, and auto-suggest modes."
+      }
+    },
+    "recentClients": "Recent clients",
+    "recentDevices": "Recent Cocospots",
+    "footerPalette": "Press <kbdCmdK/> to open the command palette",
+    "footerShortcuts": "Press <kbdQ/> for all shortcuts"
+  },
+  "commands": {
+    "goHome": "Go to Dashboard",
+    "goAbsmap": "Go to Absolute Map",
+    "goCalib": "Go to Calibration",
+    "goPairing": "Go to Pairing",
+    "toggleSidebar": "Toggle Sidebar",
+    "toggleDualMap": "Toggle Dual Map",
+    "switchClient": "Switch Client",
+    "switchDevice": "Switch Cocospot (Device)",
+    "showShortcuts": "Show Keyboard Shortcuts",
+    "save": "Save session",
+    "absmapAddSlot": "Add slot",
+    "absmapEraser": "Eraser — click to delete",
+    "absmapLasso": "Lasso — bulk delete",
+    "absmapDrawRoi": "Draw ROI",
+    "absmapLaunch": "Launch pipeline",
+    "absmapStraighten": "Straighten row",
+    "absmapReprocess": "Reprocess zone",
+    "absmapOverlayDet": "Toggle Detections layer",
+    "absmapOverlayPost": "Toggle Post-process layer",
+    "calibRun": "Run detection",
+    "calibLock": "Lock selection",
+    "calibDelete": "Delete selected bboxes",
+    "pairingPair": "Pair tool",
+    "pairingZone": "Draw pairing zone",
+    "pairingAuto": "Auto-suggest",
+    "pairingSave": "Save pairings"
+  },
+  "commandCategories": {
+    "navigation": "Navigation",
+    "view": "View",
+    "device": "Device",
+    "help": "Help",
+    "other": "Other",
+    "absmap": "Absolute Map",
+    "calib": "Calibration",
+    "pairing": "Pairing"
+  },
+  "toolDock": {
+    "expand": "Expand tool dock",
+    "collapse": "Collapse tool dock",
+    "groups": {
+      "selection": "Selection",
+      "edit": "Edit",
+      "ai": "AI",
+      "history": "History",
+      "actions": "Actions",
+      "pairing": "Pairing",
+      "zone": "Zone"
+    }
+  },
+  "statusBar": {
+    "unsaved": "Unsaved",
+    "exitTool": "exit",
+    "absmap": {
+      "select": "V Select",
+      "drawing": "R Draw ROI",
+      "slotCount": "{{count}} slots",
+      "selectedCount": "{{count}} selected",
+      "deleteSelection": "delete selection",
+      "needRoi": "Draw a ROI with R to launch the pipeline",
+      "modes": {
+        "eraser": "E Eraser",
+        "bulk_delete": "L Lasso",
+        "add": "A Add",
+        "copy": "C Copy",
+        "modify": "M Modify",
+        "straighten": "Y Straighten",
+        "reprocess": "B Reprocess",
+        "tile_row": "T Extend row",
+        "clone_row": "⇧R Clone row"
+      },
+      "hints": {
+        "select": "Click = select · Shift+click = multi · Right-click = slot type · Del = delete selection",
+        "drawing": "Click = vertex · double-click = close · Esc = undo last point",
+        "eraser": "Click = delete one slot · Esc exit",
+        "bulk_delete": "Red halo = target · release to confirm · Esc cancel",
+        "add": "Drag the + marker on the map · Esc cancel",
+        "copy": "Click a pin to duplicate",
+        "modify": "Drag a pin to move",
+        "straighten": "Two clicks on the same row",
+        "reprocess": "Draw zone · click reference slot",
+        "tile_row": "Click a slot · aim at gap · Enter accept",
+        "clone_row": "Lasso around slots · drag · Enter confirm"
+      }
+    },
+    "calib": {
+      "select": "V Select",
+      "bboxCount": "{{count}} bboxes",
+      "selectedCount": "{{count}} selected",
+      "hint": "Del deletes selection · K locks",
+      "modes": {
+        "select": "V Select",
+        "lasso_select": "L Lasso",
+        "add": "A Add",
+        "modify": "M Modify"
+      },
+      "hints": {
+        "select": "Click toggles · drag empty = marquee · Shift+drag adds · L lasso",
+        "lasso_select": "Drag on empty · release closes · Shift adds · S rectangle",
+        "add": "Click to place a bbox",
+        "modify": "Drag a bbox to move (locked bboxes stay put)"
+      }
+    },
+    "pairing": {
+      "default": "V Navigate",
+      "autoSuggest": "Q Auto-suggest",
+      "hint": "P pair · Z zone pairing",
+      "tools": {
+        "pair": "P Pair",
+        "unpair": "U Unpair",
+        "draw_zone": "Z Zone Pairing"
+      },
+      "hints": {
+        "pair": "Slot on map then bbox on image · <kCmdZ/> undo · <kP/> exit",
+        "unpair": "Click a linked slot or bbox · <kCmdZ/> undo · <kU/> exit",
+        "draw_zone": "Lasso map or image · then the other side · <kEsc/> cancel · <kZ/> exit",
+        "draw_zoneNeedImage": "Map zone drawn — lasso image · <kEsc/> cancel · <kZ/> exit",
+        "draw_zoneNeedMap": "Image zone drawn — lasso map · <kEsc/> cancel · <kZ/> exit",
+        "autoSuggest": "Auto-suggest — lasso map or image · <kQ/> exit",
+        "zoneRejected": "Zone rejected — {{message}}"
+      }
+    }
+  },
+  "commandPalette": {
+    "placeholder": "Type a command…",
+    "empty": "No command found for this search."
+  },
+  "contextHeader": {
+    "switchClientTitle": "Switch client (⌘D)",
+    "selectClientTitle": "Select a client to center the map",
+    "selectClient": "Select client…",
+    "switchDeviceTitle": "Switch Cocospot (⌘D)",
+    "selectDeviceTitle": "Select a device for calibration",
+    "selectDevice": "Select device…",
+    "commandPaletteTitle": "Command palette (⌘K)"
+  },
+  "clientPicker": {
+    "title": "Select client",
+    "refreshListingTitle": "Reload client directory from the server",
+    "closeTitle": "Close",
+    "closeAria": "Close",
+    "client": "Client (city)",
+    "loadingClients": "Loading clients…",
+    "loadingClientsShort": "loading…",
+    "availableClients": "{{count}} available",
+    "selectClient": "Select client…",
+    "hint": "Centers the map on this city. Device selection happens in Calibration.",
+    "recent": "Recent clients",
+    "filterPlaceholder": "Filter…"
+  },
+  "search": {
+    "placeholder": "Address or GPS coordinates (lat, lng)…",
+    "coordsSuggestion": "GPS coordinates — {{lat}}, {{lng}}"
+  },
+  "appShell": {
+    "drawingBanner": "<strong>Drawing</strong> — click to place vertices · double-click or click first point to close · <kEsc/> undo last point",
+    "dualMap": "Dual Map",
+    "dualMapTitleOn": "Toggle dual map view",
+    "dualMapTitleWait": "Run pipeline first",
+    "gHint": "<span>G →</span>",
+    "gHintOr": "or",
+    "modes": {
+      "add": {
+        "title": "Add mode",
+        "body": "Press on the map · drag the + marker · release to place · <kEsc/> cancel · <kA/> exit"
+      },
+      "bulk_delete": {
+        "title": "Lasso delete",
+        "body": "Draw a lasso · red halo = slots to delete · release to open confirmation · <kEsc/> cancel · <kL/> exit"
+      },
+      "delete": {
+        "title": "Click delete",
+        "body": "Click a slot to remove it · stay in mode to delete more · <kEsc/> · <kDel/> exit"
+      },
+      "copy": {
+        "title": "Copy mode",
+        "body": "Click a marker to duplicate · <kEsc/> · <kC/> exit"
+      },
+      "modify": {
+        "title": "Modify mode",
+        "body": "Drag a marker to reposition · release to apply · click the map to place (after Copy) · <kEsc/> cancel · <kM/> exit"
+      },
+      "straighten": {
+        "title": "Straighten mode",
+        "body": "Click two slots on the same row · alignment applies immediately · <kCmdZ/> undo · <kEsc/> · <kY/> exit"
+      },
+      "reprocess": {
+        "title": "Reprocess mode",
+        "body": "Trace the zone to fill · click a reference slot · review proposals (Accept / Reject) · <kEsc/> step back · <kB/> exit"
+      },
+      "tile_row": {
+        "title": "Extend row",
+        "body": "Click a slot or empty gap · move the mouse to orient the bbox · click to lock orientation · aim at the gap · click or drag to confirm · +/- count · <kEnter/> accept · <kEsc/> cancel · <kT/> exit"
+      },
+      "clone_row": {
+        "title": "Row duplicate",
+        "body": "Draw a lasso around slot(s) — session or B2B reference · release · drag · <kEnter/> confirm · <kEsc/> cancel · <kR/> exit"
+      }
+    }
+  },
+  "map": {
+    "reference": "Reference",
+    "detections": "Detections"
+  },
+  "absmapRail": {
+    "ariaLabel": "Map edit tools",
+    "select": "Select",
+    "eraser": "Eraser",
+    "add": "Add",
+    "rowBrush": "Extend",
+    "cloneRow": "Row duplicate",
+    "lasso": "Lasso",
+    "copy": "Copy",
+    "modify": "Modify",
+    "straighten": "Straighten",
+    "reprocess": "Reprocess",
+    "titleSelect": "Select slots (V)",
+    "titleEraser": "Eraser — click to delete one slot (E)",
+    "titleLasso": "Lasso — bulk delete (L)",
+    "titleRowBrush": "Extend a row — click a slot then aim at the gap ({{shortcut}})",
+    "titleCloneRow": "Duplicate a row — click+drag a slot ({{shortcut}})",
+    "titleTool": "{{label}}{{shortcut}}",
+    "titleStraighten": "Straighten row — two clicks ({{shortcut}})",
+    "titleReprocess": "Reprocess zone ({{shortcut}})",
+    "titleUndo": "Undo (⌘Z)",
+    "titleRedo": "Redo (⌘⇧Z · ⌘Y)"
+  },
+  "absmapBottom": {
+    "waitPipeline": "Wait for pipeline to finish",
+    "stopDraw": "Stop drawing (Esc · R)",
+    "drawRoi": "Draw ROI polygon (R)",
+    "drawRoiLabel": "Draw ROI",
+    "viewRoiList": "View ROI list",
+    "pipelineRunning": "Pipeline running…",
+    "needRoi": "Draw at least one ROI first (R)",
+    "launchTitle": "Launch mapping ({{count}} ROI) · J",
+    "launch": "Launch"
+  },
+  "absmapSession": {
+    "saveDirty": "Save session",
+    "saveClean": "No changes to save",
+    "saving": "Saving…",
+    "refreshingOverlay": "Refreshing prod overlay…",
+    "syncingProd": "Syncing to cocopilot…",
+    "retrySave": "Retry",
+    "saveError": "B2B error",
+    "resetSession": "Reset session",
+    "overlayToggle": "Toggle {{label}} overlay",
+    "overlayDet": "Det",
+    "overlayPost": "Post",
+    "overlayRoi": "ROI",
+    "overlayDetection": "Detections",
+    "overlayPostFull": "Post-process",
+    "overlayGroupAria": "Overlays",
+    "layersMenu": "Layers",
+    "layersMenuTitle": "Show or hide pipeline layers"
+  },
+  "imagerySource": {
+    "groupAria": "Imagery source",
+    "toggle": "Use {{label}} imagery on next launch",
+    "mapbox": "Mapbox satellite",
+    "ignCurrent": "IGN — current",
+    "ignPleiades2026": "IGN — Pléiades 2026",
+    "hintFranceOnly": "France only",
+    "layerControlTitle": "Satellite imagery",
+    "layerControlAria": "Open satellite imagery selector",
+    "wysiwygHint": "What you see is what the pipeline uses for crops and detection."
+  },
+  "slotTypePopover": {
+    "title": "Slot type",
+    "titleMultiple": "Slot type ({{count}})",
+    "mixedTypes": "Mixed types",
+    "closeAria": "Close",
+    "hint": "Color on map",
+    "category": "Category"
+  },
+  "slotTypes": {
+    "groups": {
+      "commonPlaces": "Standard parking",
+      "accessibility": "Accessibility & vehicles",
+      "regulation": "Regulation",
+      "network": "Transit & stops",
+      "technical": "Technical & maintenance"
+    },
+    "common": "Standard curb parking",
+    "short_duration": "Short stay / pickup-dropoff",
+    "pmr": "Accessible (PMR)",
+    "evh": "EV / charging",
+    "bike": "Bicycle",
+    "scooter": "Two-wheeler / scooter",
+    "forbidden": "No parking",
+    "delivery_dotted": "Delivery (mixed bays)",
+    "delivery_only": "Delivery only",
+    "bus_stop": "Bus stop",
+    "taxi": "Taxi",
+    "trolley": "Trolley / handling",
+    "pole": "Pole / obstacle",
+    "to_delete": "To remove"
+  },
+  "jobProgress": {
+    "failed": "Failed: {{message}}"
+  },
+  "devicePicker": {
+    "title": "Switch device",
+    "refreshListingTitle": "Reload client and device directories from the server",
+    "closeTitle": "Close",
+    "client": "Client",
+    "device": "Device",
+    "loadingClients": "Loading clients…",
+    "loadingClientsShort": "loading…",
+    "availableClients": "{{count}} available",
+    "selectClient": "Select client…",
+    "loadingDevices": "loading…",
+    "updatingDevices": "updating…",
+    "devicesCount": "{{count}} devices",
+    "devicesCache": "{{count}} (cache)",
+    "reloadDevicesTitle": "Reload device list for this client from the server",
+    "reloadDevices": "Reload devices",
+    "pickClientFirst": "Pick a client first",
+    "loadingDevicesEllipsis": "Loading devices…",
+    "noDevicesForClient": "No devices for this client",
+    "selectDevice": "Select device…",
+    "recent": "Recent",
+    "filterPlaceholder": "Filter…",
+    "removeRecentTitle": "Remove from recent",
+    "noMatchingDevices": "No matching devices",
+    "closeAria": "Close"
+  },
+  "shortcutOverlay": {
+    "title": "Keyboard shortcuts",
+    "note": "⌘ = Ctrl (Win/Linux)",
+    "closeAria": "Close",
+    "groups": {
+      "global": "Global",
+      "absmap": "Absolute Map",
+      "calib": "Calibration",
+      "pairing": "Pairing"
+    },
+    "otherWorkspaces": "Other workspaces",
+    "global": {
+      "palette": "Command palette",
+      "save": "Save",
+      "undo": "Undo",
+      "redo": "Redo",
+      "sidebar": "Toggle sidebar",
+      "devicePicker": "Client / device picker",
+      "absmap": "Absolute Map",
+      "calibration": "Calibration",
+      "pairingNav": "Pairing",
+      "dashboard": "Dashboard",
+      "dualMap": "Dual map",
+      "pan": "Temporary pan (hold)",
+      "thisSheet": "Show this sheet",
+      "esc": "Close · deselect · exit tool"
+    },
+    "absmap": {
+      "select": "Select / navigate",
+      "eraser": "Eraser — click to delete",
+      "addSlot": "Add slot",
+      "deleteSelection": "Delete selection",
+      "lassoDelete": "Lasso — bulk delete",
+      "copySlot": "Copy slot",
+      "modifySlot": "Modify slot",
+      "straighten": "Straighten row",
+      "reprocess": "Reprocess zone",
+      "rowBrush": "Extend row (click slot + aim at gap)",
+      "cloneRow": "Duplicate a row",
+      "drawRoi": "Draw / stop ROI",
+      "launchPipeline": "Launch pipeline",
+      "undo": "Undo",
+      "redo": "Redo"
+    },
+    "calib": {
+      "rectSelect": "Rectangle select",
+      "lasso": "Freehand lasso",
+      "addBbox": "Add bbox",
+      "modifyBbox": "Modify bbox",
+      "lockSelection": "Lock / unlock selection",
+      "deleteSelected": "Delete selected",
+      "shiftDrag": "Add to selection",
+      "zoom": "Zoom",
+      "undo": "Undo",
+      "redo": "Redo"
+    },
+    "pairing": {
+      "pairTool": "Pair tool",
+      "unpairTool": "Unpair tool",
+      "mapZone": "Map zone",
+      "zone": "Zone Pairing",
+      "imageZone": "Image zone",
+      "autoSuggest": "Auto-suggest toggle",
+      "finishZone": "Finish zone · accept proposal",
+      "skipProposal": "Skip proposal",
+      "reverseSide": "Reverse zone side",
+      "deleteZone": "Delete active zone",
+      "undo": "Undo",
+      "redo": "Redo"
+    }
+  },
+  "calib": {
+    "confidenceFilter": "Confidence filter",
+    "confidenceFilterTitle": "Confidence filter: only detections with score at least this % stay visible.",
+    "confidenceAria": "Minimum confidence threshold to show a detection",
+    "railAria": "Calibration edit tools",
+    "select": "Select",
+    "lassoTool": "Lasso",
+    "add": "Add",
+    "modify": "Modify",
+    "lock": "Lock",
+    "titleLock": "Lock / unlock selection (K)",
+    "titleDeleteBboxes": "Delete selected bboxes (Del)",
+    "bottomPrevFrame": "Previous frame",
+    "bottomNextFrame": "Next frame",
+    "bottomRefView": "Reference view",
+    "bottomBackRef": "Back to reference view",
+    "resizeTitle": "Same square size (px) for all bboxes — locked unchanged",
+    "resize": "Size bbox",
+    "zoomCanvasAria": "Zoom calibration canvas",
+    "modes": {
+      "select": {
+        "title": "Select mode",
+        "body": "Click bboxes to toggle · drag on empty canvas to marquee · <kShift/>+drag adds · <kL/> freehand lasso · <kS/> exit"
+      },
+      "lasso_select": {
+        "title": "Freehand lasso",
+        "body": "Click-drag on empty canvas · release closes · boxes inside selected · <kShift/> add · <kS/> rectangle · <kDel/> remove · <kEsc/> exit"
+      },
+      "add": {
+        "title": "Add mode",
+        "body": "Click to place a bbox · <kEsc/> · <kA/> exit"
+      },
+      "modify": {
+        "title": "Modify mode",
+        "body": "Drag a bbox to move it (locked bboxes blocked) · <kEsc/> · <kM/> exit"
+      }
+    },
+    "viewOnlyBanner": "<strong>View only</strong> — Frame {{frame}} · edits are disabled · switch to Reference to modify bboxes",
+    "switchToReference": "Switch to Reference",
+    "starting": "Starting…",
+    "loadingFromProd": "Loading calibration from production…",
+    "runningBackgroundTitle": "Running detection in background",
+    "runningBackgroundHint": "Open the editor when you are ready — it will not load the image until you click Generate.",
+    "detectionFinishedTitle": "Detection finished",
+    "detectionFinishedHint": "The result is ready. Click Generate to load the frames and bbox overlay in this editor.",
+    "generate": "Generate",
+    "regenerate": "Regenerate",
+    "saveCalib": "Save",
+    "saveToProd": "Save To Prod",
+    "savingCalib": "Saving…",
+    "saveCalibTitle": "Save calibration bboxes and pairings to production",
+    "saveToProdTitle": "Publish built bboxes to production calibration",
+    "noDataTitle": "No calibration data yet for this Cocospot",
+    "prodExistsOnGenerateTitle": "A production calibration already exists for this Cocospot",
+    "prodExistsOnGenerateHint": "Open « Edit Calibs » to view or edit it, or start a new build here.",
+    "prodExists": {
+      "badge": "In production",
+      "lead": "{{count}} bboxes already saved for this Cocospot",
+      "hint": "Choose how to continue.",
+      "editDesc": "View and edit bboxes saved in production.",
+      "editCta": "Open editor",
+      "buildDesc": "Run a new ML detection to rebuild the calibration."
+    },
+    "noData": {
+      "badge": "To build",
+      "hint": "Run ML detection to generate the first calibration bboxes."
+    },
+    "goToProductionTab": "Edit Calibs",
+    "goToConstructionTab": "Generate Calibs",
+    "pickCocospotTitle": "Select a Cocospot (client + device) to run calibration",
+    "selectDeviceTitle": "Select a device for this client",
+    "selectDeviceCta": "Choose Cocospot…",
+    "selectDeviceCmd": "Open the device picker with <kCmdD/>",
+    "deviceIdLine": "Device ID · {{id}}",
+    "pickCocospotCmd": "Pick a client on the dashboard or Absolute Map, then a device here with <kCmdD/>",
+    "generationFailed": "Generation failed",
+    "retry": "Retry",
+    "statusBboxes": "{{count}} bboxes",
+    "statusSelected": " · {{count}} selected",
+    "reference": "Reference",
+    "frameLabel": "Frame {{current}} / {{total}}",
+    "noProdSaved": "No saved calibration for this device",
+    "tabs": {
+      "aria": "Calibration Workspace Modes",
+      "production": "Edit Calibs",
+      "productionTitle": "Edit Calibs — saved production bboxes",
+      "generate": "Generate Calibs",
+      "generateTitle": "Generate Calibs — generate and refine via ML"
+    },
+    "preview": {
+      "title": "Aide à la Calib",
+      "toggleLabel": "Aide à la Calib",
+      "open": "Open calibration preview",
+      "close": "Close calibration preview",
+      "prev": "Previous",
+      "next": "Next",
+      "rankNav": "Rank {{rank}} / {{total}} — Vehicles: {{count}}",
+      "resizeHandle": "Resize preview panel",
+      "refresh": "Refresh lastpics preview",
+      "refreshing": "Refreshing…",
+      "loading": "Loading preview…",
+      "scanning": "Image analysis in progress…",
+      "analyzingInBackground": "Analysis in progress — reopen preview",
+      "empty": "No cached preview — run a refresh first to analyze lastpics.",
+      "noImages": "Analysis completed: no usable daytime lastpics found.",
+      "retry": "Retry",
+      "alreadyRunning": "A refresh is already running — polling GET…",
+      "pollingAfterPost": "POST accepted — waiting for running status via GET…",
+      "postFailed": "POST calib-preview/refresh failed.",
+      "pollFailed": "GET calib-preview polling failed.",
+      "loadFailed": "Failed to load calib-preview cache.",
+      "pollTimeout": "Timed out waiting for analysis results. Try again.",
+      "refreshFailed": "Lastpics analysis failed (status failed).",
+      "statusLine": "Status: {{status}} · GET #{{attempt}} · job {{jobId}}",
+      "status": {
+        "idle": "idle",
+        "running": "running",
+        "completed": "completed",
+        "failed": "failed"
+      },
+      "aggregated": "Aggregated (top 5)",
+      "rank": "Rank {{rank}}",
+      "refreshedAt": "Last refreshed: {{date}}",
+      "legend": {
+        "car": "Car",
+        "moto": "Motorcycle",
+        "van": "Van"
+      }
+    }
+  },
+  "pairing": {
+    "savePairings": "Save",
+    "pendingChanges": "{{count}} unsaved change(s)",
+    "unpairConfirm": {
+      "title": "Remove pairings from production?",
+      "body_one": "{{count}} pairing will be removed from production when you save.",
+      "body_other": "{{count}} pairings will be removed from production when you save.",
+      "confirm_one": "Remove {{count}} pairing",
+      "confirm_other": "Remove {{count}} pairings"
+    },
+    "zoneConfirm": {
+      "title": "Save pairings?",
+      "body": "{{slots}} slot(s) ↔ {{bboxes}} bbox · save to prod?",
+      "bodyMismatch": "{{slots}} slot(s) vs {{bboxes}} bbox — counts must match.",
+      "bodyEmpty": "No slots or bboxes in the zones — redraw the lassos."
+    },
+    "saveTitleOk": "Save pairings and calibration for this device",
+    "saveTitleNeedDevice": "Select client and device (⌘D)",
+    "saveTitleNeedDeviceOnly": "Select a device (⌘D) to save pairings",
+    "saveTitleNeedClient": "Select a client first",
+    "saveTitleNeedAbsmapSave": "Save absmap slots to production first (prod slot_id required)",
+    "railAria": "Pairing tools",
+    "pair": "Pair",
+    "unpair": "Unpair",
+    "mapZone": "Map zone",
+    "zone": "Zone Pairing",
+    "imgZone": "Img zone",
+    "undoPairing": "Undo pairing (⌘Z)",
+    "autoSuggestOn": "Auto suggest ON",
+    "autoSuggest": "Auto suggest",
+    "titleAutoSuggestExit": "Exit auto-suggest mode (Q)",
+    "titleAutoSuggestEnter": "Enable auto-suggest mode (Q)",
+    "reverseNoZone": "Select a zone to reverse",
+    "reverseNoPairings": "No pairings to reverse",
+    "reverseProdOk": "Reverse {{side}} side order for prod pairings (R)",
+    "sideMap": "map",
+    "sideImage": "image",
+    "reverseOk": "Reverse {{side}} side order (R)",
+    "reversePick": "Select zone from map or image to reverse",
+    "unpairZoneTitleOk": "Unpair all links in this zone",
+    "unpairZoneTitleNeed": "Select a zone to unpair",
+    "unpairZone": "Unpair zone",
+    "deleteZoneTitleOk": "Delete zone + its pairs (Del)",
+    "deleteZoneTitleNeed": "Select a zone to delete",
+    "deleteZone": "Delete zone",
+    "reverse": "Reverse",
+    "modes": {
+      "pair": {
+        "title": "Pair mode",
+        "body": "Select a slot on the map, then a bbox on the image · pair applies immediately · <kCmdZ/> undo · <kP/> exit"
+      },
+      "unpair": {
+        "title": "Unpair mode",
+        "body": "Click a linked slot or bbox to remove the pair · <kCmdZ/> undo · <kU/> exit"
+      },
+      "draw_zone": {
+        "title": "Pairing zone mode",
+        "body": "Draw a lasso on the map or image · then on the other side · release to confirm · <kEsc/> cancel · <kZ/> exit",
+        "bodyNeedImage": "Map zone drawn — now draw the image zone · <kEsc/> cancel · <kZ/> exit",
+        "bodyNeedMap": "Image zone drawn — now draw the map zone · <kEsc/> cancel · <kZ/> exit"
+      }
+    },
+    "accept": "Accept",
+    "skip": "Skip",
+    "proposalBanner": "<strong>Proposal {{current}}/{{total}}</strong> — {{slots}} slots ↔ {{bboxes}} bboxes",
+    "autoSuggestBanner": "<strong>Auto-suggest ON</strong> — Draw a zone on the map or image to get a proposal for the other side · <kQ/> exit",
+    "zoneRejected": "<strong>Zone rejected</strong> — {{message}}",
+    "splitResizeAria": "Resize map and image panels",
+    "zoneChipTitle": "{{slots}} slots ↔ {{bboxes}} bboxes · Click to select"
+  },
+  "pairingMap": {
+    "noSlotsTitle": "No geo slots for pairing yet",
+    "noSlotsHint": "Run Absolute Map for this Cocospot to create slots.",
+    "noSlotsClientTitle": "No geo slots for this client yet",
+    "noSlotsClientHint": "Run Absolute Map (client is enough — no device required), then return here.",
+    "selectClientTitle": "Select a client to center the map",
+    "selectClientHint": "Choose a city with <kCmdD/> on the dashboard or Absolute Map."
+  },
+  "pairingImage": {
+    "noBboxesTitle": "No calibration bboxes for this Cocospot yet",
+    "noBboxesHint": "Run Calibration for this device, wait for bbox results, then open Pairing again.",
+    "selectCocospotTitle": "Select a Cocospot to load camera bboxes",
+    "selectCocospotHint": "Pick client + device with <kCmdD/>, run Calibration, then return here.",
+    "selectClientTitle": "Select a client to center the map",
+    "selectClientHint": "Choose a city with <kCmdD/> on the dashboard or Absolute Map.",
+    "selectDeviceTitle": "Select a device to load camera bboxes",
+    "selectDeviceHint": "Open Calibration, choose a Cocospot with <kCmdD/>, run detection, then return here.",
+    "filterBanner": "No detections above the “Confidence filter” slider in the Calibration bottom bar — raise it to see them here.",
+    "zoomImageAria": "Zoom image"
+  },
+  "saveFeedback": {
+    "closeAria": "Close save summary",
+    "stats": {
+      "created": "Created",
+      "updated": "Updated",
+      "deleted": "Deleted",
+      "savedBboxes": "Bboxes",
+      "savedSlots": "Slots",
+      "deletedBboxes": "Removed",
+      "savedSlotList": "Slots in prod: {{items}}",
+      "addedSlotList": "Slots added: {{items}}",
+      "deletedBboxList": "Bboxes removed: {{items}}",
+      "deletedBboxKeysMore": "(+{{more}} more)",
+      "pairedLinks": "Paired",
+      "pairedList": "Slot ↔ bbox: {{items}}",
+      "pairingNew": "New",
+      "pairingModified": "Modified",
+      "pairingRemoved": "Removed",
+      "pairingTotal": "{{total}} pairing(s) in prod",
+      "calibTotal": "{{total}} bbox in prod",
+      "total": "{{total}} slots for this client"
+    },
+    "absmap": {
+      "success": {
+        "title": "Slots saved for this client",
+        "subtitle": "{{created}} created, {{updated}} updated, {{deleted}} deleted"
+      },
+      "empty": {
+        "title": "Save finished — nothing created",
+        "subtitle": "No pipeline slots were created for this client. Check the B2B client and ROIs, then Save again."
+      },
+      "warning": {
+        "title": "Saved with warning",
+        "subtitle": "Slots were saved for this client, but something needs attention."
+      },
+      "error": {
+        "title": "Save failed",
+        "subtitle": "Could not save slots for this client."
+      }
+    },
+    "calib": {
+      "success": {
+        "title": "Calibration saved",
+        "subtitle": "{{created}} created, {{updated}} updated, {{deleted}} deleted"
+      },
+      "error": {
+        "title": "Save failed",
+        "subtitle": "Could not save calibration to production."
+      }
+    },
+    "pairing": {
+      "success": {
+        "title": "Pairings saved",
+        "subtitle": "{{created}} new, {{updated}} modified, {{deleted}} removed",
+        "subtitleFallback": "{{paired}} pairing(s) saved"
+      },
+      "error": {
+        "title": "Save failed",
+        "subtitle": "Could not save pairings."
+      }
+    }
+  }
+}

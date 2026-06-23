@@ -1,0 +1,71 @@
+/* Shared keyboard hint pill — square ratio, font-mono, currentColor-driven so it
+ * adapts to its surface (light, dark sidebar, info banner, primary-active button). */
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  color: inherit;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: baseline;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Square sizes — width/height pairs are equal so the pill is visually square at minimum
+ * (longer captions still read fine because we let width grow with padding only). */
+
+.xs {
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  font-size: 9px;
+  border-radius: 3px;
+}
+
+.sm {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 9.5px;
+}
+
+.md {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10px;
+}
+
+.lg {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  font-size: 11px;
+  border-radius: 5px;
+}
+
+/* Tone overrides for surfaces where currentColor isn't expressive enough */
+
+.toneAccent {
+  /* On a primary-coloured background the parent text is white;
+   * lift the pill a touch so it reads as a key. */
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.toneMuted {
+  border-color: var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}

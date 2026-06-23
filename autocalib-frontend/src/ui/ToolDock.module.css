@@ -1,0 +1,169 @@
+.dock {
+  --dock-width: var(--ui-tool-dock-width, 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--dock-width);
+  min-width: var(--dock-width);
+  gap: 2px;
+  padding: 6px 4px;
+  background: var(--ui-chrome-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.12);
+  pointer-events: auto;
+  font-size: var(--ui-chrome-font-size, 12px);
+  overflow: hidden;
+}
+
+.dockExpanded {
+  --dock-width: var(--ui-tool-dock-width-expanded, 140px);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.collapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ui-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.collapseBtn:hover {
+  background: rgba(150, 122, 220, 0.08);
+  color: var(--color-text);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.groupLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.sep {
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 2px;
+  flex-shrink: 0;
+}
+
+.btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 6px 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ui-muted);
+  font-size: inherit;
+  font-family: var(--font-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.dockExpanded .btn {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 6px 8px;
+  min-height: 36px;
+}
+
+.btn:hover:not(:disabled) {
+  background: rgba(150, 122, 220, 0.08);
+  color: var(--color-text);
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn.active {
+  background: var(--ui-primary);
+  color: #fff;
+}
+
+.btn.active:hover {
+  background: var(--ui-primary-dark);
+  color: #fff;
+}
+
+.btn.destructive.active {
+  background: var(--ui-destructive);
+}
+
+.btn.ai {
+  font-weight: 600;
+  color: #7e5fd4;
+}
+
+.btn.ai.active {
+  background: #967adc;
+  color: #fff;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  min-height: 20px;
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.dockExpanded .label {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortcut {
+  flex-shrink: 0;
+}

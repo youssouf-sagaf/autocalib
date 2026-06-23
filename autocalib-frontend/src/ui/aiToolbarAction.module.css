@@ -1,0 +1,38 @@
+/**
+ * Purple accent reserved exclusively for AI-driven actions
+ * (mapping launch, calib generate, pairing suggest, straighten / reprocess).
+ */
+
+.toolbar {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.toolbar:hover:not(:disabled) {
+  background: rgba(150, 122, 220, 0.12);
+  color: var(--color-primary);
+}
+
+/* Full-width control (e.g. sidebar launch) — same accent, block layout */
+.panel {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid var(--color-primary);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.panel:hover:not(:disabled) {
+  background: rgba(150, 122, 220, 0.12);
+}
+
+.panel:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
