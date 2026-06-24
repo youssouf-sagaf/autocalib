@@ -279,7 +279,9 @@
         "draw_zoneNeedImage": "Map zone drawn — lasso image · <kEsc/> cancel · <kZ/> exit",
         "draw_zoneNeedMap": "Image zone drawn — lasso map · <kEsc/> cancel · <kZ/> exit",
         "autoSuggest": "Auto-suggest — lasso map or image · <kQ/> exit",
-        "zoneRejected": "Zone rejected — {{message}}"
+        "zoneRejected": "Zone rejected — {{message}}",
+        "navigateReverseMap": "<kR/> reverse map-side pairing order · hover map or click a linked slot",
+        "navigateReverseImage": "<kR/> reverse image-side pairing order · hover image or click a linked bbox"
       }
     }
   },
@@ -417,6 +419,18 @@
     "layersMenu": "Layers",
     "layersMenuTitle": "Show or hide pipeline layers"
   },
+  "mapDisplayLayer": {
+    "layerControlTitle": "Map type",
+    "layerControlAria": "Choose map type",
+    "sectionCarte": "Map",
+    "sectionSatellite": "Satellite imagery",
+    "streets": "Street map",
+    "osm": "Street map (OSM)",
+    "mapboxSatellite": "Mapbox satellite imagery",
+    "ignCurrent": "IGN orthophoto — current",
+    "ignPleiades2026": "IGN orthophoto — Pléiades 2026",
+    "hintFranceOnly": "France only"
+  },
   "imagerySource": {
     "groupAria": "Imagery source",
     "toggle": "Use {{label}} imagery on next launch",
@@ -426,7 +440,9 @@
     "hintFranceOnly": "France only",
     "layerControlTitle": "Satellite imagery",
     "layerControlAria": "Open satellite imagery selector",
-    "wysiwygHint": "What you see is what the pipeline uses for crops and detection."
+    "wysiwygHint": "What you see is what the pipeline uses for crops and detection.",
+    "displaySection": "Display",
+    "osmOverlay": "Street map (OSM)"
   },
   "slotTypePopover": {
     "title": "Slot type",
@@ -705,6 +721,12 @@
       "bodyMismatch": "{{slots}} slot(s) vs {{bboxes}} bbox — counts must match.",
       "bodyEmpty": "No slots or bboxes in the zones — redraw the lassos."
     },
+    "reverseConfirm": {
+      "title": "Reverse pairing order?",
+      "body": "Reverse {{side}}-side order for {{count}} pairing(s).",
+      "bodyProdHint": "Prod pairings (no zone drawn).",
+      "confirm": "Reverse order"
+    },
     "saveTitleOk": "Save pairings and calibration for this device",
     "saveTitleNeedDevice": "Select client and device (⌘D)",
     "saveTitleNeedDeviceOnly": "Select a device (⌘D) to save pairings",
@@ -727,7 +749,7 @@
     "sideMap": "map",
     "sideImage": "image",
     "reverseOk": "Reverse {{side}} side order (R)",
-    "reversePick": "Select zone from map or image to reverse",
+    "reversePick": "Hover the map or image panel (or click a linked item) to choose which side to reverse",
     "unpairZoneTitleOk": "Unpair all links in this zone",
     "unpairZoneTitleNeed": "Select a zone to unpair",
     "unpairZone": "Unpair zone",

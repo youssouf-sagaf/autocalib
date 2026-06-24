@@ -14,45 +14,22 @@ import {
   SLOT_TYPE_ICON_IMAGE,
 } from '../theme/slotTypes';
 import { useMapSlotPinLayers } from './useMapSlotPinLayers';
-import type { ImagerySource, Slot } from '../types';
+import type { Slot } from '../types';
 import type { Feature, Polygon, LineString, Point, FeatureCollection } from 'geojson';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './MapPanel.module.css';
 import { MapLayerControl } from './MapLayerControl';
 import { useAbsmapMapLayers } from './useAbsmapMapLayers';
 import { useMapboxResize } from './useMapboxResize';
+import {
+  buildIgnTileUrl,
+  displayLayerIgnPreset,
+  displayLayerNeedsOsmRaster,
+  mapStyleForDisplayLayer,
+  OSM_TILE_URL,
+} from './imageryLayers';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
-
-/**
- * IGN WMTS layer presets — kept in sync with the backend
- * ``IGN_LAYER_PRESETS`` (see autoabsmap/imagery/ign.py). The frontend only
- * needs them to render the visual overlay; the actual fetch on the backend
- * is driven by the ``imagery_source`` enum on the JobRequest.
- */
-const IGN_LAYER_PRESETS: Record<
-  Exclude<ImagerySource, 'mapbox'>,
-  { layer: string; format: string; maxZoom: number }
-> = {
-  'ign-current': {
-    layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
-    format: 'image/jpeg',
-    maxZoom: 19,
-  },
-  'ign-pleiades-2026': {
-    layer: 'ORTHOIMAGERY.ORTHO-SAT.PLEIADES.2026',
-    format: 'image/png',
-    maxZoom: 18,
-  },
-};
-
-function buildIgnTileUrl(layer: string, format: string): string {
-  return (
-    'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0' +
-    `&LAYER=${layer}&TILEMATRIXSET=PM&TILEMATRIX={z}` +
-    `&TILEROW={y}&TILECOL={x}&FORMAT=${encodeURIComponent(format)}&STYLE=normal`
-  );
-}
 
 export interface MapViewState {
   longitude: number;
@@ -167,7 +144,9 @@ export function MapPanel({
   tileRowGhostSlots,
   tileRowGhostShowFootprint = true,
 }: MapPanelProps) {
-  const imagerySource = useAppSelector((s) => s.autocalib.absmap.imagerySource);
+  const mapDisplayLayer = useAppSelector((s) => s.autocalib.absmap.mapDisplayLayer);
+  const mapStyle = mapStyleForDisplayLayer(mapDisplayLayer);
+  const ignPreset = displayLayerIgnPreset(mapDisplayLayer);
 
   const {
     slots,
@@ -303,7 +282,7 @@ export function MapPanel({
         onMoveEnd={onMoveEnd}
         mapboxAccessToken={MAPBOX_TOKEN}
         style={{ width: '100%', height: '100%' }}
-        mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
+        mapStyle={mapStyle}
         onClick={handleClick}
         onDblClick={(e) => { if (externalCursor) e.preventDefault(); }}
         onMouseMove={handleMouseMove}
@@ -343,23 +322,33 @@ export function MapPanel({
           />
         </Source>
 
-        {/* ── IGN orthophoto overlay — below ROI/slots (raster added before vector layers above) ── */}
-        {(imagerySource === 'ign-current' || imagerySource === 'ign-pleiades-2026') && (() => {
-          const preset = IGN_LAYER_PRESETS[imagerySource];
-          return (
-            <Source
-              id="imagery-overlay"
-              key={`ign-${imagerySource}`}
-              type="raster"
-              tiles={[buildIgnTileUrl(preset.layer, preset.format)]}
-              tileSize={256}
-              attribution="© IGN/Géoportail"
-              maxzoom={preset.maxZoom}
-            >
-              <Layer id="imagery-overlay-layer" type="raster" beforeId="crops-fill" />
-            </Source>
-          );
-        })()}
+        {/* ── Display base layers — below ROI/slots ── */}
+        {displayLayerNeedsOsmRaster(mapDisplayLayer) && (
+          <Source
+            id="osm-overlay"
+            key="osm-overlay"
+            type="raster"
+            tiles={[OSM_TILE_URL]}
+            tileSize={256}
+            attribution="© OpenStreetMap contributors"
+            maxzoom={19}
+          >
+            <Layer id="osm-overlay-layer" type="raster" beforeId="crops-fill" />
+          </Source>
+        )}
+        {ignPreset && (
+          <Source
+            id="imagery-overlay"
+            key={`ign-${mapDisplayLayer}`}
+            type="raster"
+            tiles={[buildIgnTileUrl(ignPreset.layer, ignPreset.format)]}
+            tileSize={256}
+            attribution="© IGN/Géoportail"
+            maxzoom={ignPreset.maxZoom}
+          >
+            <Layer id="imagery-overlay-layer" type="raster" beforeId="crops-fill" />
+          </Source>
+        )}
 
         {/* ── Preview polygon (drawing) ── */}
         <Source id="preview" type="geojson" data={previewGeoJSON}>

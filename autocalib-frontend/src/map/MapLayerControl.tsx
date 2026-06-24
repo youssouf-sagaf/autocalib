@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setImagerySource } from '../store/autocalib-slice';
-import { IMAGERY_SOURCES, type ImagerySource } from '../types';
+import { setMapDisplayLayer } from '../store/autocalib-slice';
+import {
+  MAP_CARTE_LAYERS,
+  MAP_SATELLITE_LAYERS,
+  type MapDisplayLayer,
+} from '../types';
 import styles from './MapLayerControl.module.css';
 
-// Pléiades 2026 covers metropolitan France only. Source: GetCapabilities bbox.
 const PLEIADES_FR_BBOX = {
   west: -5.17,
   east: 9.58,
@@ -20,14 +23,16 @@ function isInsideMetropolitanFR(lng: number, lat: number): boolean {
   );
 }
 
-const SOURCE_LABEL_KEYS: Record<ImagerySource, string> = {
-  'mapbox': 'imagerySource.mapbox',
-  'ign-current': 'imagerySource.ignCurrent',
-  'ign-pleiades-2026': 'imagerySource.ignPleiades2026',
+const DISPLAY_LABEL_KEYS: Record<MapDisplayLayer, string> = {
+  streets: 'mapDisplayLayer.streets',
+  osm: 'mapDisplayLayer.osm',
+  'mapbox-satellite': 'mapDisplayLayer.mapboxSatellite',
+  'ign-current': 'mapDisplayLayer.ignCurrent',
+  'ign-pleiades-2026': 'mapDisplayLayer.ignPleiades2026',
 };
 
-const SOURCE_HINT_KEYS: Partial<Record<ImagerySource, string>> = {
-  'ign-pleiades-2026': 'imagerySource.hintFranceOnly',
+const DISPLAY_HINT_KEYS: Partial<Record<MapDisplayLayer, string>> = {
+  'ign-pleiades-2026': 'mapDisplayLayer.hintFranceOnly',
 };
 
 function LayersIcon() {
@@ -41,14 +46,50 @@ function LayersIcon() {
   );
 }
 
-/**
- * Satellite imagery picker — what you see on the map is what the pipeline
- * fetches for crops and detection (WYSINWYG).
- */
+function LayerOption({
+  layer,
+  selected,
+  disabled,
+  onSelect,
+}: {
+  layer: MapDisplayLayer;
+  selected: boolean;
+  disabled: boolean;
+  onSelect: () => void;
+}) {
+  const { t } = useTranslation();
+  const hintKey = DISPLAY_HINT_KEYS[layer];
+  const pleiadesBlocked = layer === 'ign-pleiades-2026' && disabled;
+
+  return (
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={selected}
+      disabled={disabled}
+      className={`${styles.option} ${selected ? styles.selected : ''}`}
+      onClick={onSelect}
+      title={pleiadesBlocked ? t('mapDisplayLayer.hintFranceOnly') : undefined}
+    >
+      <span className={styles.optionCheck}>{selected ? '✓' : ''}</span>
+      <span className={styles.optionLabel}>
+        {t(DISPLAY_LABEL_KEYS[layer])}
+        {hintKey && (
+          <>
+            {' '}
+            <span className={styles.optionHint}>({t(hintKey)})</span>
+          </>
+        )}
+      </span>
+    </button>
+  );
+}
+
+/** Map display layer picker — carte routière vs image satellite / orthophoto. */
 export function MapLayerControl() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const active = useAppSelector((s) => s.autocalib.absmap.imagerySource);
+  const active = useAppSelector((s) => s.autocalib.absmap.mapDisplayLayer);
   const view = useAppSelector((s) => s.autocalib.absmap.absmapViewState);
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -68,14 +109,19 @@ export function MapLayerControl() {
 
   const insideFR = view ? isInsideMetropolitanFR(view.longitude, view.latitude) : true;
 
+  const selectLayer = (layer: MapDisplayLayer) => {
+    dispatch(setMapDisplayLayer(layer));
+    setOpen(false);
+  };
+
   return (
     <>
       <button
         ref={fabRef}
         type="button"
         className={`${styles.fab} ${open ? styles.active : ''}`}
-        title={t('imagerySource.layerControlTitle')}
-        aria-label={t('imagerySource.layerControlAria')}
+        title={t('mapDisplayLayer.layerControlTitle')}
+        aria-label={t('mapDisplayLayer.layerControlAria')}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
@@ -84,44 +130,30 @@ export function MapLayerControl() {
       {open && (
         <div ref={popoverRef} className={styles.popover} role="menu">
           <div className={styles.popoverHeader}>
-            {t('imagerySource.layerControlTitle')}
+            {t('mapDisplayLayer.layerControlTitle')}
           </div>
-          {IMAGERY_SOURCES.map((src) => {
-            const pleiadesBlocked = src === 'ign-pleiades-2026' && !insideFR;
-            const disabled = pleiadesBlocked;
-            const hintKey = SOURCE_HINT_KEYS[src];
-            return (
-              <button
-                key={src}
-                type="button"
-                role="menuitemradio"
-                aria-checked={active === src}
-                disabled={disabled}
-                className={`${styles.option} ${active === src ? styles.selected : ''}`}
-                onClick={() => {
-                  dispatch(setImagerySource(src));
-                  setOpen(false);
-                }}
-                title={pleiadesBlocked ? t('imagerySource.hintFranceOnly') : undefined}
-              >
-                <span className={styles.optionCheck}>
-                  {active === src ? '✓' : ''}
-                </span>
-                <span className={styles.optionLabel}>
-                  {t(SOURCE_LABEL_KEYS[src])}
-                  {hintKey && (
-                    <>
-                      {' '}
-                      <span className={styles.optionHint}>
-                        ({t(hintKey)})
-                      </span>
-                    </>
-                  )}
-                </span>
-              </button>
-            );
-          })}
-          <div className={styles.popoverHint}>{t('imagerySource.wysiwygHint')}</div>
+
+          <div className={styles.popoverDivider}>{t('mapDisplayLayer.sectionCarte')}</div>
+          {MAP_CARTE_LAYERS.map((layer) => (
+            <LayerOption
+              key={layer}
+              layer={layer}
+              selected={active === layer}
+              disabled={false}
+              onSelect={() => selectLayer(layer)}
+            />
+          ))}
+
+          <div className={styles.popoverDivider}>{t('mapDisplayLayer.sectionSatellite')}</div>
+          {MAP_SATELLITE_LAYERS.map((layer) => (
+            <LayerOption
+              key={layer}
+              layer={layer}
+              selected={active === layer}
+              disabled={layer === 'ign-pleiades-2026' && !insideFR}
+              onSelect={() => selectLayer(layer)}
+            />
+          ))}
         </div>
       )}
     </>

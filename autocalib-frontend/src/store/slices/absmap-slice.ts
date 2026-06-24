@@ -4,6 +4,7 @@ import type {
   EditEvent,
   EditMode,
   ImagerySource,
+  MapDisplayLayer,
   MarkerDisplayMode,
   OrchestratorProgress,
   OverlayLayer,
@@ -36,8 +37,10 @@ import {
   coalesceTrailingCropEvents,
   isPipelineLoadEvent,
   saveImagerySourceToStorage,
+  saveMapDisplayLayerToStorage,
   log,
 } from './shared';
+import { imagerySourceForDisplayLayer } from '../../map/imageryLayers';
 import type { AbsmapDomainState } from './nested-state';
 import { absmapInitialState } from './initial-state';
 
@@ -126,6 +129,16 @@ const slice = createSlice({
     setImagerySource(state, action: PayloadAction<ImagerySource>) {
       state.imagerySource = action.payload;
       saveImagerySourceToStorage(action.payload);
+    },
+
+    setMapDisplayLayer(state, action: PayloadAction<MapDisplayLayer>) {
+      state.mapDisplayLayer = action.payload;
+      saveMapDisplayLayerToStorage(action.payload);
+      const imagery = imagerySourceForDisplayLayer(action.payload);
+      if (imagery) {
+        state.imagerySource = imagery;
+        saveImagerySourceToStorage(imagery);
+      }
     },
 
     addCrop(state, action: PayloadAction<CropRequest>) {
@@ -677,6 +690,7 @@ export const absmapReducer = slice.reducer;
 export const {
   setAbsmapViewState,
   setImagerySource,
+  setMapDisplayLayer,
   addCrop,
   removeCrop,
   clearCrops,

@@ -22,7 +22,7 @@ import { visibleCalibBboxes } from '../../utils/calibVisibility';
 import { useMemo } from 'react';
 import { usePairingReverse } from '../../hooks/usePairingReverse';
 
-export function PairingEditRail() {
+export function PairingEditRail({ onRequestReverse }: { onRequestReverse: () => void }) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const pairing = useAppSelector((s) => s.autocalib.pairing);
@@ -38,7 +38,7 @@ export function PairingEditRail() {
     [calibBboxes, confidenceThreshold],
   );
   const { autoSuggestMode } = pairing;
-  const { canReverse, handleReverse, reverseSide, activeZone } = usePairingReverse();
+  const { canReverse, reverseSide, activeZone } = usePairingReverse();
 
   const canPairingUndo = editIndex > 0;
   const canPairingRedo = editIndex < editHistory.length;
@@ -94,7 +94,7 @@ export function PairingEditRail() {
           label={t('pairing.reverse')}
           shortcut="R"
           disabled={!canReverse}
-          onClick={handleReverse}
+          onClick={onRequestReverse}
           title={
             !canReverse
               ? t('pairing.reverseNoPairings')

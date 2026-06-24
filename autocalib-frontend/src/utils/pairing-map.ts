@@ -65,30 +65,64 @@ export function formatPairingSaveLabels(
   );
 }
 
+/** Resolve which side (map slots vs image bboxes) to reverse for pairing order. */
+export function resolvePairingReverseSide(args: {
+  activeZoneSide: 'map' | 'image' | null;
+  focusedPanel: 'map' | 'image' | null;
+}): 'map' | 'image' {
+  return args.activeZoneSide ?? args.focusedPanel ?? 'image';
+}
+
 /** Spatial baseline order for reversing pairings without a committed zone polygon. */
 export function pairingOrderForReverse(args: {
   links: PairingLink[];
   slots: Array<{ slot_id: string; center: { lng: number; lat: number } }>;
   bboxes: Array<{ spot_id: number }>;
-  side: 'map' | 'image';
+  dbSlots?: Record<string, { lat: number; lng: number }>;
 }): { slotIds: string[]; bboxSpotIds: number[] } | null {
   const slotById = new Map(args.slots.map((s) => [s.slot_id, s]));
   const bboxSpots = new Set(args.bboxes.map((b) => b.spot_id));
-  const entries = args.links.filter(
-    (link) => slotById.has(link.slotId) && bboxSpots.has(link.bboxSpotId),
-  );
+
+  const slotCenter = (slotId: string): { lng: number; lat: number } | null => {
+    const fromDisplay = slotById.get(slotId);
+    if (fromDisplay) return fromDisplay.center;
+    const fromDb = args.dbSlots?.[slotId];
+    if (fromDb) return { lng: fromDb.lng, lat: fromDb.lat };
+    return null;
+  };
+
+  const entries = args.links.filter((link) => {
+    if (!bboxSpots.has(link.bboxSpotId)) return false;
+    return slotCenter(link.slotId) != null;
+  });
   if (entries.length === 0) return null;
 
   const sorted = [...entries].sort((a, b) => {
-    const sa = slotById.get(a.slotId)!;
-    const sb = slotById.get(b.slotId)!;
-    return sa.center.lng - sb.center.lng || sa.center.lat - sb.center.lat;
+    const sa = slotCenter(a.slotId)!;
+    const sb = slotCenter(b.slotId)!;
+    return sa.lng - sb.lng || sa.lat - sb.lat;
   });
 
-  let slotIds = sorted.map((entry) => entry.slotId);
-  let bboxSpotIds = sorted.map((entry) => entry.bboxSpotId);
-  if (args.side === 'map') slotIds = [...slotIds].reverse();
-  else bboxSpotIds = [...bboxSpotIds].reverse();
-
+  const slotIds = sorted.map((entry) => entry.slotId);
+  const bboxSpotIds = sorted.map((entry) => entry.bboxSpotId);
   return { slotIds, bboxSpotIds };
+}
+
+/** Count of pairings that would be reversed (zone scope or prod fallback). */
+export function reversePairCount(args: {
+  activeZone: { mapSlotIds: string[] } | null | undefined;
+  links: PairingLink[];
+  slots: Array<{ slot_id: string; center: { lng: number; lat: number } }>;
+  bboxes: Array<{ spot_id: number }>;
+  dbSlots?: Record<string, { lat: number; lng: number }>;
+}): number {
+  if (args.activeZone && args.activeZone.mapSlotIds.length > 0) {
+    return args.activeZone.mapSlotIds.length;
+  }
+  return pairingOrderForReverse({
+    links: args.links,
+    slots: args.slots,
+    bboxes: args.bboxes,
+    dbSlots: args.dbSlots,
+  })?.slotIds.length ?? 0;
 }

@@ -279,7 +279,9 @@
         "draw_zoneNeedImage": "Zone carte tracée — lasso image · <kEsc/> annuler · <kZ/> quitter",
         "draw_zoneNeedMap": "Zone image tracée — lasso carte · <kEsc/> annuler · <kZ/> quitter",
         "autoSuggest": "Suggestion auto — lasso carte ou image · <kQ/> quitter",
-        "zoneRejected": "Zone rejetée — {{message}}"
+        "zoneRejected": "Zone rejetée — {{message}}",
+        "navigateReverseMap": "<kR/> inverser l’ordre côté carte · survolez la carte ou cliquez une place liée",
+        "navigateReverseImage": "<kR/> inverser l’ordre côté image · survolez l’image ou cliquez une bbox liée"
       }
     }
   },
@@ -417,6 +419,18 @@
     "layersMenu": "Calques",
     "layersMenuTitle": "Afficher ou masquer les couches pipeline"
   },
+  "mapDisplayLayer": {
+    "layerControlTitle": "Type de carte",
+    "layerControlAria": "Choisir le type de carte",
+    "sectionCarte": "Carte",
+    "sectionSatellite": "Image satellite",
+    "streets": "Carte routière",
+    "osm": "Carte routière OSM",
+    "mapboxSatellite": "Image satellite Mapbox",
+    "ignCurrent": "Orthophoto IGN — actuelle",
+    "ignPleiades2026": "Orthophoto IGN — Pléiades 2026",
+    "hintFranceOnly": "France métro uniquement"
+  },
   "imagerySource": {
     "groupAria": "Source d'imagerie",
     "toggle": "Utiliser l'imagerie {{label}} au prochain lancement",
@@ -426,7 +440,9 @@
     "hintFranceOnly": "France métro uniquement",
     "layerControlTitle": "Imagerie satellite",
     "layerControlAria": "Ouvrir le sélecteur d'imagerie satellite",
-    "wysiwygHint": "L'affichage correspond à l'orthophoto utilisée pour les crops et la détection."
+    "wysiwygHint": "L'affichage correspond à l'orthophoto utilisée pour les crops et la détection.",
+    "displaySection": "Affichage",
+    "osmOverlay": "Carte routière (OSM)"
   },
   "slotTypePopover": {
     "title": "Type de place",
@@ -705,6 +721,12 @@
       "bodyMismatch": "{{slots}} place(s) vs {{bboxes}} bbox — les effectifs doivent correspondre.",
       "bodyEmpty": "Aucune place ni bbox dans les zones — retracez les lassos."
     },
+    "reverseConfirm": {
+      "title": "Inverser l’ordre des appariements ?",
+      "body": "Inverser l’ordre côté {{side}} pour {{count}} appariement(s).",
+      "bodyProdHint": "Appariements prod (sans zone tracée).",
+      "confirm": "Inverser l’ordre"
+    },
     "saveTitleOk": "Enregistrer les appariements et la calibration pour cet appareil",
     "saveTitleNeedDevice": "Sélectionnez client et appareil (⌘D)",
     "saveTitleNeedDeviceOnly": "Sélectionnez un appareil (⌘D) pour enregistrer",
@@ -727,7 +749,7 @@
     "sideMap": "carte",
     "sideImage": "image",
     "reverseOk": "Inverser l’ordre du côté {{side}} (R)",
-    "reversePick": "Sélectionnez une zone sur la carte ou l’image pour inverser",
+    "reversePick": "Survolez la carte ou l’image (ou cliquez un élément lié) pour choisir le côté à inverser",
     "unpairZoneTitleOk": "Désapparier tous les liens de cette zone",
     "unpairZoneTitleNeed": "Sélectionnez une zone à désapparier",
     "unpairZone": "Désapparier la zone",

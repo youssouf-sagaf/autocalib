@@ -51,14 +51,17 @@ req_logger = logging.getLogger("app.requests")
 
 @asynccontextmanager
 async def _app_lifespan(_app: FastAPI):
+    warmup_task: asyncio.Task | None = None
     if prewarm_ml_models_enabled():
         logging.getLogger(__name__).info(
-            "Loading ML models at startup (SAM3); first boot may download weights",
+            "Scheduling ML warm-up in background (SAM3); first boot may download weights",
         )
-        await asyncio.to_thread(prewarm_ml_models)
+        warmup_task = asyncio.create_task(asyncio.to_thread(prewarm_ml_models))
     try:
         yield
     finally:
+        if warmup_task is not None:
+            warmup_task.cancel()
         await close_b2b_http_client()
 
 

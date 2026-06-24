@@ -67,6 +67,30 @@ export const IMAGERY_SOURCES: readonly ImagerySource[] = [
   'ign-pleiades-2026',
 ] as const;
 
+/** Map base layer — display only; does not change ML imagery unless orthophoto is selected. */
+export type MapDisplayLayer =
+  | 'streets'
+  | 'osm'
+  | 'mapbox-satellite'
+  | 'ign-current'
+  | 'ign-pleiades-2026';
+
+export const MAP_DISPLAY_LAYERS: readonly MapDisplayLayer[] = [
+  'streets',
+  'osm',
+  'mapbox-satellite',
+  'ign-current',
+  'ign-pleiades-2026',
+] as const;
+
+export const MAP_CARTE_LAYERS: readonly MapDisplayLayer[] = ['streets', 'osm'] as const;
+
+export const MAP_SATELLITE_LAYERS: readonly MapDisplayLayer[] = [
+  'mapbox-satellite',
+  'ign-current',
+  'ign-pleiades-2026',
+] as const;
+
 export interface JobRequest {
   crops: CropRequest[];
   imagery_source?: ImagerySource;

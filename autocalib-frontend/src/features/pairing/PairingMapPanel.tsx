@@ -12,6 +12,7 @@ import {
   pairingSelectSlot,
   pairingSetDrawingPoints,
   pairingSetActiveZone,
+  pairingSetFocusedPanel,
 } from '../../store/autocalib-slice';
 import { useAbsmapDisplaySlots } from '../../hooks/useAbsmapDisplaySlots';
 import { useAbsmapSyncedMapView } from '../../hooks/useAbsmapSyncedMapView';
@@ -39,9 +40,15 @@ interface PairingMapPanelProps {
   panelRef?: RefObject<HTMLDivElement | null>;
   onFinishDrawing?: () => void;
   previewZone?: PreviewZoneMap;
+  highlightActiveZone?: boolean;
 }
 
-export function PairingMapPanel({ panelRef, onFinishDrawing, previewZone }: PairingMapPanelProps) {
+export function PairingMapPanel({
+  panelRef,
+  onFinishDrawing,
+  previewZone,
+  highlightActiveZone = false,
+}: PairingMapPanelProps) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const mapRef = useRef<MapRef>(null);
@@ -49,7 +56,7 @@ export function PairingMapPanel({ panelRef, onFinishDrawing, previewZone }: Pair
   const slots = useAbsmapDisplaySlots();
   const { viewState, onMove, onMoveEnd } = useAbsmapSyncedMapView();
   const pairing = useAppSelector((s) => s.autocalib.pairing);
-  const { activeTool, selectedSlotId, zones, activeZoneId, drawingMapPoints } = pairing;
+  const { activeTool, selectedSlotId, zones, activeZoneId, activeZoneSide, drawingMapPoints } = pairing;
   const isDrawZone = activeTool === 'draw_zone';
   const {
     linkedSlotIds,
@@ -159,20 +166,32 @@ export function PairingMapPanel({ panelRef, onFinishDrawing, previewZone }: Pair
   }, [drawingMapPoints, lassoPreviewFeature, lassoEdgeFeature]);
 
   /** Committed zone polygons — one feature per zone, each with its palette color. */
-  const zonesGeoJson = useMemo((): FeatureCollection<Polygon> => ({
-    type: 'FeatureCollection',
-    features: zones.map((z): Feature<Polygon> => {
-      const pts = z.mapPolygon.points;
-      if (pts.length < 3) return null!;
-      const first = pts[0]!;
-      const zColor = PAIR_PALETTE[z.colorIndex % PAIR_PALETTE.length] ?? '#37bc9b';
-      return {
-        type: 'Feature',
-        geometry: { type: 'Polygon', coordinates: [[...pts, first]] },
-        properties: { zoneId: z.id, color: zColor, isActive: z.id === activeZoneId },
-      };
-    }).filter(Boolean),
-  }), [zones, activeZoneId]);
+  const zonesGeoJson = useMemo((): FeatureCollection<Polygon> => {
+    const zonesToRender = activeZoneId
+      ? zones.filter((z) => z.id === activeZoneId)
+      : zones;
+    return {
+      type: 'FeatureCollection',
+      features: zonesToRender.map((z): Feature<Polygon> => {
+        const pts = z.mapPolygon.points;
+        if (pts.length < 3) return null!;
+        const first = pts[0]!;
+        const zColor = PAIR_PALETTE[z.colorIndex % PAIR_PALETTE.length] ?? '#37bc9b';
+        const isActive = z.id === activeZoneId;
+        return {
+          type: 'Feature',
+          geometry: { type: 'Polygon', coordinates: [[...pts, first]] },
+          properties: {
+            zoneId: z.id,
+            color: zColor,
+            isActive,
+            fillOpacity: isActive && highlightActiveZone ? 0.35 : isActive ? 0.25 : 0.12,
+            lineWidth: isActive && highlightActiveZone ? 3.5 : isActive ? 2.5 : 1.5,
+          },
+        };
+      }).filter(Boolean),
+    };
+  }, [zones, activeZoneId, highlightActiveZone]);
 
   const handleMouseDown = useCallback(
     (e: MapMouseEvent) => {
@@ -216,15 +235,36 @@ export function PairingMapPanel({ panelRef, onFinishDrawing, previewZone }: Pair
         const lat = e.lngLat.lat;
         for (const zone of zones) {
           if (zone.mapPolygon.points.length >= 3 && pointInRing(lng, lat, zone.mapPolygon.points)) {
-            const toggle = zone.id === activeZoneId;
-            dispatch(pairingSetActiveZone({ zoneId: toggle ? null : zone.id, side: toggle ? null : 'map' }));
+            if (zone.id === activeZoneId) {
+              if (activeZoneSide === 'map') {
+                dispatch(pairingSetActiveZone({ zoneId: null, side: null }));
+              } else {
+                dispatch(pairingSetActiveZone({ zoneId: zone.id, side: 'map' }));
+              }
+            } else {
+              dispatch(pairingSetActiveZone({ zoneId: zone.id, side: 'map' }));
+            }
             return;
           }
         }
+
+        const tol = 8;
+        const hitBbox: [[number, number], [number, number]] = [
+          [e.point.x - tol, e.point.y - tol],
+          [e.point.x + tol, e.point.y + tol],
+        ];
+        const slotFeatures = e.target.queryRenderedFeatures(hitBbox, { layers: ['pairing-slots-circle'] });
+        const slotHit = slotFeatures[0];
+        const slotId = slotHit?.properties?.slot_id as string | undefined;
+        if (slotId && linkedSlotIds.has(slotId)) {
+          dispatch(pairingSetFocusedPanel('map'));
+          return;
+        }
+
         if (activeZoneId) dispatch(pairingSetActiveZone({ zoneId: null, side: null }));
       }
     },
-    [activeTool, dispatch, zones, activeZoneId],
+    [activeTool, dispatch, zones, activeZoneId, activeZoneSide, linkedSlotIds],
   );
 
   return (
@@ -353,7 +393,7 @@ export function PairingMapPanel({ panelRef, onFinishDrawing, previewZone }: Pair
                 type="fill"
                 paint={{
                   'fill-color': ['get', 'color'],
-                  'fill-opacity': ['case', ['get', 'isActive'], 0.25, 0.12],
+                  'fill-opacity': ['get', 'fillOpacity'],
                 }}
               />
               <Layer
@@ -361,7 +401,7 @@ export function PairingMapPanel({ panelRef, onFinishDrawing, previewZone }: Pair
                 type="line"
                 paint={{
                   'line-color': ['get', 'color'],
-                  'line-width': ['case', ['get', 'isActive'], 2.5, 1.5],
+                  'line-width': ['get', 'lineWidth'],
                 }}
               />
             </Source>
