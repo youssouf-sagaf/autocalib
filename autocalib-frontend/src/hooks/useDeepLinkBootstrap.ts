@@ -44,11 +44,12 @@ function workspaceFromPath(pathname: string): AutocalibWorkspace | null {
   return null;
 }
 
+/** Workspace to open — only when path or `workspace` query explicitly requests one. */
 function resolveTargetWorkspace(
   search: URLSearchParams,
   pathname: string,
-): AutocalibWorkspace {
-  return parseWorkspaceParam(search.get('workspace')) ?? workspaceFromPath(pathname) ?? 'absmap';
+): AutocalibWorkspace | null {
+  return parseWorkspaceParam(search.get('workspace')) ?? workspaceFromPath(pathname);
 }
 
 function workspacePath(workspace: AutocalibWorkspace): string {
@@ -95,16 +96,19 @@ function useDeepLinkBootstrap(): void {
     }
 
     const workspace = resolveTargetWorkspace(params, location.pathname);
-    const targetPath = workspacePath(workspace);
-    const targetSearch = searchWithoutWorkspace(params);
-    const targetUrl = `${targetPath}${targetSearch}`;
 
-    if (`${location.pathname}${location.search}` !== targetUrl) {
-      navigate(targetUrl, { replace: true });
-      return;
+    if (workspace) {
+      const targetPath = workspacePath(workspace);
+      const targetSearch = searchWithoutWorkspace(params);
+      const targetUrl = `${targetPath}${targetSearch}`;
+
+      if (`${location.pathname}${location.search}` !== targetUrl) {
+        navigate(targetUrl, { replace: true });
+        return;
+      }
+
+      dispatch(setWorkspaceMode(workspace));
     }
-
-    dispatch(setWorkspaceMode(workspace));
 
     if (clientParam) {
       const rosterMatch = findClientInDirectory(clientParam, clients);
@@ -132,7 +136,7 @@ function useDeepLinkBootstrap(): void {
     }
 
     log.info(
-      `Deep link applied — workspace=${workspace}${deviceParam ? ` device=${deviceParam}` : ''}${clientParam ? ` client=${clientParam}` : ''}`,
+      `Deep link applied — workspace=${workspace ?? 'dashboard'}${deviceParam ? ` device=${deviceParam}` : ''}${clientParam ? ` client=${clientParam}` : ''}`,
     );
     appliedSearchRef.current = searchKey;
   }, [clients, clientsStatus, dispatch, location.pathname, location.search, navigate]);
