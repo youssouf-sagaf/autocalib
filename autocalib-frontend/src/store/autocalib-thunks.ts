@@ -571,6 +571,9 @@ export const loadClientSlots = createAsyncThunk(
     );
     return parsed;
   },
+  {
+    condition: (_, { getState }) => !readAutocalib(getState).isRefreshingReferenceOverlay,
+  },
 );
 
 export const reprocessArea = createAsyncThunk(

@@ -17,6 +17,9 @@ import { auth } from './firebase';
 import { performLogout } from './logout';
 import { clearStoredAuthToken, syncFirebaseIdToken } from './token';
 import type { UserProfile } from './types';
+import { fetchClients } from '../store/autocalib-slice';
+import { store } from '../store/store';
+import { useAuthHandoff, type AuthHandoffError } from '../hooks/useAuthHandoff';
 
 type AuthUser = {
   uid: string;
@@ -36,6 +39,8 @@ type AuthContextValue = {
   sessionId: string | null;
   setSessionId: (id: string | null) => void;
   loading: boolean;
+  handoffLoading: boolean;
+  handoffError: AuthHandoffError;
   logout: () => Promise<void>;
 };
 
@@ -76,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { handoffLoading, handoffError } = useAuthHandoff();
 
   const isStaff = originalProfile?.is_staff === true;
 
@@ -88,6 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       await syncFirebaseIdToken();
+      store.dispatch(fetchClients());
+
       const { activeProfile: active, originalProfile: original } = await loadProfiles(
         firebaseUser.uid,
       );
@@ -98,15 +106,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const session = await createUserSession({
+      void createUserSession({
         userId: original.user_id,
         clientId: active.client,
         userEmail: original.email,
         userDisplayName: original.display_name,
         clientDisplayName: active.client_display_name,
         sendSlackNotification: false,
-      });
-      setSessionId(session.id);
+      })
+        .then((session) => setSessionId(session.id))
+        .catch(() => {
+          /* Session tracking is optional — do not block the operator UI. */
+        });
     } catch {
       setProfileError('profile_load_failed');
       clearStoredAuthToken();
@@ -164,6 +175,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionId,
       setSessionId,
       loading,
+      handoffLoading,
+      handoffError,
       logout,
     }),
     [
@@ -175,6 +188,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileError,
       sessionId,
       loading,
+      handoffLoading,
+      handoffError,
       logout,
     ],
   );

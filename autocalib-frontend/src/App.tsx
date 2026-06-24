@@ -8,7 +8,6 @@ import {
   launchJob,
   restoreAbsmapJobFromCache,
   setAbsmapViewState,
-  loadClientSlots,
   bulkSetSlotsParkingType,
   bulkDeleteSlots,
   clearSlotSelection,
@@ -16,7 +15,7 @@ import {
   setSlotSelection,
   toggleOverlay,
 } from './store/autocalib-slice';
-import { activeClientDirectoryKey, isB2bClientId } from './utils/clientContext';
+import { activeClientDirectoryKey } from './utils/clientContext';
 import { slotKey, normalizeSlotId } from './utils/slot-key';
 import { usePolygonDraw } from './hooks/usePolygonDraw';
 import { createLogger } from './utils/logger';
@@ -32,6 +31,7 @@ import { useReprocessSlot } from './hooks/useReprocessSlot';
 import { useTileRow } from './hooks/useTileRow';
 import { useCloneRow } from './hooks/useCloneRow';
 import { useAbsmapDisplaySlots } from './hooks/useAbsmapDisplaySlots';
+import { usePrefetchReferenceSlots } from './hooks/usePrefetchReferenceSlots';
 import { useJobStream } from './hooks/useJobStream';
 import { AppShell } from './features/layout/AppShell';
 import { AbsmapDualMapViewport, AbsmapMapViewport } from './map/AbsmapMapViewport';
@@ -102,7 +102,6 @@ export default function App() {
   const contextClientName = useAppSelector((s) => s.autocalib.context.clientName);
   const contextB2bClientId = useAppSelector((s) => s.autocalib.context.clientId.trim());
   const contextClientNameForRef = useAppSelector((s) => s.autocalib.context.clientName.trim());
-  const cropsLen = useAppSelector((s) => s.autocalib.absmap.crops.length);
   const contextDeviceId = useAppSelector((s) => s.autocalib.context.deviceId);
   const workspaceMode = useAppSelector((s) => s.autocalib.ui.workspaceMode);
   const slots = useAppSelector((s) => s.autocalib.absmap.slots);
@@ -599,27 +598,7 @@ export default function App() {
   };
 
   /** Prod slots from B2B — load when client (and B2B location when needed) is known. */
-  useEffect(() => {
-    if (!contextClientNameForRef && !contextB2bClientId) return;
-    const canLoadWithB2bId = isB2bClientId(contextB2bClientId);
-    const canLoadWithGeo = cropsLen > 0 || clientLocation != null;
-    if (canLoadWithB2bId || canLoadWithGeo) {
-      const t0 = performance.now();
-      roiLog.info(
-        `Reference slots refresh triggered (crops=${cropsLen}, b2bId=${Boolean(canLoadWithB2bId)})`,
-      );
-      void dispatch(loadClientSlots()).finally(() => {
-        roiLog.info(`Reference slots refresh finished in ${Math.round(performance.now() - t0)}ms`);
-      });
-    }
-  }, [
-    dispatch,
-    contextB2bClientId,
-    contextClientNameForRef,
-    cropsLen,
-    clientLocation?.lat,
-    clientLocation?.lng,
-  ]);
+  usePrefetchReferenceSlots();
 
   const composedKeyDown = useCallback(
     (e: KeyboardEvent): boolean => {

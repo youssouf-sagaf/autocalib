@@ -65,7 +65,8 @@
     "guest": "User",
     "accessDeniedTitle": "Staff access only",
     "accessDeniedMessage": "Autocalib Tools is reserved for Cocoparks staff accounts.",
-    "profileLoadFailed": "Could not load your Cocopilot profile. Please sign in again."
+    "profileLoadFailed": "Could not load your Cocopilot profile. Please sign in again.",
+    "handoffFailed": "Automatic sign-in from Cocopilot failed. Please sign in manually."
   },
   "bulkDeleteConfirm": {
     "title": "Delete slots?",

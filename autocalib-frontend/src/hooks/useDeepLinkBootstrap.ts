@@ -56,10 +56,11 @@ function workspacePath(workspace: AutocalibWorkspace): string {
   return `/${workspace}`;
 }
 
-/** Strip `workspace` from query after it has been applied to the route path. */
-function searchWithoutWorkspace(search: URLSearchParams): string {
+/** Strip routing-only query params after they have been applied. */
+function searchWithoutRoutingParams(search: URLSearchParams): string {
   const next = new URLSearchParams(search);
   next.delete('workspace');
+  next.delete('handoff');
   const serialized = next.toString();
   return serialized ? `?${serialized}` : '';
 }
@@ -99,7 +100,7 @@ function useDeepLinkBootstrap(): void {
 
     if (workspace) {
       const targetPath = workspacePath(workspace);
-      const targetSearch = searchWithoutWorkspace(params);
+      const targetSearch = searchWithoutRoutingParams(params);
       const targetUrl = `${targetPath}${targetSearch}`;
 
       if (`${location.pathname}${location.search}` !== targetUrl) {

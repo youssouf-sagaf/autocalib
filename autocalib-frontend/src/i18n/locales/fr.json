@@ -65,7 +65,8 @@
     "guest": "Utilisateur",
     "accessDeniedTitle": "Accès réservé au staff",
     "accessDeniedMessage": "Outils Autocalib est réservé aux comptes staff Cocoparks.",
-    "profileLoadFailed": "Impossible de charger votre profil Cocopilot. Veuillez vous reconnecter."
+    "profileLoadFailed": "Impossible de charger votre profil Cocopilot. Veuillez vous reconnecter.",
+    "handoffFailed": "La connexion automatique depuis Cocopilot a échoué. Veuillez vous connecter manuellement."
   },
   "bulkDeleteConfirm": {
     "title": "Supprimer des places ?",

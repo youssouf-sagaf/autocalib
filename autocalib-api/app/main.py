@@ -20,7 +20,7 @@ from starlette.responses import Response
 
 from contextlib import asynccontextmanager
 
-from app.routes import calib, calib_preview, calibration, clients, jobs, logs, pairing, reprocess, straighten
+from app.routes import auth, calib, calib_preview, calibration, clients, jobs, logs, pairing, reprocess, straighten
 from app.services.b2b_http import close_b2b_http_client
 from app.services.pipeline_service import prewarm_ml_models, prewarm_ml_models_enabled
 
@@ -96,6 +96,7 @@ async def log_requests(request: Request, call_next):
     return response
 
 
+app.include_router(auth.router)
 app.include_router(jobs.router)
 app.include_router(calib.router)
 app.include_router(calibration.router)

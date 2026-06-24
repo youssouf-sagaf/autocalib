@@ -43,17 +43,17 @@ function waitForAppStylesheets(): Promise<void> {
   ).then(() => undefined);
 }
 
-/** When `clientsStatus` is idle (cold start or stale localStorage), load the roster from the API. */
+/** Fallback roster fetch when auth restored a user but the directory is still idle. */
 function ClientsDirectoryRefetchOnIdle() {
   const dispatch = useAppDispatch();
   const status = useAppSelector((s) => s.autocalib.directory.clientsStatus);
-  const { isStaff, profileLoading, user } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (!user || profileLoading || !isStaff) return;
+    if (!user) return;
     if (status !== 'idle') return;
     dispatch(fetchClients());
-  }, [dispatch, status, user, profileLoading, isStaff]);
+  }, [dispatch, status, user]);
 
   return null;
 }

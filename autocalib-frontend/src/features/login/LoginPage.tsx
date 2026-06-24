@@ -10,7 +10,7 @@ import styles from './LoginPage.module.css';
 
 export function LoginPage() {
   const { t } = useTranslation();
-  const { user, profileError } = useAuth();
+  const { user, profileError, handoffError } = useAuth();
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,7 +80,10 @@ export function LoginPage() {
           </label>
 
           {error && <p className={styles.error}>{error}</p>}
-          {profileError && !error && (
+          {handoffError === 'handoff_failed' && !error && (
+            <p className={styles.error}>{t('auth.handoffFailed')}</p>
+          )}
+          {profileError && !error && handoffError !== 'handoff_failed' && (
             <p className={styles.error}>{t('auth.profileLoadFailed')}</p>
           )}
 

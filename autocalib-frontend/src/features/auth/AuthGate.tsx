@@ -24,10 +24,10 @@ function AuthLoading() {
 }
 
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { user, loading, profileLoading, profileError, isStaff, originalProfile } = useAuth();
+  const { user, loading, profileLoading, profileError, isStaff, originalProfile, handoffLoading } = useAuth();
   const location = useLocation();
 
-  if (loading || (user && profileLoading)) {
+  if (loading || handoffLoading || (user && profileLoading)) {
     return <AuthLoading />;
   }
 

@@ -221,6 +221,8 @@ See also [`integration.md`](../integration.md) §7 and [`geography-slots-endpoin
 | `B2B_BASE_URL` | prod URL | backend-b2b base |
 | `B2B_SLOTS_CACHE_TTL_SEC` | `90` | Catalog cache TTL |
 | `B2B_STAFF_UID` | — | Required for live client roster from `GET /clients` |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | — | Firebase Admin JSON for `POST /api/v1/auth/handoff` (Cocopilot SSO) |
+| `GOOGLE_APPLICATION_CREDENTIALS` | — | Alternative to `FIREBASE_SERVICE_ACCOUNT_JSON` for handoff |
 | `B2B_PUT_BATCH_SIZE` | `20` | Chunk size for B2B `PUT geography/slots` (halves batch on 5xx) |
 | `COCOPARKS_PROD_URL` | — | Base URL for ops API (`GET …/cocopilot/get-cocospots-status`) |
 | `COCOPARKS_PROD_VERIFY_SSL` | `false` | TLS verify for ops API (dev / jump-host setups) |

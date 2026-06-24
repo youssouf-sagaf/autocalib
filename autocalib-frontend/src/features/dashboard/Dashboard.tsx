@@ -10,6 +10,7 @@ import {
 } from '../../utils/clientContext';
 import { pathForLastCompletedStep } from '../../utils/workspaceFlow';
 import { getRecentDeviceDisplayName } from '../../utils/recentDeviceDisplay';
+import { usePrefetchReferenceSlots } from '../../hooks/usePrefetchReferenceSlots';
 import { AppShell } from '../layout/AppShell';
 import { Kbd } from '../../ui/Kbd';
 import type { WorkspaceStep } from '../../types';
@@ -85,6 +86,8 @@ export function Dashboard() {
   );
   const currentDeviceId = useAppSelector((s) => s.autocalib.context.deviceId);
   const hasClient = Boolean(currentClientLabel);
+
+  usePrefetchReferenceSlots();
 
   useEffect(() => {
     const keys = new Set(recentDevices.slice(0, 8).map((d) => d.client).filter(Boolean));
