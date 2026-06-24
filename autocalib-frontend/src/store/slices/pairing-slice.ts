@@ -247,14 +247,19 @@ const slice = createSlice({
 
       const newSlotIds = side === 'map' ? [...slotIds].reverse() : [...slotIds];
       const newBboxIds = side === 'image' ? [...bboxSpotIds].reverse() : [...bboxSpotIds];
-      const oldColorBySlot = new Map(oldLinks.map((l) => [l.slotId, l.colorIndex]));
+      const colorByPosition = slotIds.map((slotId, i) => {
+        const link = oldLinks.find(
+          (l) => l.slotId === slotId && l.bboxSpotId === bboxSpotIds[i],
+        );
+        return link?.colorIndex ?? (i % PAIR_PALETTE.length);
+      });
       const newLinks: PairingLink[] = newSlotIds.map((slotId, i) => {
         pairingLinkCounter++;
         return {
           id: `link-${pairingLinkCounter}`,
           slotId,
           bboxSpotId: newBboxIds[i]!,
-          colorIndex: oldColorBySlot.get(slotId) ?? (pairingLinkCounter % PAIR_PALETTE.length),
+          colorIndex: colorByPosition[i] ?? (pairingLinkCounter % PAIR_PALETTE.length),
         };
       });
 

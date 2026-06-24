@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PairingLink } from '../types';
-import { pairingOrderForReverse, resolvePairingReverseSide } from './pairing-map';
+import { pairingOrderForReverse, resolvePairingReverseSide, reversePairCount } from './pairing-map';
 
 const links: PairingLink[] = [
   { id: 'link-1', slotId: 'slot-a', bboxSpotId: 10, colorIndex: 0 },
@@ -31,25 +31,27 @@ describe('resolvePairingReverseSide', () => {
 });
 
 describe('pairingOrderForReverse', () => {
-  it('reverses slot order when side is map', () => {
+  it('returns spatial slot order with paired bboxes (reducer applies side flip)', () => {
     const order = pairingOrderForReverse({
       links,
       slots: displaySlots,
       bboxes,
-      side: 'map',
     });
     expect(order).toEqual({
-      slotIds: ['slot-c', 'slot-b', 'slot-a'],
+      slotIds: ['slot-a', 'slot-b', 'slot-c'],
       bboxSpotIds: [10, 20, 30],
     });
   });
 
-  it('reverses bbox order when side is image', () => {
+  it('uses current link pairings along spatial slot order', () => {
     const order = pairingOrderForReverse({
-      links,
+      links: [
+        { id: 'link-1', slotId: 'slot-a', bboxSpotId: 30, colorIndex: 0 },
+        { id: 'link-2', slotId: 'slot-b', bboxSpotId: 20, colorIndex: 1 },
+        { id: 'link-3', slotId: 'slot-c', bboxSpotId: 10, colorIndex: 2 },
+      ],
       slots: displaySlots,
       bboxes,
-      side: 'image',
     });
     expect(order).toEqual({
       slotIds: ['slot-a', 'slot-b', 'slot-c'],
@@ -62,7 +64,6 @@ describe('pairingOrderForReverse', () => {
       links: [{ id: 'link-x', slotId: 'slot-db-only', bboxSpotId: 10, colorIndex: 0 }],
       slots: [],
       bboxes: [{ spot_id: 10 }],
-      side: 'image',
       dbSlots: { 'slot-db-only': { lat: 48.5, lng: 2.5 } },
     });
     expect(order).toEqual({
@@ -76,8 +77,36 @@ describe('pairingOrderForReverse', () => {
       links,
       slots: [],
       bboxes,
-      side: 'map',
     });
     expect(order).toBeNull();
+  });
+});
+
+describe('reversePairCount', () => {
+  it('uses active zone slot count when zone is selected', () => {
+    expect(reversePairCount({
+      activeZone: { mapSlotIds: ['a', 'b', 'c'] },
+      links,
+      slots: displaySlots,
+      bboxes,
+    })).toBe(3);
+  });
+
+  it('falls back to resolvable prod link count without zone', () => {
+    expect(reversePairCount({
+      activeZone: null,
+      links,
+      slots: displaySlots,
+      bboxes,
+    })).toBe(3);
+  });
+
+  it('returns 0 when prod links cannot be resolved', () => {
+    expect(reversePairCount({
+      activeZone: null,
+      links,
+      slots: [],
+      bboxes,
+    })).toBe(0);
   });
 });

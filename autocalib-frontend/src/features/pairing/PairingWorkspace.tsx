@@ -40,6 +40,7 @@ import { usePairingReverse } from '../../hooks/usePairingReverse';
 import { invokePairingSaveRequest } from '../../hooks/pairingSaveGate';
 import { PairingUnpairConfirmModal } from './PairingUnpairConfirmModal';
 import { PairingZoneConfirmModal } from './PairingZoneConfirmModal';
+import { PairingReverseConfirmModal } from './PairingReverseConfirmModal';
 import styles from './PairingWorkspace.module.css';
 
 const zoneLog = createLogger('pairing-zone');
@@ -66,7 +67,12 @@ export function PairingWorkspace() {
   const pairing = useAppSelector((s) => s.autocalib.pairing);
   const { pendingChanges } = usePairingVisuals();
   const pairingSaveConfirm = usePairingSaveConfirm();
-  const { canReverse, handleReverse, reverseSide } = usePairingReverse();
+  const {
+    canReverse,
+    confirmReverse,
+    reverseSide,
+    reversePairCount,
+  } = usePairingReverse();
   const slots = useAbsmapDisplaySlots();
   const bboxes = useAppSelector((s) => s.autocalib.calib.bboxes);
   const confidenceThreshold = useAppSelector((s) => s.autocalib.calib.confidenceThreshold);
@@ -137,7 +143,7 @@ export function PairingWorkspace() {
     calibJobId,
   ]);
 
-  const { activeTool, links, zones, drawingMapPoints, drawingImagePoints, zoneMismatchError, activeZoneId, activeZoneSide, autoSuggestMode, autoSuggest } = pairing;
+  const { activeTool, links, zones, drawingMapPoints, drawingImagePoints, zoneMismatchError, activeZoneId, activeZoneSide, focusedPanel, autoSuggestMode, autoSuggest } = pairing;
   const hasProposal = autoSuggest !== null;
   const currentProposal = hasProposal ? autoSuggest.proposals[autoSuggest.proposalIndex] ?? null : null;
 
@@ -161,7 +167,24 @@ export function PairingWorkspace() {
 
   const [topSplitRatio, setTopSplitRatio] = useState(() => readStoredSplitRatio());
   const [zoneConfirmOpen, setZoneConfirmOpen] = useState(false);
+  const [reverseConfirmOpen, setReverseConfirmOpen] = useState(false);
+  const [pendingReverseSide, setPendingReverseSide] = useState<'map' | 'image'>('image');
   topRatioRef.current = topSplitRatio;
+
+  const requestReverse = useCallback(() => {
+    if (canReverse) {
+      setPendingReverseSide(reverseSide);
+      setReverseConfirmOpen(true);
+    }
+  }, [canReverse, reverseSide]);
+
+  const handleConfirmReverse = useCallback(() => {
+    if (confirmReverse(pendingReverseSide)) setReverseConfirmOpen(false);
+  }, [confirmReverse, pendingReverseSide]);
+
+  const cancelReverse = useCallback(() => {
+    setReverseConfirmOpen(false);
+  }, []);
 
   const updateSplitFromClientY = useCallback((clientY: number) => {
     const el = panelsRef.current;
@@ -380,6 +403,20 @@ export function PairingWorkspace() {
         return;
       }
 
+      if (reverseConfirmOpen) {
+        if (key === 'enter') {
+          e.preventDefault();
+          handleConfirmReverse();
+          return;
+        }
+        if (key === 'escape') {
+          e.preventDefault();
+          cancelReverse();
+          return;
+        }
+        return;
+      }
+
       if (hasProposal) {
         if (key === 'enter') {
           e.preventDefault();
@@ -473,14 +510,14 @@ export function PairingWorkspace() {
 
       if (key === 'r' && canReverse && activeTool === 'none') {
         e.preventDefault();
-        handleReverse();
+        requestReverse();
         return;
       }
     };
 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dispatch, activeTool, activeZoneId, hasProposal, zoneConfirmOpen, zoneDraft, drawingMapPoints, drawingImagePoints, handleMapZoneFinished, handleImageZoneFinished, requestZoneCommit, confirmZoneCommit, cancelZoneCommit, canReverse, handleReverse]);
+  }, [dispatch, activeTool, activeZoneId, hasProposal, zoneConfirmOpen, reverseConfirmOpen, zoneDraft, drawingMapPoints, drawingImagePoints, handleMapZoneFinished, handleImageZoneFinished, requestZoneCommit, confirmZoneCommit, cancelZoneCommit, canReverse, requestReverse, handleConfirmReverse, cancelReverse]);
 
   return (
     <AppShell
@@ -541,6 +578,7 @@ export function PairingWorkspace() {
               panelRef={mapPanelRef}
               onFinishDrawing={handleMapZoneFinished}
               previewZone={currentProposal ? { polygon: currentProposal.mapPolygon, slotIds: currentProposal.mapSlotIds } : undefined}
+              highlightActiveZone={reverseConfirmOpen || activeZoneId != null}
             />
           </div>
 
@@ -561,7 +599,7 @@ export function PairingWorkspace() {
               onDoubleClick={onSplitDoubleClick}
             />
             <div className={styles.pairingRailFloating}>
-              <PairingEditRail />
+              <PairingEditRail onRequestReverse={requestReverse} />
             </div>
           </div>
 
@@ -574,6 +612,7 @@ export function PairingWorkspace() {
               panelRef={imagePanelRef}
               onFinishDrawing={handleImageZoneFinished}
               previewZone={currentProposal ? { polygon: currentProposal.imagePolygon, bboxIds: currentProposal.imageBboxIds } : undefined}
+              highlightActiveZone={reverseConfirmOpen || activeZoneId != null}
             />
           </div>
 
@@ -599,7 +638,8 @@ export function PairingWorkspace() {
                     backgroundColor: isActive ? `${zColor}30` : undefined,
                   }}
                   onClick={() => {
-                    dispatch(pairingSetActiveZone({ zoneId: isActive ? null : zone.id, side: isActive ? null : activeZoneSide }));
+                    const side = activeZoneSide ?? focusedPanel ?? 'image';
+                    dispatch(pairingSetActiveZone({ zoneId: isActive ? null : zone.id, side: isActive ? null : side }));
                     dispatch(pairingSetTool('none'));
                   }}
                   title={t('pairing.zoneChipTitle', {
@@ -637,6 +677,13 @@ export function PairingWorkspace() {
         bboxCount={zoneDraft?.imageBboxIds.length ?? 0}
         onConfirm={confirmZoneCommit}
         onCancel={cancelZoneCommit}
+      />
+      <PairingReverseConfirmModal
+        open={reverseConfirmOpen}
+        side={pendingReverseSide}
+        pairCount={reversePairCount}
+        onConfirm={handleConfirmReverse}
+        onCancel={cancelReverse}
       />
     </AppShell>
   );

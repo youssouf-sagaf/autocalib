@@ -47,9 +47,15 @@ interface PairingImagePanelProps {
   panelRef?: React.RefObject<HTMLDivElement | null>;
   onFinishDrawing?: () => void;
   previewZone?: PreviewZoneImage;
+  highlightActiveZone?: boolean;
 }
 
-export function PairingImagePanel({ panelRef, onFinishDrawing, previewZone }: PairingImagePanelProps) {
+export function PairingImagePanel({
+  panelRef,
+  onFinishDrawing,
+  previewZone,
+  highlightActiveZone = false,
+}: PairingImagePanelProps) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const bboxes = useAppSelector((s) => s.autocalib.calib.bboxes);
@@ -61,7 +67,7 @@ export function PairingImagePanel({ panelRef, onFinishDrawing, previewZone }: Pa
   const pairing = useAppSelector((s) => s.autocalib.pairing);
   const { hasClient, hasCocospot, client: ctxClient, deviceId: ctxDeviceId, cocospotLabel } =
     usePairingDeviceContext();
-  const { activeTool, selectedBboxId, zones, activeZoneId, drawingImagePoints } = pairing;
+  const { activeTool, selectedBboxId, zones, activeZoneId, activeZoneSide, drawingImagePoints } = pairing;
   const {
     linkedBboxIds,
     bboxColorMap,
@@ -215,7 +221,11 @@ export function PairingImagePanel({ panelRef, onFinishDrawing, previewZone }: Pa
     ctx.translate(canvasPanX, canvasPanY);
     ctx.scale(z, z);
 
-    for (const zone of zones) {
+    const zonesToRender = activeZoneId
+      ? zones.filter((z) => z.id === activeZoneId)
+      : zones;
+
+    for (const zone of zonesToRender) {
       if (zone.imagePolygon.points.length < 3) continue;
       const zColor = PAIR_PALETTE[zone.colorIndex % PAIR_PALETTE.length] ?? '#37bc9b';
       const isActive = zone.id === activeZoneId;
@@ -227,12 +237,12 @@ export function PairingImagePanel({ panelRef, onFinishDrawing, previewZone }: Pa
         else ctx.lineTo(pti[0], pti[1]);
       }
       ctx.closePath();
-      ctx.globalAlpha = isActive ? 0.25 : 0.12;
+      ctx.globalAlpha = isActive && highlightActiveZone ? 0.35 : isActive ? 0.25 : 0.12;
       ctx.fillStyle = zColor;
       ctx.fill();
       ctx.globalAlpha = 1;
       ctx.strokeStyle = zColor;
-      ctx.lineWidth = (isActive ? 2.5 : 1.5) / z;
+      ctx.lineWidth = (isActive && highlightActiveZone ? 3.5 : isActive ? 2.5 : 1.5) / z;
       ctx.stroke();
     }
 
@@ -318,6 +328,7 @@ export function PairingImagePanel({ panelRef, onFinishDrawing, previewZone }: Pa
     visibleBboxes,
     zones,
     activeZoneId,
+    highlightActiveZone,
     drawingImagePoints,
     selectedBboxId,
     activeTool,
@@ -553,8 +564,15 @@ export function PairingImagePanel({ panelRef, onFinishDrawing, previewZone }: Pa
       const [ix, iy] = toImageCoords(cx, cy);
       for (const zone of zones) {
         if (zone.imagePolygon.points.length >= 3 && imgPointInPolygon(ix, iy, zone.imagePolygon.points)) {
-          const toggle = zone.id === activeZoneId;
-          dispatch(pairingSetActiveZone({ zoneId: toggle ? null : zone.id, side: toggle ? null : 'image' }));
+          if (zone.id === activeZoneId) {
+            if (activeZoneSide === 'image') {
+              dispatch(pairingSetActiveZone({ zoneId: null, side: null }));
+            } else {
+              dispatch(pairingSetActiveZone({ zoneId: zone.id, side: 'image' }));
+            }
+          } else {
+            dispatch(pairingSetActiveZone({ zoneId: zone.id, side: 'image' }));
+          }
           return;
         }
       }
@@ -572,6 +590,7 @@ export function PairingImagePanel({ panelRef, onFinishDrawing, previewZone }: Pa
       activeTool,
       zones,
       activeZoneId,
+      activeZoneSide,
       dispatch,
       toImageCoords,
       imgPointInPolygon,

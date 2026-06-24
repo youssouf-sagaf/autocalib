@@ -78,7 +78,6 @@ export function pairingOrderForReverse(args: {
   links: PairingLink[];
   slots: Array<{ slot_id: string; center: { lng: number; lat: number } }>;
   bboxes: Array<{ spot_id: number }>;
-  side: 'map' | 'image';
   dbSlots?: Record<string, { lat: number; lng: number }>;
 }): { slotIds: string[]; bboxSpotIds: number[] } | null {
   const slotById = new Map(args.slots.map((s) => [s.slot_id, s]));
@@ -104,10 +103,26 @@ export function pairingOrderForReverse(args: {
     return sa.lng - sb.lng || sa.lat - sb.lat;
   });
 
-  let slotIds = sorted.map((entry) => entry.slotId);
-  let bboxSpotIds = sorted.map((entry) => entry.bboxSpotId);
-  if (args.side === 'map') slotIds = [...slotIds].reverse();
-  else bboxSpotIds = [...bboxSpotIds].reverse();
-
+  const slotIds = sorted.map((entry) => entry.slotId);
+  const bboxSpotIds = sorted.map((entry) => entry.bboxSpotId);
   return { slotIds, bboxSpotIds };
+}
+
+/** Count of pairings that would be reversed (zone scope or prod fallback). */
+export function reversePairCount(args: {
+  activeZone: { mapSlotIds: string[] } | null | undefined;
+  links: PairingLink[];
+  slots: Array<{ slot_id: string; center: { lng: number; lat: number } }>;
+  bboxes: Array<{ spot_id: number }>;
+  dbSlots?: Record<string, { lat: number; lng: number }>;
+}): number {
+  if (args.activeZone && args.activeZone.mapSlotIds.length > 0) {
+    return args.activeZone.mapSlotIds.length;
+  }
+  return pairingOrderForReverse({
+    links: args.links,
+    slots: args.slots,
+    bboxes: args.bboxes,
+    dbSlots: args.dbSlots,
+  })?.slotIds.length ?? 0;
 }

@@ -1,9 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { pairingReverseZoneLinks } from '../store/autocalib-slice';
+import { pairingReverseZoneLinks, pairingSetActiveZone } from '../store/autocalib-slice';
 import { useAbsmapDisplaySlots } from './useAbsmapDisplaySlots';
 import { visibleCalibBboxes } from '../utils/calibVisibility';
-import { pairingOrderForReverse, resolvePairingReverseSide } from '../utils/pairing-map';
+import {
+  pairingOrderForReverse,
+  resolvePairingReverseSide,
+  reversePairCount,
+} from '../utils/pairing-map';
 
 export function usePairingReverse() {
   const dispatch = useAppDispatch();
@@ -23,34 +27,45 @@ export function usePairingReverse() {
   const reverseSide = resolvePairingReverseSide({ activeZoneSide, focusedPanel });
   const hasProdSlots =
     b2bSnapshotAtLoad.length > 0 || Object.keys(calibrationDbSlots).length > 0;
-  const canReverse =
-    (activeZone != null && activeZone.mapSlotIds.length > 0)
-    || (hasProdSlots && links.length > 0);
-
-  const handleReverse = useCallback(() => {
-    if (!canReverse) return;
-    if (activeZone && activeZone.mapSlotIds.length > 0) {
-      dispatch(pairingReverseZoneLinks({
-        zoneId: activeZone.id,
-        side: reverseSide,
-        slotIds: activeZone.mapSlotIds,
-        bboxSpotIds: activeZone.imageBboxIds,
-      }));
-      return;
-    }
-    const order = pairingOrderForReverse({
+  const reversePairCountValue = useMemo(
+    () => reversePairCount({
+      activeZone,
       links,
       slots: displaySlots,
       bboxes: visibleBboxes,
-      side: reverseSide,
       dbSlots: calibrationDbSlots,
-    });
-    if (!order) return;
-    dispatch(pairingReverseZoneLinks({
-      side: reverseSide,
-      slotIds: order.slotIds,
-      bboxSpotIds: order.bboxSpotIds,
-    }));
+    }),
+    [activeZone, links, displaySlots, visibleBboxes, calibrationDbSlots],
+  );
+  const canReverse =
+    (activeZone != null && activeZone.mapSlotIds.length > 0)
+    || (hasProdSlots && reversePairCountValue > 0);
+
+  const confirmReverse = useCallback((side: 'map' | 'image') => {
+    if (!canReverse) return false;
+    if (activeZone && activeZone.mapSlotIds.length > 0) {
+      dispatch(pairingReverseZoneLinks({
+        zoneId: activeZone.id,
+        side,
+        slotIds: activeZone.mapSlotIds,
+        bboxSpotIds: activeZone.imageBboxIds,
+      }));
+    } else {
+      const order = pairingOrderForReverse({
+        links,
+        slots: displaySlots,
+        bboxes: visibleBboxes,
+        dbSlots: calibrationDbSlots,
+      });
+      if (!order) return false;
+      dispatch(pairingReverseZoneLinks({
+        side,
+        slotIds: order.slotIds,
+        bboxSpotIds: order.bboxSpotIds,
+      }));
+    }
+    dispatch(pairingSetActiveZone({ zoneId: null, side: null }));
+    return true;
   }, [
     activeZone,
     calibrationDbSlots,
@@ -58,9 +73,15 @@ export function usePairingReverse() {
     dispatch,
     displaySlots,
     links,
-    reverseSide,
     visibleBboxes,
   ]);
 
-  return { canReverse, handleReverse, reverseSide, activeZone };
+  return {
+    canReverse,
+    confirmReverse,
+    reverseSide,
+    activeZone,
+    reversePairCount: reversePairCountValue,
+    hasReverseZone: activeZone != null && activeZone.mapSlotIds.length > 0,
+  };
 }

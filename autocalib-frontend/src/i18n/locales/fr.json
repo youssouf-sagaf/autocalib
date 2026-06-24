@@ -721,6 +721,12 @@
       "bodyMismatch": "{{slots}} place(s) vs {{bboxes}} bbox — les effectifs doivent correspondre.",
       "bodyEmpty": "Aucune place ni bbox dans les zones — retracez les lassos."
     },
+    "reverseConfirm": {
+      "title": "Inverser l’ordre des appariements ?",
+      "body": "Inverser l’ordre côté {{side}} pour {{count}} appariement(s).",
+      "bodyProdHint": "Appariements prod (sans zone tracée).",
+      "confirm": "Inverser l’ordre"
+    },
     "saveTitleOk": "Enregistrer les appariements et la calibration pour cet appareil",
     "saveTitleNeedDevice": "Sélectionnez client et appareil (⌘D)",
     "saveTitleNeedDeviceOnly": "Sélectionnez un appareil (⌘D) pour enregistrer",

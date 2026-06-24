@@ -605,7 +605,6 @@ export function clearPairingZoneOverlays(pairing: PairingState): void {
   pairing.drawingImagePoints = [];
   pairing.activeZoneId = null;
   pairing.activeZoneSide = null;
-  pairing.focusedPanel = null;
   pairing.activeTool = 'none';
   pairing.suggestion = null;
   pairing.zoneMismatchError = null;
