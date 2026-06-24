@@ -222,6 +222,10 @@ const slice = createSlice({
       state.suggestion = null;
     },
 
+    pairingSetFocusedPanel(state, action: PayloadAction<'map' | 'image'>) {
+      state.focusedPanel = action.payload;
+    },
+
     pairingReverseZoneLinks(state, action: PayloadAction<{
       side: 'map' | 'image';
       zoneId?: string;
@@ -486,6 +490,7 @@ export const {
   pairingCommitZone,
   pairingDismissMismatchError,
   pairingSetActiveZone,
+  pairingSetFocusedPanel,
   pairingReverseZoneLinks,
   pairingDeleteZone,
   pairingSuggestForZone,

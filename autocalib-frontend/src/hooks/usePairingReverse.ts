@@ -3,12 +3,12 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { pairingReverseZoneLinks } from '../store/autocalib-slice';
 import { useAbsmapDisplaySlots } from './useAbsmapDisplaySlots';
 import { visibleCalibBboxes } from '../utils/calibVisibility';
-import { pairingOrderForReverse } from '../utils/pairing-map';
+import { pairingOrderForReverse, resolvePairingReverseSide } from '../utils/pairing-map';
 
 export function usePairingReverse() {
   const dispatch = useAppDispatch();
   const pairing = useAppSelector((s) => s.autocalib.pairing);
-  const { zones, links, activeZoneId, activeZoneSide } = pairing;
+  const { zones, links, activeZoneId, activeZoneSide, focusedPanel } = pairing;
   const displaySlots = useAbsmapDisplaySlots();
   const b2bSnapshotAtLoad = useAppSelector((s) => s.autocalib.absmap.b2bSnapshotAtLoad);
   const calibrationDbSlots = useAppSelector((s) => s.autocalib.calib.calibrationDbSlots);
@@ -20,7 +20,7 @@ export function usePairingReverse() {
   );
 
   const activeZone = zones.find((z) => z.id === activeZoneId);
-  const reverseSide = activeZoneSide ?? 'image';
+  const reverseSide = resolvePairingReverseSide({ activeZoneSide, focusedPanel });
   const hasProdSlots =
     b2bSnapshotAtLoad.length > 0 || Object.keys(calibrationDbSlots).length > 0;
   const canReverse =
@@ -43,6 +43,7 @@ export function usePairingReverse() {
       slots: displaySlots,
       bboxes: visibleBboxes,
       side: reverseSide,
+      dbSlots: calibrationDbSlots,
     });
     if (!order) return;
     dispatch(pairingReverseZoneLinks({
@@ -50,7 +51,16 @@ export function usePairingReverse() {
       slotIds: order.slotIds,
       bboxSpotIds: order.bboxSpotIds,
     }));
-  }, [activeZone, canReverse, dispatch, displaySlots, links, reverseSide, visibleBboxes]);
+  }, [
+    activeZone,
+    calibrationDbSlots,
+    canReverse,
+    dispatch,
+    displaySlots,
+    links,
+    reverseSide,
+    visibleBboxes,
+  ]);
 
   return { canReverse, handleReverse, reverseSide, activeZone };
 }

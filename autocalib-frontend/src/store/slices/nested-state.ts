@@ -4,6 +4,7 @@ import type {
   EditEvent,
   EditMode,
   ImagerySource,
+  MapDisplayLayer,
   MarkerDisplayMode,
   OverlayVisibility,
   OrientedRect,
@@ -59,6 +60,7 @@ export interface AbsmapDomainState {
   tileRowProposed: Slot[];
   absmapViewState: { longitude: number; latitude: number; zoom: number } | null;
   imagerySource: ImagerySource;
+  mapDisplayLayer: MapDisplayLayer;
 }
 
 export interface AutocalibUiState {
@@ -126,6 +128,7 @@ const ABSMAP_KEYS: (keyof AbsmapDomainState)[] = [
   'tileRowProposed',
   'absmapViewState',
   'imagerySource',
+  'mapDisplayLayer',
 ];
 
 export function flatToNested(flat: LegacyAutocalibState): AutocalibRootState {

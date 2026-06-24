@@ -8,10 +8,19 @@ export function pairingStatusHintKey(args: {
   mapPtsLen: number;
   imgPtsLen: number;
   zoneMismatchError?: string | null;
+  pairsCount?: number;
+  reverseSide?: 'map' | 'image';
 }): string {
   if (args.zoneMismatchError) return 'statusBar.pairing.hints.zoneRejected';
   if (args.autoSuggestMode) return 'statusBar.pairing.hints.autoSuggest';
-  if (!PAIRING_HINT_TOOLS.has(args.activeTool)) return 'statusBar.pairing.hint';
+  if (!PAIRING_HINT_TOOLS.has(args.activeTool)) {
+    if (args.activeTool === 'none' && (args.pairsCount ?? 0) > 0) {
+      return args.reverseSide === 'map'
+        ? 'statusBar.pairing.hints.navigateReverseMap'
+        : 'statusBar.pairing.hints.navigateReverseImage';
+    }
+    return 'statusBar.pairing.hint';
+  }
   if (args.activeTool === 'draw_zone') {
     const mapReady = args.mapPtsLen >= 3;
     const imgReady = args.imgPtsLen >= 3;

@@ -89,6 +89,8 @@ export interface PairingState {
   drawingImagePoints: [number, number][];
   activeZoneId: string | null;
   activeZoneSide: 'map' | 'image' | null;
+  /** Last map or image panel hovered — drives prod reverse side when zones are cleared. */
+  focusedPanel: 'map' | 'image' | null;
   suggestion: SuggestedZonePairing | null;
   zoneMismatchError: string | null;
   autoSuggestMode: boolean;

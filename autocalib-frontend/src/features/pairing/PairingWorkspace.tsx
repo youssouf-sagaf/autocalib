@@ -6,6 +6,7 @@ import {
   pairingCommitZone,
   pairingClearDrawing,
   pairingSetActiveZone,
+  pairingSetFocusedPanel,
   pairingDeleteZone,
   pairingDismissMismatchError,
   pairingAutoSuggestZoneDrawn,
@@ -65,7 +66,7 @@ export function PairingWorkspace() {
   const pairing = useAppSelector((s) => s.autocalib.pairing);
   const { pendingChanges } = usePairingVisuals();
   const pairingSaveConfirm = usePairingSaveConfirm();
-  const { canReverse, handleReverse } = usePairingReverse();
+  const { canReverse, handleReverse, reverseSide } = usePairingReverse();
   const slots = useAbsmapDisplaySlots();
   const bboxes = useAppSelector((s) => s.autocalib.calib.bboxes);
   const confidenceThreshold = useAppSelector((s) => s.autocalib.calib.confidenceThreshold);
@@ -494,6 +495,7 @@ export function PairingWorkspace() {
           mapPtsLen={drawingMapPoints.length}
           imgPtsLen={drawingImagePoints.length}
           zoneMismatchError={zoneMismatchError}
+          reverseSide={reverseSide}
         />
       }
     >
@@ -530,7 +532,11 @@ export function PairingWorkspace() {
         ) : null}
 
         <div className={styles.panels} ref={panelsRef}>
-          <div className={styles.pairPane} style={{ flex: `${topSplitRatio} 1 0px` }}>
+          <div
+            className={styles.pairPane}
+            style={{ flex: `${topSplitRatio} 1 0px` }}
+            onMouseEnter={() => dispatch(pairingSetFocusedPanel('map'))}
+          >
             <PairingMapPanel
               panelRef={mapPanelRef}
               onFinishDrawing={handleMapZoneFinished}
@@ -559,7 +565,11 @@ export function PairingWorkspace() {
             </div>
           </div>
 
-          <div className={styles.pairPane} style={{ flex: `${1 - topSplitRatio} 1 0px` }}>
+          <div
+            className={styles.pairPane}
+            style={{ flex: `${1 - topSplitRatio} 1 0px` }}
+            onMouseEnter={() => dispatch(pairingSetFocusedPanel('image'))}
+          >
             <PairingImagePanel
               panelRef={imagePanelRef}
               onFinishDrawing={handleImageZoneFinished}

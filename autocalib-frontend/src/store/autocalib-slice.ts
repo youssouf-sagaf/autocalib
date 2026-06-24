@@ -51,6 +51,7 @@ export {
 export {
   setAbsmapViewState,
   setImagerySource,
+  setMapDisplayLayer,
   addCrop,
   removeCrop,
   clearCrops,
@@ -124,6 +125,7 @@ export {
   pairingCommitZone,
   pairingDismissMismatchError,
   pairingSetActiveZone,
+  pairingSetFocusedPanel,
   pairingReverseZoneLinks,
   pairingDeleteZone,
   pairingSuggestForZone,

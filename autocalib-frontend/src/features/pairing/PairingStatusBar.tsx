@@ -15,6 +15,7 @@ interface PairingStatusBarProps {
   mapPtsLen: number;
   imgPtsLen: number;
   zoneMismatchError?: string | null;
+  reverseSide?: 'map' | 'image';
 }
 
 function toolLabelKey(tool: PairingTool, auto: boolean): string {
@@ -30,6 +31,7 @@ const PAIRING_HINT_KBD = {
   kEsc: <Kbd size="xs">Esc</Kbd>,
   kZ: <Kbd size="xs">Z</Kbd>,
   kQ: <Kbd size="xs">Q</Kbd>,
+  kR: <Kbd size="xs">R</Kbd>,
 };
 
 export function PairingStatusBar({
@@ -42,6 +44,7 @@ export function PairingStatusBar({
   mapPtsLen,
   imgPtsLen,
   zoneMismatchError,
+  reverseSide = 'image',
 }: PairingStatusBarProps) {
   const { t } = useTranslation();
   const hintKey = pairingStatusHintKey({
@@ -50,6 +53,8 @@ export function PairingStatusBar({
     mapPtsLen,
     imgPtsLen,
     zoneMismatchError,
+    pairsCount,
+    reverseSide,
   });
 
   return (

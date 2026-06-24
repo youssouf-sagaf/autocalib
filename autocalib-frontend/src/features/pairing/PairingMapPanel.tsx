@@ -12,6 +12,7 @@ import {
   pairingSelectSlot,
   pairingSetDrawingPoints,
   pairingSetActiveZone,
+  pairingSetFocusedPanel,
 } from '../../store/autocalib-slice';
 import { useAbsmapDisplaySlots } from '../../hooks/useAbsmapDisplaySlots';
 import { useAbsmapSyncedMapView } from '../../hooks/useAbsmapSyncedMapView';
@@ -221,10 +222,24 @@ export function PairingMapPanel({ panelRef, onFinishDrawing, previewZone }: Pair
             return;
           }
         }
+
+        const tol = 8;
+        const hitBbox: [[number, number], [number, number]] = [
+          [e.point.x - tol, e.point.y - tol],
+          [e.point.x + tol, e.point.y + tol],
+        ];
+        const slotFeatures = e.target.queryRenderedFeatures(hitBbox, { layers: ['pairing-slots-circle'] });
+        const slotHit = slotFeatures[0];
+        const slotId = slotHit?.properties?.slot_id as string | undefined;
+        if (slotId && linkedSlotIds.has(slotId)) {
+          dispatch(pairingSetFocusedPanel('map'));
+          return;
+        }
+
         if (activeZoneId) dispatch(pairingSetActiveZone({ zoneId: null, side: null }));
       }
     },
-    [activeTool, dispatch, zones, activeZoneId],
+    [activeTool, dispatch, zones, activeZoneId, linkedSlotIds],
   );
 
   return (

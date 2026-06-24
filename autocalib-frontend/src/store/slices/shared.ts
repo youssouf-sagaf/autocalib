@@ -3,6 +3,7 @@ import type {
   DeviceCalibrationResponse,
   EditEvent,
   ImagerySource,
+  MapDisplayLayer,
   OverlayVisibility,
   SaveFeedbackState,
   SaveFeedbackVariant,
@@ -68,6 +69,8 @@ export function mergePipelineOverlay(
 const CONTEXT_STORAGE_KEY = 'autocalib:context';
 const SIDEBAR_EXPANDED_DEFAULT_MIGRATION_KEY = 'autocalib:sidebar-expanded-default-v2';
 const IMAGERY_SOURCE_STORAGE_KEY = 'autocalib:imagerySource';
+const MAP_DISPLAY_LAYER_STORAGE_KEY = 'autocalib:mapDisplayLayer';
+const LEGACY_OSM_OVERLAY_STORAGE_KEY = 'autocalib:showOsmOverlay';
 const MAX_RECENT_DEVICES = 20;
 const MAX_RECENT_CLIENTS = 8;
 
@@ -104,6 +107,34 @@ export function saveImagerySourceToStorage(src: ImagerySource) {
   try {
     localStorage.setItem(IMAGERY_SOURCE_STORAGE_KEY, src);
   } catch { /* quota or private mode — ignore */ }
+}
+
+const VALID_MAP_DISPLAY_LAYERS: MapDisplayLayer[] = [
+  'streets',
+  'osm',
+  'mapbox-satellite',
+  'ign-current',
+  'ign-pleiades-2026',
+];
+
+export function loadMapDisplayLayerFromStorage(): MapDisplayLayer {
+  try {
+    const raw = localStorage.getItem(MAP_DISPLAY_LAYER_STORAGE_KEY);
+    if (raw && (VALID_MAP_DISPLAY_LAYERS as string[]).includes(raw)) {
+      return raw as MapDisplayLayer;
+    }
+    if (localStorage.getItem(LEGACY_OSM_OVERLAY_STORAGE_KEY) === '1') {
+      return 'osm';
+    }
+  } catch { /* ignore */ }
+  return 'mapbox-satellite';
+}
+
+export function saveMapDisplayLayerToStorage(layer: MapDisplayLayer) {
+  try {
+    localStorage.setItem(MAP_DISPLAY_LAYER_STORAGE_KEY, layer);
+    localStorage.removeItem(LEGACY_OSM_OVERLAY_STORAGE_KEY);
+  } catch { /* ignore */ }
 }
 
 export function loadContextFromStorage(): WorkspaceContext {
@@ -221,6 +252,7 @@ export const pairingInitial: PairingState = {
   drawingImagePoints: [],
   activeZoneId: null,
   activeZoneSide: null,
+  focusedPanel: null,
   suggestion: null,
   zoneMismatchError: null,
   autoSuggestMode: false,
@@ -573,6 +605,7 @@ export function clearPairingZoneOverlays(pairing: PairingState): void {
   pairing.drawingImagePoints = [];
   pairing.activeZoneId = null;
   pairing.activeZoneSide = null;
+  pairing.focusedPanel = null;
   pairing.activeTool = 'none';
   pairing.suggestion = null;
   pairing.zoneMismatchError = null;

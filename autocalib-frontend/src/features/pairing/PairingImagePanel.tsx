@@ -5,6 +5,7 @@ import {
   pairingSelectBbox,
   pairingSetDrawingPoints,
   pairingSetActiveZone,
+  pairingSetFocusedPanel,
   calibSetZoom,
   calibSetPan,
   calibAlignBboxesToImageSize,
@@ -557,9 +558,27 @@ export function PairingImagePanel({ panelRef, onFinishDrawing, previewZone }: Pa
           return;
         }
       }
+
+      const z = canvasZoom <= 0 ? 1 : canvasZoom;
+      const hit = bboxAtImagePoint(ix, iy, 6 / z);
+      if (hit != null && linkedBboxIds.has(hit)) {
+        dispatch(pairingSetFocusedPanel('image'));
+        return;
+      }
+
       if (activeZoneId) dispatch(pairingSetActiveZone({ zoneId: null, side: null }));
     },
-    [activeTool, zones, activeZoneId, dispatch, toImageCoords, imgPointInPolygon],
+    [
+      activeTool,
+      zones,
+      activeZoneId,
+      dispatch,
+      toImageCoords,
+      imgPointInPolygon,
+      canvasZoom,
+      bboxAtImagePoint,
+      linkedBboxIds,
+    ],
   );
 
   useEffect(() => {

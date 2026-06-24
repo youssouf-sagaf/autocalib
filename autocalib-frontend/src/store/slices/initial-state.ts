@@ -8,6 +8,7 @@ import {
   initialSaveFeedback,
   defaultOverlayVisibility,
   loadImagerySourceFromStorage,
+  loadMapDisplayLayerFromStorage,
 } from './shared';
 
 export { calibInitial, pairingInitial };
@@ -56,6 +57,7 @@ export const absmapInitialState: AbsmapDomainState = {
   tileRowProposed: [],
   absmapViewState: null,
   imagerySource: loadImagerySourceFromStorage(),
+  mapDisplayLayer: loadMapDisplayLayerFromStorage(),
 };
 
 export const autocalibInitialState: AutocalibRootState = {
